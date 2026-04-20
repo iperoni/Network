@@ -1,4 +1,4 @@
-# Network Diagnostic Tool (v1.1)
+# Network Diagnostic Tool (v1.2)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux.
 
@@ -57,6 +57,14 @@ chmod +x network_diagnostic.py
 ```
 
 ## Historial de Cambios
+
+### v1.2 (2026)
+**Modificado por: Ignacio Peroni**
+
+- Agregado Test 11: Velocidad de internet
+- Download + Upload test
+- Servidores: Cloudflare, nperf, Tele2
+- 5MB por test
 
 ### v1.1 (2026)
 **Modificado por: Ignacio Peroni**

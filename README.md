@@ -1,4 +1,4 @@
-# Network Diagnostic Tool (v1.2.1)
+# Network Diagnostic Tool (v1.2.2)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux.
 
@@ -57,6 +57,12 @@ chmod +x network_diagnostic.py
 ```
 
 ## Historial de Cambios
+
+### v1.2.2 (2026)
+**Modificado por: Ignacio Peroni**
+
+- Fix: Test de velocidad con opciones mejoradas de curl
+- Cloudflare download ahora funciona correctamente
 
 ### v1.2.1 (2026)
 **Modificado por: Ignacio Peroni**

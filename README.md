@@ -1,4 +1,4 @@
-# Network Diagnostic Tool (v1.0)
+# Network Diagnostic Tool (v1.1)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux.
 
@@ -57,6 +57,13 @@ chmod +x network_diagnostic.py
 ```
 
 ## Historial de Cambios
+
+### v1.1 (2026)
+**Modificado por: Ignacio Peroni**
+
+- Agregado Test 10: Traceroute
+- Destinos: YouTube (CDN), Yahoo (IPTransit)
+- Muestra: IP, DNS reverso, saltos
 
 ### v1.0 (2026) - Stable
 **Modificado por: Ignacio Peroni**

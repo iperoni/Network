@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Network Diagnostic Tool (v1.0)
+Network Diagnostic Tool (v1.1)
 Diagnóstico completo de conectividad de red mejorado para Windows/Linux
 
 Autor: Xabier Pereira - Modificado por Ignacio Peroni (v0.5)
@@ -501,6 +501,118 @@ def get_firewall_status():
     return firewall_info
 
 
+def run_traceroute(host, max_hops=30):
+    """Ejecuta traceroute y parsea resultados"""
+    is_windows = platform.system().lower() == "windows"
+    hops = []
+
+    try:
+        if is_windows:
+            result = subprocess.run(
+                f"tracert -d -h {max_hops} {host}",
+                shell=True,
+                capture_output=True,
+                timeout=60,
+            )
+            output = result.stdout.decode("cp437", errors="replace")
+
+            for line in output.split("\n"):
+                line = line.strip()
+                if not line:
+                    continue
+
+                parts = line.split()
+                if len(parts) > 0 and parts[0].isdigit():
+                    hop_num = parts[0]
+                    ip = None
+                    tiempos = []
+
+                    for i, part in enumerate(parts):
+                        if (
+                            part.replace(".", "").replace(":", "").isdigit()
+                            and len(part) > 3
+                        ):
+                            ip = part.replace(":", "")
+                            break
+
+                    for part in parts:
+                        if "ms" in part:
+                            try:
+                                tiempo = part.replace("ms", "").strip()
+                                if tiempo.replace(".", "").isdigit():
+                                    tiempos.append(tiempo)
+                            except:
+                                pass
+
+                    if ip:
+                        try:
+                            hostname, _, _ = socket.gethostbyaddr(ip)
+                        except:
+                            hostname = "N/A"
+
+                        tiempo_str = f"{tiempos[0]} ms" if tiempos else "N/A"
+                        hops.append(f"{hop_num}. {ip} ({hostname}) - {tiempo_str}")
+                    elif "* * *" in line:
+                        hops.append(f"{hop_num}. * * * (Timeout)")
+        else:
+            result = subprocess.run(
+                f"traceroute -m {max_hops} -I {host}",
+                shell=True,
+                capture_output=True,
+                timeout=60,
+            )
+            output = result.stdout.decode("utf-8", errors="replace")
+
+            for line in output.split("\n"):
+                line = line.strip()
+                if not line:
+                    continue
+
+                parts = line.split()
+                if len(parts) > 0 and parts[0].isdigit():
+                    hop_num = parts[0]
+                    ip = None
+                    hostname = "N/A"
+                    tiempos = []
+
+                    for part in parts:
+                        if "(" in part and ")" in part:
+                            ip = part.replace("(", "").replace(")", "")
+                            break
+                        elif (
+                            part.replace(".", "").replace(":", "").isdigit()
+                            and len(part) > 3
+                        ):
+                            ip = part
+                            break
+
+                    if ip and ip != "*":
+                        try:
+                            hostname, _, _ = socket.gethostbyaddr(ip)
+                        except:
+                            pass
+
+                    for part in parts:
+                        if "ms" in part:
+                            try:
+                                tiempo = part.replace("ms", "").strip()
+                                if tiempo.replace(".", "").replace("<", "").isdigit():
+                                    tiempos.append(tiempo)
+                            except:
+                                pass
+
+                    if ip:
+                        if ip == "*":
+                            hops.append(f"{hop_num}. * * * (Timeout)")
+                        else:
+                            tiempo_str = f"{tiempos[0]} ms" if tiempos else "N/A"
+                            hops.append(f"{hop_num}. {ip} ({hostname}) - {tiempo_str}")
+    except Exception as e:
+        hops.append(f"Error: {str(e)[:50]}")
+
+    return hops
+
+
 def main():
     is_windows = platform.system().lower() == "windows"
 
@@ -683,6 +795,24 @@ def main():
             print(f"      {key}: {value}")
     else:
         print("   ⚠️ No se pudo obtener información del firewall")
+
+    # ========== TRACEROUTE ==========
+    print_header("TEST 10: TRACEROUTE")
+    targets = [("youtube.com", "YouTube (CDN)"), ("yahoo.com", "Yahoo (IPTransit)")]
+    traceroute_results = []
+
+    for host, name in targets:
+        print(f"\n   📍 Ruta hacia {name}:")
+        hops = run_traceroute(host, max_hops=30)
+        if hops:
+            traceroute_results.append((name, hops))
+            for hop in hops[:20]:
+                print(f"      {hop}")
+            if len(hops) > 20:
+                print(f"      ... y {len(hops) - 20} saltos más")
+        else:
+            print("      ⚠️ No se pudo obtener ruta")
+            traceroute_results.append((name, None))
 
     # ========== RESUMEN ==========
     print_header("RESULTADO FINAL")
@@ -875,6 +1005,20 @@ def main():
                 f.write(f"{key}: {value}\n")
         else:
             f.write("No se pudo obtener información del firewall\n")
+
+        # TEST 10: TRACEROUTE
+        f.write("\n" + "=" * 60 + "\n")
+        f.write("   TEST 10: TRACEROUTE\n")
+        f.write("=" * 60 + "\n")
+        for name, hops in traceroute_results:
+            f.write(f"\n{name}:\n")
+            if hops:
+                for hop in hops[:20]:
+                    f.write(f"   {hop}\n")
+                if len(hops) > 20:
+                    f.write(f"   ... y {len(hops) - 20} saltos más\n")
+            else:
+                f.write("   No se pudo obtener ruta\n")
 
         # RESULTADO FINAL
         f.write("\n" + "=" * 60 + "\n")

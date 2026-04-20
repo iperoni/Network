@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Network Diagnostic Tool (v0.6)
+Network Diagnostic Tool (v0.7)
 Diagnóstico completo de conectividad de red mejorado para Windows/Linux
 
 Autor: Xabier Pereira - Modificado por Ignacio Peroni (v0.5)
@@ -258,6 +258,57 @@ def get_public_ip_and_isp():
             return None
 
 
+def test_packet_loss(host, count=10):
+    """Test de pérdida de paquetes"""
+    is_windows = platform.system().lower() == "windows"
+    param = "-n" if is_windows else "-c"
+
+    result = subprocess.run(
+        f"ping {param} {count} {host}", shell=True, capture_output=True, timeout=30
+    )
+    output = (
+        result.stdout.decode("cp437", errors="replace")
+        if is_windows
+        else result.stdout.decode("utf-8", errors="replace")
+    )
+
+    packet_info = {}
+
+    if is_windows:
+        for line in output.split("\n"):
+            line_lower = line.lower()
+            if "paquetes" in line_lower and "enviados" in line_lower:
+                try:
+                    parts = line.split(",")
+                    for part in parts:
+                        if "enviados" in part.lower():
+                            packet_info["enviados"] = part.split("=")[1].strip()
+                        elif "recibidos" in part.lower():
+                            packet_info["recibidos"] = part.split("=")[1].strip()
+                        elif "perdidos" in part.lower():
+                            packet_info["perdidos"] = part.split("=")[1].strip()
+                except:
+                    pass
+    else:
+        for line in output.split("\n"):
+            line_lower = line.lower()
+            if "packets transmitted" in line_lower:
+                try:
+                    parts = line.split(",")
+                    for part in parts:
+                        part = part.strip()
+                        if "transmitted" in part:
+                            packet_info["enviados"] = part.split()[0]
+                        elif "received" in part:
+                            packet_info["recibidos"] = part.split()[0]
+                        elif "%" in part and "loss" in part:
+                            packet_info["% perda"] = part.split()[0]
+                except:
+                    pass
+
+    return packet_info
+
+
 def main():
     is_windows = platform.system().lower() == "windows"
 
@@ -387,6 +438,27 @@ def main():
         )
     else:
         print("   ⚠️ No se pudo obtener información del ISP")
+
+    # ========== PÉRDIDA DE PAQUETES ==========
+    print_header("TEST 7: PÉRDIDA DE PAQUETES")
+    hosts = [("8.8.8.8", "Google DNS"), ("1.1.1.1", "Cloudflare")]
+    packet_loss_results = []
+
+    for host, name in hosts:
+        print(f"\n   📊 Testeando {name} ({host})...")
+        packet_info = test_packet_loss(host, count=10)
+        if packet_info:
+            if "enviados" in packet_info:
+                print(f"   {name}:")
+                print(f"      Enviados: {packet_info.get('enviados', 'N/A')}")
+                print(f"      Recibidos: {packet_info.get('recibidos', 'N/A')}")
+                print(f"      Perdidos: {packet_info.get('perdidos', 'N/A')}")
+            else:
+                print(f"   {name}: {packet_info.get('% perda', 'N/A')}")
+            packet_loss_results.append((name, packet_info))
+        else:
+            print(f"   ⚠️ No se pudo obtener información de {name}")
+            packet_loss_results.append((name, None))
 
     # ========== RESUMEN ==========
     print_header("RESULTADO FINAL")
@@ -534,6 +606,20 @@ def main():
             )
         else:
             f.write("No se pudo obtener información del ISP\n")
+
+        # TEST 7: PÉRDIDA DE PAQUETES
+        f.write("\n" + "=" * 60 + "\n")
+        f.write("   TEST 7: PÉRDIDA DE PAQUETES\n")
+        f.write("=" * 60 + "\n")
+        for name, packet_info in packet_loss_results:
+            if packet_info:
+                f.write(f"{name}:\n")
+                f.write(f"   Enviados: {packet_info.get('enviados', 'N/A')}\n")
+                f.write(f"   Recibidos: {packet_info.get('recibidos', 'N/A')}\n")
+                f.write(f"   Perdidos: {packet_info.get('perdidos', 'N/A')}\n")
+                f.write(f"   Porcentaje: {packet_info.get('% perda', 'N/A')}\n")
+            else:
+                f.write(f"{name}: No disponible\n")
 
         # RESULTADO FINAL
         f.write("\n" + "=" * 60 + "\n")

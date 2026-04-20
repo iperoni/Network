@@ -3,7 +3,7 @@
 Network Diagnostic Tool (v0.5)
 Diagnóstico completo de conectividad de red mejorado para Windows/Linux
 
-Autor: Xabier Pereira - Modificado por Ignacio Peroni
+Autor: Xabier Pereira - Modificado por Ignacio Peroni (v0.5)
 """
 
 import socket
@@ -139,8 +139,14 @@ def get_connection_type():
 
     if is_windows:
         output = run_command("netsh wlan show interfaces")
-        if output and "conectado" in output.lower() and "estado" in output.lower():
-            return "wifi"
+        if output and "el servicio" not in output.lower():
+            if "conectado" in output.lower() and "estado" in output.lower():
+                return "wifi"
+            if any(
+                keyword in output.lower()
+                for keyword in ["ssid", "dirección", "channel", "señal"]
+            ):
+                return "wifi"
         return "ethernet"
     else:
         output = run_command("ip link show")
@@ -150,6 +156,7 @@ def get_connection_type():
                     "wlo" in line.lower()
                     or "wlan" in line.lower()
                     or "wlp" in line.lower()
+                    or "wifi" in line.lower()
                 ):
                     if "state UP" in line or "state UNKNOWN" in line:
                         return "wifi"
@@ -163,8 +170,14 @@ def test_wifi_signal():
 
     if is_windows:
         output = run_command("netsh wlan show interfaces")
-        if not output or "no hay" in output.lower():
+        if not output:
             return None
+        if "el servicio" in output.lower() or "no se" in output.lower():
+            wifi_info["Estado"] = "Servicio WiFi no disponible"
+            return wifi_info
+        if "no hay" in output.lower() or "no existe" in output.lower():
+            wifi_info["Estado"] = "No hay adaptador WiFi"
+            return wifi_info
 
         for line in output.split("\n"):
             line_lower = line.lower().strip()
@@ -184,6 +197,9 @@ def test_wifi_signal():
             elif "bssid" in line_lower:
                 if ":" in line:
                     wifi_info["BSSID"] = line.split(":", 1)[1].strip()
+            elif "estado" in line_lower or "state" in line_lower:
+                if ":" in line:
+                    wifi_info["Estado"] = line.split(":", 1)[1].strip()
     else:
         output = run_command("ip link show | grep -E '^[0-9]+: wl'")
         interface = ""
@@ -288,19 +304,38 @@ def main():
     # ========== SEÑAL WIFI ==========
     print_header("TEST 5: SEÑAL WI-FI")
     conn_type = get_connection_type()
-    print(f"   Tipo de conexión: {conn_type.upper()}")
 
+    is_windows = platform.system().lower() == "windows"
     wifi_info = None
-    if conn_type == "wifi":
+
+    if is_windows:
         wifi_info = test_wifi_signal()
-        if wifi_info:
-            print(f"\n📶 Información de Red WiFi:")
+    else:
+        if conn_type == "wifi":
+            wifi_info = test_wifi_signal()
+
+    if wifi_info:
+        is_connected_wifi = any(
+            key in wifi_info for key in ["SSID", "Signal", "Channel"]
+        )
+        has_wifiHardware = wifi_info.get("Estado", "") not in [
+            "No hay adaptador WiFi",
+            "",
+        ]
+
+        if is_connected_wifi:
+            print(f"\n📶 Conexión WiFi activa:")
             for key, value in wifi_info.items():
                 print(f"   {key}: {value}")
+        elif "Estado" in wifi_info and "no disponible" in wifi_info["Estado"].lower():
+            print(f"   ⚠️ {wifi_info.get('Estado', 'Servicio WiFi no disponible')}")
+            print(f"   💡 Tipo de conexión: ETHERNET")
         else:
-            print("   ⚠️ No se pudo obtener información de la red WiFi")
+            print(f"   ℹ️ Adaptador WiFi detectado pero Sin conexión activa")
+            print(f"   💡 Tipo de conexión actual: ETHERNET")
     else:
-        print(f"   ℹ️ Conexión {conn_type.upper()} - Test WiFi no aplicable")
+        print(f"   ℹ️ Sin adaptador WiFi detectado")
+        print(f"   💡 Tipo de conexión: ETHERNET")
 
     # ========== RESUMEN ==========
     print_header("RESULTADO FINAL")
@@ -451,9 +486,8 @@ def main():
     # ========== PIE DE PÁGINA ==========
     print("\n" + "=" * 60)
     print("Diagnóstico completado")
-    print(
-        f"Autor: Xabier Pereira - Modificado por Ignacio Peroni | github.com/xabierpereira"
-    )
+    print(f"Autor: Xabier Pereira - Modificado por Ignacio Peroni")
+    print("github.com/xabierpereira |  github.com/iperoni")
     print("=" * 60)
 
 

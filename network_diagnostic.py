@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Network Diagnostic Tool (v0.7.1)
+Network Diagnostic Tool (v0.8)
 Diagnóstico completo de conectividad de red mejorado para Windows/Linux
 
 Autor: Xabier Pereira - Modificado por Ignacio Peroni (v0.5)
@@ -318,6 +318,49 @@ def test_packet_loss(host, count=10):
     return packet_info
 
 
+def get_configured_dns():
+    """Obtiene servidores DNS configurados"""
+    is_windows = platform.system().lower() == "windows"
+    dns_servers = []
+
+    if is_windows:
+        output = run_command("netsh interface ipv4 show dns")
+        for line in output.split("\n"):
+            line = line.strip()
+            parts = line.split()
+            if len(parts) > 0:
+                try:
+                    ip = parts[0]
+                    if ip.replace(".", "").isdigit() and ip not in dns_servers:
+                        dns_servers.append(ip)
+                except:
+                    pass
+    else:
+        output = run_command("cat /etc/resolv.conf")
+        for line in output.split("\n"):
+            if line.strip().startswith("nameserver"):
+                parts = line.split()
+                if len(parts) > 1:
+                    dns_servers.append(parts[1])
+
+    return dns_servers
+
+
+def test_dns_verification(dns_server):
+    """Prueba un servidor DNS específico"""
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(2)
+        result = sock.connect_ex((dns_server, 53))
+        sock.close()
+        if result == 0:
+            print(f"         ✅ {dns_server}:53 (Puerto DNS abierto)")
+        else:
+            print(f"         ⚠️ {dns_server}:53 (Puerto DNS cerrado)")
+    except Exception as e:
+        print(f"         ❌ {dns_server}:53 (Error: {str(e)[:30]})")
+
+
 def main():
     is_windows = platform.system().lower() == "windows"
 
@@ -381,6 +424,17 @@ def main():
 
     internet_ok = test_ping("8.8.8.8", "Google DNS")
     dns_ok, _ = test_dns("google.com")
+
+    # ========== DNS CONFIGURADOS ==========
+    print_header("TEST 2B: SERVIDORES DNS CONFIGURADOS")
+    dns_servers = get_configured_dns()
+    if dns_servers:
+        print(f"   📋 Servidores DNS configurados ({len(dns_servers)}):")
+        for dns in dns_servers:
+            print(f"      - {dns}")
+            test_dns_verification(dns)
+    else:
+        print("   ⚠️ No se detectaron servidores DNS configurados")
 
     # ========== TEST PUERTOS ==========
     print_header("TEST 3: PUERTOS CRÍTICOS")
@@ -558,6 +612,17 @@ def main():
         f.write("=" * 60 + "\n")
         f.write(f"Internet (8.8.8.8): {'OK' if internet_ok else 'FALLO'}\n")
         f.write(f"DNS (google.com): {'OK' if dns_ok else 'FALLO'}\n")
+
+        # TEST 2B: DNS CONFIGURADOS
+        f.write("\n" + "=" * 60 + "\n")
+        f.write("   TEST 2B: SERVIDORES DNS CONFIGURADOS\n")
+        f.write("=" * 60 + "\n")
+        if dns_servers:
+            f.write(f"Servidores DNS ({len(dns_servers)}):\n")
+            for dns in dns_servers:
+                f.write(f"   - {dns}\n")
+        else:
+            f.write("No se detectaron servidores DNS configurados\n")
 
         # TEST 3: PUERTOS
         f.write("\n" + "=" * 60 + "\n")

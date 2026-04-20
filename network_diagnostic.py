@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Network Diagnostic Tool (v0.4)
+Network Diagnostic Tool (v0.5)
 Diagnóstico completo de conectividad de red mejorado para Windows/Linux
 
 Autor: Xabier Pereira - Modificado por Ignacio Peroni
@@ -133,6 +133,89 @@ def test_port(host, port, service_name=""):
         sock.close()
 
 
+def get_connection_type():
+    """Detectar tipo de conexión: WiFi o Ethernet"""
+    is_windows = platform.system().lower() == "windows"
+
+    if is_windows:
+        output = run_command("netsh wlan show interfaces")
+        if output and "conectado" in output.lower() and "estado" in output.lower():
+            return "wifi"
+        return "ethernet"
+    else:
+        output = run_command("ip link show")
+        if output:
+            for line in output.split("\n"):
+                if (
+                    "wlo" in line.lower()
+                    or "wlan" in line.lower()
+                    or "wlp" in line.lower()
+                ):
+                    if "state UP" in line or "state UNKNOWN" in line:
+                        return "wifi"
+        return "ethernet"
+
+
+def test_wifi_signal():
+    """Test de señal WiFi - Windows/Linux"""
+    is_windows = platform.system().lower() == "windows"
+    wifi_info = {}
+
+    if is_windows:
+        output = run_command("netsh wlan show interfaces")
+        if not output or "no hay" in output.lower():
+            return None
+
+        for line in output.split("\n"):
+            line_lower = line.lower().strip()
+            if "ssid" in line_lower and ":" in line:
+                wifi_info["SSID"] = line.split(":", 1)[1].strip()
+            elif "se" in line_lower and "%" in line:
+                try:
+                    wifi_info["Signal"] = line.split(":", 1)[1].strip()
+                except:
+                    pass
+            elif "canal" in line_lower or "channel" in line_lower:
+                if ":" in line:
+                    wifi_info["Channel"] = line.split(":", 1)[1].strip()
+            elif "tipo de radio" in line_lower or "radio type" in line_lower:
+                if ":" in line:
+                    wifi_info["Radio Type"] = line.split(":", 1)[1].strip()
+            elif "bssid" in line_lower:
+                if ":" in line:
+                    wifi_info["BSSID"] = line.split(":", 1)[1].strip()
+    else:
+        output = run_command("ip link show | grep -E '^[0-9]+: wl'")
+        interface = ""
+        if output:
+            parts = output.split(":")
+            if len(parts) > 1:
+                interface = parts[1].strip().split()[0]
+
+        if interface:
+            output = run_command(f"iw dev {interface} link")
+            if output:
+                for line in output.split("\n"):
+                    line_lower = line.lower().strip()
+                    if "ssid" in line_lower:
+                        wifi_info["SSID"] = line.strip()
+                    elif "signal" in line_lower and "dBm" in line:
+                        wifi_info["Signal"] = line.strip().split(":")[-1].strip()
+                    elif "freq" in line_lower:
+                        try:
+                            freq = line.split(":")[-1].strip().split()[0]
+                            channel = int((int(freq) - 2412) / 5) + 1
+                            wifi_info["Channel"] = f"{channel} ({freq} MHz)"
+                        except:
+                            pass
+                    elif "tx bitrate" in line_lower:
+                        wifi_info["Tx Rate"] = line.split(":")[-1].strip()
+                    elif "rx bitrate" in line_lower:
+                        wifi_info["Rx Rate"] = line.split(":")[-1].strip()
+
+    return wifi_info if wifi_info else None
+
+
 def main():
     is_windows = platform.system().lower() == "windows"
 
@@ -202,16 +285,22 @@ def main():
     test_port("google.com", 443, "HTTPS")
     test_port("8.8.8.8", 53, "DNS")
 
-    # ========== LATENCIA DETALLADA ==========
-    print_header("TEST 4: ESTADÍSTICAS DE LATENCIA")
-    targets = [("8.8.8.8", "Google"), ("1.1.1.1", "Cloudflare")]
-    for ip, name in targets:
-        print(f"\n📡 {name}:")
-        param = "-n" if is_windows else "-c"
-        output = run_command(f"ping {param} 5 {ip}")
-        for line in output.split("\n"):
-            if any(k in line.lower() for k in ["average", "media", "min", "max"]):
-                print(f"   {line.strip()}")
+    # ========== SEÑAL WIFI ==========
+    print_header("TEST 5: SEÑAL WI-FI")
+    conn_type = get_connection_type()
+    print(f"   Tipo de conexión: {conn_type.upper()}")
+
+    wifi_info = None
+    if conn_type == "wifi":
+        wifi_info = test_wifi_signal()
+        if wifi_info:
+            print(f"\n📶 Información de Red WiFi:")
+            for key, value in wifi_info.items():
+                print(f"   {key}: {value}")
+        else:
+            print("   ⚠️ No se pudo obtener información de la red WiFi")
+    else:
+        print(f"   ℹ️ Conexión {conn_type.upper()} - Test WiFi no aplicable")
 
     # ========== RESUMEN ==========
     print_header("RESULTADO FINAL")
@@ -335,6 +424,17 @@ def main():
                 if any(k in line.lower() for k in ["average", "media", "min", "max"]):
                     f.write(f"{name}: {line.strip()}\n")
 
+        # TEST 5: SEÑAL WIFI
+        f.write("\n" + "=" * 60 + "\n")
+        f.write("   TEST 5: SEÑAL WI-FI\n")
+        f.write("=" * 60 + "\n")
+        f.write(f"Tipo de conexión: {conn_type}\n")
+        if conn_type == "wifi" and wifi_info:
+            for key, value in wifi_info.items():
+                f.write(f"{key}: {value}\n")
+        elif conn_type != "wifi":
+            f.write(f"Conexión {conn_type} - Test WiFi no aplicable\n")
+
         # RESULTADO FINAL
         f.write("\n" + "=" * 60 + "\n")
         f.write("   RESULTADO FINAL\n")
@@ -351,7 +451,9 @@ def main():
     # ========== PIE DE PÁGINA ==========
     print("\n" + "=" * 60)
     print("Diagnóstico completado")
-    print(f"Autor: Xabier Pereira - Modificado por Ignacio Peroni | github.com/xabierpereira")
+    print(
+        f"Autor: Xabier Pereira - Modificado por Ignacio Peroni | github.com/xabierpereira"
+    )
     print("=" * 60)
 
 

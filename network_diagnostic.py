@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Network Diagnostic Tool (v2.0)
+Network Diagnostic Tool (v0.4)
 Diagnóstico completo de conectividad de red mejorado para Windows/Linux
 
-Autor: Xabier Pereira
+Autor: Xabier Pereira - Modificado por Ignacio Peroni
 """
 
 import socket
@@ -351,7 +351,7 @@ def main():
     # ========== PIE DE PÁGINA ==========
     print("\n" + "=" * 60)
     print("Diagnóstico completado")
-    print(f"Autor: Xabier Pereira | github.com/xabierpereira")
+    print(f"Autor: Xabier Pereira - Modificado por Ignacio Peroni | github.com/xabierpereira")
     print("=" * 60)
 
 

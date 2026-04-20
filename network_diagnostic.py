@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Network Diagnostic Tool (v1.2)
+Network Diagnostic Tool (v1.2.2)
 Diagnóstico completo de conectividad de red mejorado para Windows/Linux
 
 Autor: Xabier Pereira - Modificado por Ignacio Peroni (v0.5)
@@ -630,27 +630,37 @@ def test_internet_speed():
     test_data = b"X" * test_size_bytes
 
     download_servers = [
-        ("Cloudflare", "https://speed.cloudflare.com/__down?bytes=5000000"),
-        ("nperf", "https://speedtest.nperf.net/5MB.bin"),
-        ("Tele2", "http://speedtest.tele2.net/5MB.zip"),
+        (
+            "Cloudflare",
+            "https://speed.cloudflare.com/__down?bytes=5000000",
+            "curl -L -k -s -A 'Mozilla/5.0'",
+        ),
+        ("nperf", "https://speedtest.nperf.net/5MB.bin", "curl -k -s -A 'Mozilla/5.0'"),
+        ("Tele2", "http://speedtest.tele2.net/5MB.zip", "curl -s -A 'Mozilla/5.0'"),
     ]
 
     upload_servers = [
-        ("Cloudflare", "https://speed.cloudflare.com/__up"),
-        ("nperf", "https://speedtest.nperf.net/upload"),
-        ("Tele2", "http://speedtest.tele2.net/upload.php"),
+        (
+            "Cloudflare",
+            "https://speed.cloudflare.com/__up",
+            "curl -L -k -s -X POST -A 'Mozilla/5.0'",
+        ),
+        (
+            "Tele2",
+            "http://speedtest.tele2.net/upload.php",
+            "curl -s -X POST -A 'Mozilla/5.0'",
+        ),
     ]
 
     download_results = []
     upload_results = []
 
     print("\n   📶 Download:")
-    for name, url in download_servers:
+    for name, url, curl_opts in download_servers:
         try:
             start = time.time()
-            result = subprocess.run(
-                ["curl", "-o", "NUL", "-s", url], capture_output=True, timeout=60
-            )
+            cmd = f'{curl_opts} -o NUL --connect-timeout 30 --max-time 60 "{url}"'
+            result = subprocess.run(cmd, shell=True, capture_output=True, timeout=65)
             elapsed = time.time() - start
 
             if result.returncode == 0 and elapsed > 0:
@@ -660,21 +670,29 @@ def test_internet_speed():
                     f"      {name}: {speed_mbps:.1f} Mbps ({test_size_mb}MB en {elapsed:.1f}s)"
                 )
             else:
-                print(f"      {name}: Error en la descarga")
+                error_msg = (
+                    result.stderr.decode() if result.stderr else "Error desconocido"
+                )
+                print(f"      {name}: Error - {error_msg[:30]}")
         except Exception as e:
             print(f"      {name}: Error - {str(e)[:30]}")
 
     print("\n   📶 Upload:")
-    for name, url in upload_servers:
+    for name, url, curl_opts in upload_servers:
         try:
             start = time.time()
-            result = subprocess.run(
-                ["curl", "-X", "POST", "-o", "NUL", "-s", "--data-binary", "@-", url],
-                input=test_data,
-                capture_output=True,
-                timeout=60,
-            )
+            # Crear archivo temporal para upload
+            with open("temp_upload.bin", "wb") as f:
+                f.write(test_data)
+            cmd = f'curl -X POST -o NUL --connect-timeout 30 --max-time 60 -A "Mozilla/5.0" -F "file=@temp_upload.bin" "{url}"'
+            result = subprocess.run(cmd, shell=True, capture_output=True, timeout=65)
             elapsed = time.time() - start
+
+            # Limpiar archivo temporal
+            try:
+                os.remove("temp_upload.bin")
+            except:
+                pass
 
             if result.returncode == 0 and elapsed > 0:
                 speed_mbps = (test_size_mb * 8) / elapsed
@@ -683,7 +701,10 @@ def test_internet_speed():
                     f"      {name}: {speed_mbps:.1f} Mbps ({test_size_mb}MB en {elapsed:.1f}s)"
                 )
             else:
-                print(f"      {name}: Error en la subida")
+                error_msg = (
+                    result.stderr.decode() if result.stderr else "Error desconocido"
+                )
+                print(f"      {name}: Error - {error_msg[:30]}")
         except Exception as e:
             print(f"      {name}: Error - {str(e)[:30]}")
 

@@ -17,7 +17,7 @@ import argparse
 import configparser
 from datetime import datetime
 
-VERSION = "v1.5"
+VERSION = "v1.6"
 
 TESTS_MAP = {
     "1": "connectivity",
@@ -181,6 +181,14 @@ def parse_args():
         "--save-prefs",
         action="store_true",
         help="Gardar preferencias actuales como defecto",
+    )
+    parser.add_argument(
+        "--speed-size",
+        help="Tamano del test de velocidad en MB (ej: 5 o 5,10 para download,upload)",
+    )
+    parser.add_argument(
+        "--speed-servers",
+        help="Servidores para speed test (cloudflare,nperf,tele2)",
     )
 
     return parser.parse_args()
@@ -926,70 +934,105 @@ def get_dhcp_lease_info():
     return lease_info
 
 
-def test_internet_speed():
-    """Test de velocidad de internet (download + upload)"""
+def test_internet_speed(test_size_mb=5, server_filter=None):
+    """Test de velocidad de internet (download + upload)
+
+    Args:
+        test_size_mb: Tamaño en MB (puede ser int o tuple (download, upload))
+        server_filter: Lista de servidores a usar (ej: ['cloudflare', 'nperf'])
+    """
     import time
 
-    test_size_mb = 5
-    test_size_bytes = test_size_mb * 1024 * 1024
-    test_data = b"X" * test_size_bytes
+    if isinstance(test_size_mb, tuple):
+        dl_size, ul_size = test_size_mb
+    else:
+        dl_size = test_size_mb
+        ul_size = test_size_mb
 
-    download_servers = [
+    all_download_servers = [
         (
             "Cloudflare",
-            "https://speed.cloudflare.com/__down?bytes=5000000",
+            "https://speed.cloudflare.com/__down?bytes={size}",
             "curl -L -k -s -A 'Mozilla/5.0'",
+            5000000,
         ),
         (
             "nperf",
-            "https://www.nperf.com/__down?bytes=5000000",
+            "https://www.nperf.com/__down?bytes={size}",
             "curl -L -k -s -A 'Mozilla/5.0'",
+            5000000,
         ),
-        ("Tele2", "http://speedtest.tele2.net/5MB.zip", "curl -s -A 'Mozilla/5.0'"),
+        (
+            "Tele2",
+            "http://speedtest.tele2.net/{size}MB.zip",
+            "curl -s -A 'Mozilla/5.0'",
+            5,
+        ),
     ]
 
-    upload_servers = [
+    all_upload_servers = [
         (
             "Cloudflare",
             "https://speed.cloudflare.com/__up",
             "curl -L -k -s -X POST -A 'Mozilla/5.0'",
+            None,
         ),
         (
             "Tele2",
             "http://speedtest.tele2.net/upload.php",
             "curl -s -X POST -A 'Mozilla/5.0'",
+            None,
         ),
     ]
+
+    def filter_servers(servers, filter_list):
+        if not filter_list:
+            return servers
+        filter_lower = [s.lower() for s in filter_list]
+        return [
+            (name, url, opts, size)
+            for name, url, opts, size in servers
+            if name.lower() in filter_lower
+        ]
+
+    download_servers = filter_servers(all_download_servers, server_filter)
+    upload_servers = filter_servers(all_upload_servers, server_filter)
+
+    test_size_bytes = dl_size * 1024 * 1024
+    test_data = b"X" * (ul_size * 1024 * 1024)
 
     download_results = []
     upload_results = []
 
-    print("\n   📶 Download:")
-    for name, url, curl_opts in download_servers:
+    print(f"\n   📶 Download ({dl_size}MB):")
+    for name, url, curl_opts, fixed_size in download_servers:
         try:
+            actual_url = url.replace("{size}", str(dl_size))
+            if fixed_size and dl_size != fixed_size // 1000000:
+                actual_url = actual_url.replace(
+                    str(dl_size), str(fixed_size // 1000000)
+                )
+
             start = time.time()
-            cmd = f'{curl_opts} -o NUL --connect-timeout 30 --max-time 60 "{url}"'
+            cmd = (
+                f'{curl_opts} -o NUL --connect-timeout 30 --max-time 60 "{actual_url}"'
+            )
             result = subprocess.run(cmd, shell=True, capture_output=True, timeout=65)
             elapsed = time.time() - start
 
             if result.returncode == 0 and elapsed > 0:
-                speed_mbps = (test_size_mb * 8) / elapsed
+                speed_mbps = (dl_size * 8) / elapsed
                 download_results.append((name, speed_mbps, elapsed))
                 print(
-                    f"      {name}: {speed_mbps:.1f} Mbps ({test_size_mb}MB en {elapsed:.1f}s)"
+                    f"      {name}: {speed_mbps:.1f} Mbps ({dl_size}MB en {elapsed:.1f}s)"
                 )
             else:
-                error_msg = (
-                    result.stderr.decode("utf-8", errors="replace")
-                    if result.stderr
-                    else "Error desconocido"
-                )
                 print(f"      {name}: Error del servidor")
         except Exception as e:
             print(f"      {name}: Error - {str(e)[:30]}")
 
-    print("\n   📶 Upload:")
-    for name, url, curl_opts in upload_servers:
+    print(f"\n   📶 Upload ({ul_size}MB):")
+    for name, url, curl_opts, _ in upload_servers:
         try:
             start = time.time()
             # Crear archivo temporal para upload
@@ -1006,17 +1049,12 @@ def test_internet_speed():
                 pass
 
             if result.returncode == 0 and elapsed > 0:
-                speed_mbps = (test_size_mb * 8) / elapsed
+                speed_mbps = (ul_size * 8) / elapsed
                 upload_results.append((name, speed_mbps, elapsed))
                 print(
-                    f"      {name}: {speed_mbps:.1f} Mbps ({test_size_mb}MB en {elapsed:.1f}s)"
+                    f"      {name}: {speed_mbps:.1f} Mbps ({ul_size}MB en {elapsed:.1f}s)"
                 )
             else:
-                error_msg = (
-                    result.stderr.decode("utf-8", errors="replace")
-                    if result.stderr
-                    else "Error desconocido"
-                )
                 print(f"      {name}: Error del servidor")
         except Exception as e:
             print(f"      {name}: Error - {str(e)[:30]}")
@@ -1350,8 +1388,20 @@ def main():
 
     # Test 11: Velocidad (omitir si --no-speed)
     if "11" in selected_tests and not args.no_speed:
+        speed_size = 5
+        if args.speed_size:
+            parts = args.speed_size.split(",")
+            if len(parts) == 2:
+                speed_size = (int(parts[0]), int(parts[1]))
+            else:
+                speed_size = int(parts[0])
+
+        speed_servers = None
+        if args.speed_servers:
+            speed_servers = [s.strip() for s in args.speed_servers.split(",")]
+
         print_header("TEST 11: VELOCIDAD DE INTERNET")
-        speed_results = test_internet_speed()
+        speed_results = test_internet_speed(speed_size, speed_servers)
 
     if speed_results.get("download") or speed_results.get("upload"):
         print("\n   📊 Resumen:")

@@ -4,15 +4,15 @@ Lista de mejoras pendientes para el proyecto.
 
 ## Alta Prioridad
 
-- [ ] Tests paralelos - Ejecutar tests independentes (ping, DNS, speed) en paralelo para reducir tiempo total
-- [ ] Menú interactivo - Permitir seleccionar qué tests ejecutar
-- [ ] Args/flags - Añadir argumentos CLI (`--no-speed`, `--wifi-only`, etc.)
-- [ ] Modo verbose - Añadir flag `-v` para ver output completo
+- [ ] Tests paralelos - Ejecutar tests independientes (ping, DNS, speed) en paralelo para reducir tiempo total
+- [x] Menú interactivo - Permitir seleccionar qué tests ejecutar
+- [x] Args/flags - Añadir argumentos CLI (`--no-speed`, `--wifi-only`, etc.)
+- [x] Modo verbose - Añadir flag `-v` para ver output completo
 
 ## Media Prioridad
 
-- [ ] Exportar JSON - Opción para exportar resultados a JSON además de TXT
-- [ ] Speed test configurable - Tamaño de archivo personalizable para speed test
+- [x] Exportar JSON - Opción para exportar resultados a JSON además de TXT (--format json)
+- [x] Speed test configurable - Tamaño de archivo personalizable para speed test
 - [ ] Timeouts configurables - Timeouts ajustables para conexiones lentas
 - [ ] Retry logic - Reintentos automáticos en tests quefallen
 
@@ -32,3 +32,5 @@ Lista de mejoras pendientes para el proyecto.
 ---
 
 *Última actualización: 2026-04-20*
+
+*Completado en v1.5: Args/flags, menú interactivo, selección por nombre/número, preferencias CFG*

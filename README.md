@@ -1,4 +1,4 @@
-# Network Diagnostic Tool (v1.2.4)
+# Network Diagnostic Tool (v1.2.5)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux.
 
@@ -57,6 +57,12 @@ chmod +x network_diagnostic.py
 ```
 
 ## Historial de Cambios
+
+### v1.2.5 (2026)
+**Modificado por: Ignacio Peroni**
+
+- Fix: Upload method changed to --data-binary
+- Cloudflare upload no soportado actualmente
 
 ### v1.2.4 (2026)
 **Modificado por: Ignacio Peroni**

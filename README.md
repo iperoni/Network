@@ -1,4 +1,4 @@
-# Network Diagnostic Tool (v0.7)
+# Network Diagnostic Tool (v0.7.1)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux.
 
@@ -58,11 +58,16 @@ chmod +x network_diagnostic.py
 
 ## Historial de Cambios
 
+### v0.7.1 (2026) - Beta
+**Modificado por: Ignacio Peroni**
+
+- Fix: Mostrar porcentaje de paquetes perdidos en pantalla y archivo
+
 ### v0.7 (2026) - Beta
 **Modificado por: Ignacio Peroni**
 
 - Agregado Test 7: Detección de pérdida de paquetes
-- Muestra: Enviados, Recibidos, Perdidos
+- Muestra: Enviados, Recibidos, Perdidos, Porcentaje
 - Testea Google DNS (8.8.8.8) y Cloudflare (1.1.1.1)
 
 ### v0.6 (2026) - Beta

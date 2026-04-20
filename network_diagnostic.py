@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Network Diagnostic Tool (v1.2.4)
+Network Diagnostic Tool (v1.2.5)
 Diagnóstico completo de conectividad de red mejorado para Windows/Linux
 
 Autor: Xabier Pereira - Modificado por Ignacio Peroni (v0.5)
@@ -690,7 +690,7 @@ def test_internet_speed():
             # Crear archivo temporal para upload
             with open("temp_upload.bin", "wb") as f:
                 f.write(test_data)
-            cmd = f'curl -X POST -o NUL --connect-timeout 30 --max-time 60 -A "Mozilla/5.0" -F "file=@temp_upload.bin" "{url}"'
+            cmd = f'curl -X POST -o NUL --connect-timeout 30 --max-time 60 -A "Mozilla/5.0" --data-binary "@temp_upload.bin" "{url}"'
             result = subprocess.run(cmd, shell=True, capture_output=True, timeout=65)
             elapsed = time.time() - start
 

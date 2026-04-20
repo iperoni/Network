@@ -1,4 +1,4 @@
-# Network Diagnostic Tool (v1.4)
+# Network Diagnostic Tool (v1.5)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux.
 
@@ -60,6 +60,8 @@ cd Network
 
 ## Uso
 
+### Básico
+
 ```bash
 python network_diagnostic.py
 ```
@@ -70,7 +72,74 @@ chmod +x network_diagnostic.py
 ./network_diagnostic.py
 ```
 
+### Menú Interactivo
+
+```bash
+python network_diagnostic.py -i
+```
+
+### Argumentos CLI
+
+```bash
+# Ejecutar tests específicos por número
+python network_diagnostic.py --tests 1,2,5,11
+python network_diagnostic.py --tests 1-5          # Rango
+python network_diagnostic.py --tests 1-7,9       # Combinado
+
+# Ejecutar tests por nombre
+python network_diagnostic.py --tests internet,wifi,speed
+python network_diagnostic.py --tests connectivity,dns-configured,firewall
+
+# Omitir tests lentos
+python network_diagnostic.py --no-speed            # Omitir test de velocidad
+python network_diagnostic.py --no-isp             # Omitir consulta ISP
+
+# Formato de output
+python network_diagnostic.py -o mis-resultados.txt
+python network_diagnostic.py --format json -o resultado.json
+
+# Opciones adicionales
+python network_diagnostic.py -v                   # Verbose
+python network_diagnostic.py --version             # Mostrar versión
+python network_diagnostic.py --help               # Ver ayuda
+python network_diagnostic.py --save-prefs          # Guardar preferencias
+```
+
+### Tabla de Tests
+
+| # | Nombre | Descripción |
+|---|--------|-------------|
+| 1 | connectivity | Conectividad local (loopback, gateway) |
+| 2 | internet | Internet y DNS |
+| 2b | dns-configured | Servidores DNS configurados |
+| 3 | ports | Puertos críticos (443, 53) |
+| 4 | latency | Estadísticas de latencia |
+| 5 | wifi | Señal WiFi |
+| 6 | isp | Información del ISP |
+| 7 | packet-loss | Pérdida de paquetes |
+| 8 | interface | Detalles del interfaz de red |
+| 9 | firewall | Estado del firewall |
+| 10 | traceroute | Ruta hacia destinos |
+| 11 | speed | Velocidad de internet |
+| 12 | dhcp | Información DHCP |
+
+### Preferencias
+
+Las preferencias se guardan en `network_diagnostic.cfg` en el directorio del script.
+
 ## Historial de Cambios
+
+### v1.5 (2026)
+**Modificado por: Ignacio Peroni**
+
+- Agregado sistema de argumentos CLI (argparse)
+- Agregado menú interactivo (`-i`)
+- Agregada selección de tests por número o nombre
+- Agregado soporte para rangos (`1-5`)
+- Agregadas opciones `--no-speed` y `--no-isp`
+- Agregado formato JSON output
+- Agregado sistema de preferencias (CFG)
+- Backward compatible: sin args ejecuta todos los tests
 
 ### v1.4 (2026)
 **Modificado por: Ignacio Peroni**

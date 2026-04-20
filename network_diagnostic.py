@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Network Diagnostic Tool (v1.4)
+Network Diagnostic Tool (v1.5)
 Diagnóstico completo de conectividad de red mejorado para Windows/Linux
 
 Autor: Xabier Pereira - Modificado por Ignacio Peroni (v0.5)
@@ -13,7 +13,59 @@ import platform
 import time
 import sys
 import os
+import argparse
+import configparser
 from datetime import datetime
+
+VERSION = "v1.5"
+
+TESTS_MAP = {
+    "1": "connectivity",
+    "2": "internet",
+    "2b": "dns-configured",
+    "3": "ports",
+    "4": "latency",
+    "5": "wifi",
+    "6": "isp",
+    "7": "packet-loss",
+    "8": "interface",
+    "9": "firewall",
+    "10": "traceroute",
+    "11": "speed",
+    "12": "dhcp",
+    # Nombres también
+    "connectivity": "1",
+    "internet": "2",
+    "dns-configured": "2b",
+    "dns-configured": "2b",
+    "ports": "3",
+    "latency": "4",
+    "wifi": "5",
+    "isp": "6",
+    "packet-loss": "7",
+    "packet-loss": "7",
+    "interface": "8",
+    "firewall": "9",
+    "traceroute": "10",
+    "speed": "11",
+    "dhcp": "12",
+}
+
+TEST_NAMES = {
+    "1": "Test 1: Conectividad local",
+    "2": "Test 2: Internet y DNS",
+    "2b": "Test 2B: DNS configurados",
+    "3": "Test 3: Puertos críticos",
+    "4": "Test 4: Latencia",
+    "5": "Test 5: WiFi",
+    "6": "Test 6: ISP",
+    "7": "Test 7: Pérdida de paquetes",
+    "8": "Test 8: Interfaz de red",
+    "9": "Test 9: Firewall",
+    "10": "Test 10: Traceroute",
+    "11": "Test 11: Velocidad internet",
+    "12": "Test 12: DHCP",
+}
 
 if platform.system().lower() == "windows":
     try:
@@ -65,6 +117,149 @@ def print_dependencies_warning(deps):
             print(f"   - {cmd}: {feature}")
         print("   Instalar con: sudo apt install " + " ".join(missing))
         print()
+
+
+def get_config_path():
+    """Obtiene la ruta del archivo de configuración"""
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(script_dir, "network_diagnostic.cfg")
+
+
+def save_preferences(prefs):
+    """Guarda las preferencias en archivo CFG"""
+    config = configparser.ConfigParser()
+    config[" preferences "] = prefs
+    try:
+        with open(get_config_path(), "w") as f:
+            config.write(f)
+    except:
+        pass
+
+
+def load_preferences():
+    """Carga las preferencias desde archivo CFG"""
+    config = configparser.ConfigParser()
+    try:
+        if config.read(get_config_path()):
+            return dict(config[" preferences "])
+    except:
+        pass
+    return {}
+
+
+def parse_args():
+    """Parsea argumentos de línea de comandos"""
+    parser = argparse.ArgumentParser(
+        description="Network Diagnostic Tool - Herramienta de diagnóstico de red",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "-i",
+        "--interactive",
+        action="store_true",
+        help="Abrir menú interactivo para seleccionar tests",
+    )
+    parser.add_argument(
+        "--tests", help="Tests a executar (ej: 1,2,5-7 ou internet,dns,wifi)"
+    )
+    parser.add_argument(
+        "--no-speed", action="store_true", help="Omitir test de velocidade"
+    )
+    parser.add_argument("--no-isp", action="store_true", help="Omitir consulta ISP")
+    parser.add_argument(
+        "--format",
+        choices=["txt", "json"],
+        default="txt",
+        help="Formato de output (default: txt)",
+    )
+    parser.add_argument(
+        "-o", "--output", help="Archivo de output (default: automático)"
+    )
+    parser.add_argument("-v", "--verbose", action="store_true", help="Output detallado")
+    parser.add_argument("--version", action="store_true", help="Mostrar versión")
+    parser.add_argument(
+        "--save-prefs",
+        action="store_true",
+        help="Gardar preferencias actuales como defecto",
+    )
+
+    return parser.parse_args()
+
+
+def parse_test_string(test_str):
+    """Parsea string de tests (ej: '1,2,5-7' ou 'internet,dns,wifi')"""
+    if not test_str:
+        return []
+
+    tests = set()
+    parts = test_str.replace(",", " ").replace("-", " ").split()
+
+    i = 0
+    while i < len(parts):
+        part = parts[i]
+
+        # Verificar rango (ej: 5-7)
+        if i + 1 < len(parts) and parts[i + 1].isdigit():
+            start = int(part) if part.isdigit() else TESTS_MAP.get(part, part)
+            end = int(parts[i + 1])
+            if isinstance(start, str):
+                start_num = (
+                    int(start) if start.isdigit() else int(TESTS_MAP.get(start, "1"))
+                )
+            else:
+                start_num = start
+            for n in range(start_num, end + 1):
+                tests.add(str(n))
+            i += 2
+        else:
+            # Test individual o nombre
+            num = TESTS_MAP.get(part, part)
+            if num.isdigit():
+                tests.add(num)
+            i += 1
+
+    return sorted(tests, key=lambda x: (len(x), x))
+
+
+def show_menu():
+    """Muestra menú interactivo y retorna tests selecionados"""
+    print("\n" + "=" * 50)
+    print("       DIAGNÓSTICO DE RED")
+    print("       Selecciona los tests:")
+    print("=" * 50)
+
+    for num, name in TEST_NAMES.items():
+        print(f"  {num:>2}  - {name}")
+
+    print("=" * 50)
+    print("  [A] Executar TODOS los tests")
+    print("  [Q] Sair")
+    print("=" * 50)
+
+    while True:
+        try:
+            selection = input("\nSelecciona: ").strip().lower()
+
+            if selection == "a":
+                return list(TEST_NAMES.keys())
+            elif selection == "q":
+                print("Saindo...")
+                sys.exit(0)
+            elif selection:
+                return parse_test_string(selection)
+        except (EOFError, KeyboardInterrupt):
+            print("\nSaindo...")
+            sys.exit(0)
+
+
+def get_tests_to_run(args):
+    """Determina qué tests executar baseado en args"""
+    # Si tem tests especificados
+    if args.tests:
+        return parse_test_string(args.tests)
+
+    # Si no hay args (compatibilidade atrás) → todos
+    return list(TEST_NAMES.keys())
 
 
 def print_header(title):
@@ -831,6 +1026,34 @@ def test_internet_speed():
 
 
 def main():
+    args = parse_args()
+
+    # Version flag
+    if args.version:
+        print(f"Network Diagnostic Tool {VERSION}")
+        return
+
+    # Cargar preferencias
+    prefs = load_preferences()
+
+    # Determinar tests a ejecutar
+    if args.interactive:
+        selected_tests = show_menu()
+    else:
+        selected_tests = get_tests_to_run(args)
+
+    # Guardar preferencias si se pide
+    if args.save_prefs:
+        save_preferences(
+            {
+                "format": args.format,
+                "no_speed": str(args.no_speed),
+                "no_isp": str(args.no_isp),
+                "verbose": str(args.verbose),
+            }
+        )
+        print("Preferencias guardadas.")
+
     is_windows = platform.system().lower() == "windows"
 
     # Verificar dependencias en Linux
@@ -840,11 +1063,16 @@ def main():
     print("║" + " " * 20 + "DIAGNÓSTICO DE RED" + " " * 20 + "║")
     print("╚" + "═" * 58 + "╝")
     print(f"\nFecha: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"Versión: {VERSION}")
 
     # Mostrar advertencias de dependencias en Linux
     print_dependencies_warning(linux_deps)
 
-    # ========== INFORMACIÓN LOCAL ==========
+    # Si no hay tests selecionados (compatibilidad atrás), ejecutar todos
+    if not selected_tests:
+        selected_tests = list(TEST_NAMES.keys())
+
+    # ========== INFORMACIÓN LOCAL (siempre) ==========
     print_header("INFORMACIÓN LOCAL")
 
     print(f"📌 Hostname: {socket.gethostname()}")
@@ -866,6 +1094,79 @@ def main():
             for line in output.split("\n"):
                 if line:
                     print(f"   {line.strip()}")
+
+    # Ejecutar solo los tests seleccionados
+    # Variables globales para compartir entre tests
+    global gateway, gateway_ok, loopback_ok, internet_ok, dns_ok
+    global dns_servers, conn_type, wifi_info, isp_info
+    global packet_loss_results, interface_details, firewall_info
+    global traceroute_results, speed_results, dhcp_info
+
+    loopback_ok = False
+    gateway = None
+    gateway_ok = False
+    internet_ok = False
+    dns_ok = False
+    dns_servers = []
+    conn_type = "unknown"
+    wifi_info = {}
+    isp_info = {}
+    packet_loss_results = []
+    interface_details = {}
+    firewall_info = {}
+    traceroute_results = []
+    speed_results = {}
+    dhcp_info = {}
+
+    # Test 1: Conectividad local
+    if "1" in selected_tests:
+        print_header("TEST 1: CONECTIVIDAD LOCAL")
+        loopback_ok = test_ping("127.0.0.1", "Loopback (Interno)")
+
+        gateway = None
+        if is_windows:
+            output = run_command("ipconfig")
+            for line in output.split("\n"):
+                if (
+                    "puerta de enlace" in line.lower()
+                    or "default gateway" in line.lower()
+                ):
+                    parts = line.split(":")
+                    if len(parts) > 1 and parts[1].strip():
+                        gateway = parts[1].strip()
+                        break
+        else:
+            output = run_command("ip route | grep default")
+            if output:
+                parts = output.split()
+                if len(parts) > 2:
+                    gateway = parts[2]
+
+        gateway_ok = False
+        if gateway:
+            print(f"\n📍 Gateway detectado: {gateway}")
+            gateway_ok = test_ping(gateway, f"Gateway ({gateway})")
+        else:
+            print("\n⚠️ No se detectó Gateway automáticamente.")
+
+    # Test 2: Internet y DNS
+    if "2" in selected_tests:
+        print_header("TEST 2: INTERNET Y DNS")
+
+        internet_ok = test_ping("8.8.8.8", "Google DNS")
+        dns_ok, _ = test_dns("google.com")
+
+    # Test 2B: DNS configurados
+    if "2b" in selected_tests:
+        print_header("TEST 2B: SERVIDORES DNS CONFIGURADOS")
+        dns_servers = get_configured_dns()
+        if dns_servers:
+            print(f"   📋 Servidores DNS configurados ({len(dns_servers)}):")
+            for dns in dns_servers:
+                print(f"      - {dns}")
+                test_dns_verification(dns)
+        else:
+            print("   ⚠️ No se detectaron servidores DNS configurados")
 
     # ========== TEST CONECTIVIDAD LOCAL ==========
     print_header("TEST 1: CONECTIVIDAD LOCAL")
@@ -911,146 +1212,157 @@ def main():
     else:
         print("   ⚠️ No se detectaron servidores DNS configurados")
 
-    # ========== TEST PUERTOS ==========
-    print_header("TEST 3: PUERTOS CRÍTICOS")
-    test_port("google.com", 443, "HTTPS")
-    test_port("8.8.8.8", 53, "DNS")
+    # Test 3: Puertos
+    if "3" in selected_tests:
+        print_header("TEST 3: PUERTOS CRÍTICOS")
+        test_port("google.com", 443, "HTTPS")
+        test_port("8.8.8.8", 53, "DNS")
 
-    # ========== LATENCIA DETALLADA ==========
-    print_header("TEST 4: ESTADÍSTICAS DE LATENCIA")
-    targets = [("8.8.8.8", "Google"), ("1.1.1.1", "Cloudflare")]
-    for ip, name in targets:
-        print(f"\n📡 {name}:")
-        param = "-n" if is_windows else "-c"
-        output = run_command(f"ping {param} 5 {ip}")
-        for line in output.split("\n"):
-            if any(k in line.lower() for k in ["average", "media", "min", "max"]):
-                print(f"   {line.strip()}")
+    # Test 4: Latencia
+    if "4" in selected_tests:
+        print_header("TEST 4: ESTADÍSTICAS DE LATENCIA")
+        targets = [("8.8.8.8", "Google"), ("1.1.1.1", "Cloudflare")]
+        for ip, name in targets:
+            print(f"\n📡 {name}:")
+            param = "-n" if is_windows else "-c"
+            output = run_command(f"ping {param} 5 {ip}")
+            for line in output.split("\n"):
+                if any(k in line.lower() for k in ["average", "media", "min", "max"]):
+                    print(f"   {line.strip()}")
 
-    # ========== SEÑAL WIFI ==========
-    print_header("TEST 5: SEÑAL WI-FI")
-    conn_type = get_connection_type()
+    # Test 5: WiFi
+    if "5" in selected_tests:
+        print_header("TEST 5: SEÑAL WI-FI")
+        conn_type = get_connection_type()
 
-    is_windows = platform.system().lower() == "windows"
-    wifi_info = None
+        is_windows = platform.system().lower() == "windows"
+        wifi_info = None
 
-    if is_windows:
-        wifi_info = test_wifi_signal()
-    else:
-        if conn_type == "wifi":
+        if is_windows:
             wifi_info = test_wifi_signal()
-
-    if wifi_info:
-        is_connected_wifi = any(
-            key in wifi_info for key in ["SSID", "Signal", "Channel"]
-        )
-        has_wifiHardware = wifi_info.get("Estado", "") not in [
-            "No hay adaptador WiFi",
-            "",
-        ]
-
-        if is_connected_wifi:
-            print(f"\n📶 Conexión WiFi activa:")
-            for key, value in wifi_info.items():
-                print(f"   {key}: {value}")
-        elif "Estado" in wifi_info and "no disponible" in wifi_info["Estado"].lower():
-            print(f"   ⚠️ {wifi_info.get('Estado', 'Servicio WiFi no disponible')}")
-            print(f"   💡 Tipo de conexión: ETHERNET")
         else:
-            print(f"   ℹ️ Adaptador WiFi detectado pero Sin conexión activa")
-            print(f"   💡 Tipo de conexión actual: ETHERNET")
-    else:
-        print(f"   ℹ️ Sin adaptador WiFi detectado")
-        print(f"   💡 Tipo de conexión: ETHERNET")
+            if conn_type == "wifi":
+                wifi_info = test_wifi_signal()
 
-    # ========== INFO ISP ==========
-    print_header("TEST 6: INFORMACIÓN DEL ISP")
-    print("   🌐 Consultando información del ISP...")
-    isp_info = get_public_ip_and_isp()
-    if isp_info:
-        print(f"   IP Pública: {isp_info.get('public_ip', 'N/A')}")
-        print(f"   ISP: {isp_info.get('isp', 'N/A')}")
-        print(f"   Organización: {isp_info.get('org', 'N/A')}")
-        print(
-            f"   Ubicación: {isp_info.get('city', 'N/A')}, {isp_info.get('country', 'N/A')}"
-        )
-    else:
-        print("   ⚠️ No se pudo obtener información del ISP")
+        if wifi_info:
+            is_connected_wifi = any(
+                key in wifi_info for key in ["SSID", "Signal", "Channel"]
+            )
+            has_wifiHardware = wifi_info.get("Estado", "") not in [
+                "No hay adaptador WiFi",
+                "",
+            ]
 
-    # ========== PÉRDIDA DE PAQUETES ==========
-    print_header("TEST 7: PÉRDIDA DE PAQUETES")
-    hosts = [("8.8.8.8", "Google DNS"), ("1.1.1.1", "Cloudflare")]
-    packet_loss_results = []
-
-    for host, name in hosts:
-        print(f"\n   📊 Testeando {name} ({host})...")
-        packet_info = test_packet_loss(host, count=10)
-        if packet_info:
-            if "enviados" in packet_info:
-                print(f"   {name}:")
-                print(f"      Enviados: {packet_info.get('enviados', 'N/A')}")
-                print(f"      Recibidos: {packet_info.get('recibidos', 'N/A')}")
-                print(f"      Perdidos: {packet_info.get('perdidos', 'N/A')}")
-                print(f"      Porcentaje: {packet_info.get('% perda', 'N/A')}")
+            if is_connected_wifi:
+                print(f"\n📶 Conexión WiFi activa:")
+                for key, value in wifi_info.items():
+                    print(f"   {key}: {value}")
+            elif (
+                "Estado" in wifi_info and "no disponible" in wifi_info["Estado"].lower()
+            ):
+                print(f"   ⚠️ {wifi_info.get('Estado', 'Servicio WiFi no disponible')}")
+                print(f"   💡 Tipo de conexión: ETHERNET")
             else:
-                print(f"   {name}: {packet_info.get('% perda', 'N/A')}")
-            packet_loss_results.append((name, packet_info))
+                print(f"   ℹ️ Adaptador WiFi detectado pero Sin conexión activa")
+                print(f"   💡 Tipo de conexión actual: ETHERNET")
         else:
-            print(f"   ⚠️ No se pudo obtener información de {name}")
-            packet_loss_results.append((name, None))
+            print(f"   ℹ️ Sin adaptador WiFi detectado")
+            print(f"   💡 Tipo de conexión: ETHERNET")
 
-    # ========== DETALLES INTERFAZ DE RED ==========
-    print_header("TEST 8: DETALLES DEL INTERFAZ DE RED")
-    interface_details = get_network_interface_details()
-    if interface_details:
-        print(f"   📡 Información del interfaz de red:")
-        for key, value in interface_details.items():
-            print(f"      {key}: {value}")
-    else:
-        print("   ⚠️ No se pudo obtener información del interfaz")
-
-    # ========== ESTADO DEL FIREWALL ==========
-    print_header("TEST 9: ESTADO DEL FIREWALL")
-    firewall_info = get_firewall_status()
-    if firewall_info:
-        print(f"   🔥 Estado del firewall:")
-        for key, value in firewall_info.items():
-            print(f"      {key}: {value}")
-    else:
-        print("   ⚠️ No se pudo obtener información del firewall")
-
-    # ========== TRACEROUTE ==========
-    print_header("TEST 10: TRACEROUTE")
-    targets = [("youtube.com", "YouTube (CDN)"), ("yahoo.com", "Yahoo (IPTransit)")]
-    traceroute_results = []
-
-    for host, name in targets:
-        print(f"\n   📍 Ruta hacia {name}:")
-        hops = run_traceroute(host, max_hops=30)
-        if hops:
-            traceroute_results.append((name, hops))
-            for hop in hops[:20]:
-                print(f"      {hop}")
-            if len(hops) > 20:
-                print(f"      ... y {len(hops) - 20} saltos más")
+    # Test 6: ISP
+    if "6" in selected_tests and not args.no_isp:
+        print_header("TEST 6: INFORMACIÓN DEL ISP")
+        print("   🌐 Consultando información del ISP...")
+        isp_info = get_public_ip_and_isp()
+        if isp_info:
+            print(f"   IP Pública: {isp_info.get('public_ip', 'N/A')}")
+            print(f"   ISP: {isp_info.get('isp', 'N/A')}")
+            print(f"   Organización: {isp_info.get('org', 'N/A')}")
+            print(
+                f"   Ubicación: {isp_info.get('city', 'N/A')}, {isp_info.get('country', 'N/A')}"
+            )
         else:
-            print("      ⚠️ No se pudo obtener ruta")
-            traceroute_results.append((name, None))
+            print("   ⚠️ No se pudo obtener información del ISP")
 
-    # ========== VELOCIDAD DE INTERNET ==========
-    print_header("TEST 11: VELOCIDAD DE INTERNET")
-    speed_results = test_internet_speed()
+    # Test 7: Pérdida de paquetes
+    if "7" in selected_tests:
+        print_header("TEST 7: PÉRDIDA DE PAQUETES")
+        hosts = [("8.8.8.8", "Google DNS"), ("1.1.1.1", "Cloudflare")]
+        packet_loss_results = []
 
-    if speed_results["download"] or speed_results["upload"]:
+        for host, name in hosts:
+            print(f"\n   📊 Testeando {name} ({host})...")
+            packet_info = test_packet_loss(host, count=10)
+            if packet_info:
+                if "enviados" in packet_info:
+                    print(f"   {name}:")
+                    print(f"      Enviados: {packet_info.get('enviados', 'N/A')}")
+                    print(f"      Recibidos: {packet_info.get('recibidos', 'N/A')}")
+                    print(f"      Perdidos: {packet_info.get('perdidos', 'N/A')}")
+                    print(f"      Porcentaje: {packet_info.get('% perda', 'N/A')}")
+                else:
+                    print(f"   {name}: {packet_info.get('% perda', 'N/A')}")
+                packet_loss_results.append((name, packet_info))
+            else:
+                print(f"   ⚠️ No se pudo obtener información de {name}")
+                packet_loss_results.append((name, None))
+
+    # Test 8: Interfaz de red
+    if "8" in selected_tests:
+        print_header("TEST 8: DETALLES DEL INTERFAZ DE RED")
+        interface_details = get_network_interface_details()
+        if interface_details:
+            print(f"   📡 Información del interfaz de red:")
+            for key, value in interface_details.items():
+                print(f"      {key}: {value}")
+        else:
+            print("   ⚠️ No se pudo obtener información del interfaz")
+
+    # Test 9: Firewall
+    if "9" in selected_tests:
+        print_header("TEST 9: ESTADO DEL FIREWALL")
+        firewall_info = get_firewall_status()
+        if firewall_info:
+            print(f"   🔥 Estado del firewall:")
+            for key, value in firewall_info.items():
+                print(f"      {key}: {value}")
+        else:
+            print("   ⚠️ No se pudo obtener información del firewall")
+
+    # Test 10: Traceroute
+    if "10" in selected_tests:
+        print_header("TEST 10: TRACEROUTE")
+        targets = [("youtube.com", "YouTube (CDN)"), ("yahoo.com", "Yahoo (IPTransit)")]
+        traceroute_results = []
+
+        for host, name in targets:
+            print(f"\n   📍 Ruta hacia {name}:")
+            hops = run_traceroute(host, max_hops=30)
+            if hops:
+                traceroute_results.append((name, hops))
+                for hop in hops[:20]:
+                    print(f"      {hop}")
+                if len(hops) > 20:
+                    print(f"      ... y {len(hops) - 20} saltos más")
+            else:
+                print("      ⚠️ No se pudo obtener ruta")
+                traceroute_results.append((name, None))
+
+    # Test 11: Velocidad (omitir si --no-speed)
+    if "11" in selected_tests and not args.no_speed:
+        print_header("TEST 11: VELOCIDAD DE INTERNET")
+        speed_results = test_internet_speed()
+
+    if speed_results.get("download") or speed_results.get("upload"):
         print("\n   📊 Resumen:")
-        if speed_results["download"]:
+        if speed_results.get("download"):
             avg_dl = sum(r[1] for r in speed_results["download"]) / len(
                 speed_results["download"]
             )
             max_dl = max(r[1] for r in speed_results["download"])
             print(f"      Download promedio: {avg_dl:.1f} Mbps")
             print(f"      Download máxima: {max_dl:.1f} Mbps")
-        if speed_results["upload"]:
+        if speed_results.get("upload"):
             avg_ul = sum(r[1] for r in speed_results["upload"]) / len(
                 speed_results["upload"]
             )
@@ -1060,15 +1372,16 @@ def main():
     else:
         print("   ⚠️ No se pudo obtener información de velocidad")
 
-    # ========== INFORMACIÓN DHCP ==========
-    print_header("TEST 12: INFORMACIÓN DHCP")
-    dhcp_info = get_dhcp_lease_info()
-    if dhcp_info:
-        print(f"   📋 Información del lease DHCP:")
-        for key, value in dhcp_info.items():
-            print(f"      {key}: {value}")
-    else:
-        print("   ⚠️ No se pudo obtener información DHCP")
+    # Test 12: DHCP
+    if "12" in selected_tests:
+        print_header("TEST 12: INFORMACIÓN DHCP")
+        dhcp_info = get_dhcp_lease_info()
+        if dhcp_info:
+            print(f"   📋 Información del lease DHCP:")
+            for key, value in dhcp_info.items():
+                print(f"      {key}: {value}")
+        else:
+            print("   ⚠️ No se pudo obtener información DHCP")
 
     # ========== RESUMEN ==========
     print_header("RESULTADO FINAL")

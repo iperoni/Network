@@ -1,4 +1,4 @@
-# Network Diagnostic Tool (v1.2.3)
+# Network Diagnostic Tool (v1.2.4)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux.
 
@@ -57,6 +57,13 @@ chmod +x network_diagnostic.py
 ```
 
 ## Historial de Cambios
+
+### v1.2.4 (2026)
+**Modificado por: Ignacio Peroni**
+
+- Fix: nperf URL actualizada (ahora funciona)
+- Fix: UTF-8 decode error en upload
+- Test de velocidad: Cloudflare, nperf, Tele2
 
 ### v1.2.3 (2026)
 **Modificado por: Ignacio Peroni**

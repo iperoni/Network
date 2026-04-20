@@ -8,6 +8,7 @@ Autor: Xabier Pereira - Modificado por Ignacio Peroni (v0.5)
 
 import socket
 import subprocess
+import re
 import platform
 import time
 import sys
@@ -325,16 +326,11 @@ def get_configured_dns():
 
     if is_windows:
         output = run_command("netsh interface ipv4 show dns")
-        for line in output.split("\n"):
-            line = line.strip()
-            parts = line.split()
-            if len(parts) > 0:
-                try:
-                    ip = parts[0]
-                    if ip.replace(".", "").isdigit() and ip not in dns_servers:
-                        dns_servers.append(ip)
-                except:
-                    pass
+        ip_pattern = r"\b(?:\d{1,3}\.){3}\d{1,3}\b"
+        matches = re.findall(ip_pattern, output)
+        for ip in matches:
+            if ip not in dns_servers:
+                dns_servers.append(ip)
     else:
         output = run_command("cat /etc/resolv.conf")
         for line in output.split("\n"):

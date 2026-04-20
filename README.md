@@ -1,4 +1,4 @@
-# Network Diagnostic Tool (v0.7.1)
+# Network Diagnostic Tool (v0.8)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux.
 
@@ -57,6 +57,13 @@ chmod +x network_diagnostic.py
 ```
 
 ## Historial de Cambios
+
+### v0.8 (2026) - Beta
+**Modificado por: Ignacio Peroni**
+
+- Agregado Test 2B: Servidores DNS configurados
+- Muestra los DNS del sistema
+- Verifica puerto 53 de cada DNS
 
 ### v0.7.1 (2026) - Beta
 **Modificado por: Ignacio Peroni**

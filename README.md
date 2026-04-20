@@ -1,4 +1,4 @@
-# Network Diagnostic Tool (v1.2.2)
+# Network Diagnostic Tool (v1.2.3)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux.
 
@@ -57,6 +57,12 @@ chmod +x network_diagnostic.py
 ```
 
 ## Historial de Cambios
+
+### v1.2.3 (2026)
+**Modificado por: Ignacio Peroni**
+
+- Fix: Mejor manejo de errores en test de velocidad
+- Mensaje más claro cuando el servidor falla
 
 ### v1.2.2 (2026)
 **Modificado por: Ignacio Peroni**

@@ -1,4 +1,4 @@
-# Network Diagnostic Tool (v0.4)
+# Network Diagnostic Tool (v0.5)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux.
 
@@ -30,6 +30,7 @@ Herramienta de diagnóstico de conectividad de red para Windows y Linux.
 
 ### Linux
 - Python 3.x instalado
+- Paquete `iw` instalado (para test WiFi): `sudo apt install iw`
 - Módulos estándar de Python:
   - socket
   - subprocess
@@ -56,6 +57,15 @@ chmod +x network_diagnostic.py
 ```
 
 ## Historial de Cambios
+
+### v0.5 (2026) - Beta
+**Modificado por: Ignacio Peroni**
+
+- Agregado Test 5: Detección de señal WiFi
+- Detección automática de tipo de conexión (WiFi/Ethernet)
+- Compatible con Windows (`netsh wlan`) y Linux (`iw`)
+- Muestra: SSID, Signal, Channel, Radio Type, BSSID, Tx/Rx Rate
+- Guardado de resultados en archivo
 
 ### v0.4 (2025) - Beta
 **Modificado por: Ignacio Peroni**

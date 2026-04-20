@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Network Diagnostic Tool (v0.7)
+Network Diagnostic Tool (v0.7.1)
 Diagnóstico completo de conectividad de red mejorado para Windows/Linux
 
 Autor: Xabier Pereira - Modificado por Ignacio Peroni (v0.5)
@@ -287,6 +287,15 @@ def test_packet_loss(host, count=10):
                             packet_info["recibidos"] = part.split("=")[1].strip()
                         elif "perdidos" in part.lower():
                             packet_info["perdidos"] = part.split("=")[1].strip()
+                    if "perdidos" in packet_info and "enviados" in packet_info:
+                        try:
+                            p_perdidos = int(packet_info["perdidos"])
+                            p_enviados = int(packet_info["enviados"])
+                            if p_enviados > 0:
+                                pct = (p_perdidos / p_enviados) * 100
+                                packet_info["% perda"] = f"{pct:.0f}%"
+                        except:
+                            pass
                 except:
                     pass
     else:
@@ -453,6 +462,7 @@ def main():
                 print(f"      Enviados: {packet_info.get('enviados', 'N/A')}")
                 print(f"      Recibidos: {packet_info.get('recibidos', 'N/A')}")
                 print(f"      Perdidos: {packet_info.get('perdidos', 'N/A')}")
+                print(f"      Porcentaje: {packet_info.get('% perda', 'N/A')}")
             else:
                 print(f"   {name}: {packet_info.get('% perda', 'N/A')}")
             packet_loss_results.append((name, packet_info))

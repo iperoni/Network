@@ -1,4 +1,4 @@
-# Network Diagnostic Tool (v0.8)
+# Network Diagnostic Tool (v0.9)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux.
 
@@ -57,6 +57,12 @@ chmod +x network_diagnostic.py
 ```
 
 ## Historial de Cambios
+
+### v0.9 (2026) - Beta
+**Modificado por: Ignacio Peroni**
+
+- Agregado Test 8: Detalles del interfaz de red
+- Muestra: Nombre, Descripcion, Estado, MAC, Velocidad
 
 ### v0.8 (2026) - Beta
 **Modificado por: Ignacio Peroni**

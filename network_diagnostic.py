@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Network Diagnostic Tool (v1.2.2)
+Network Diagnostic Tool (v1.2.3)
 Diagnóstico completo de conectividad de red mejorado para Windows/Linux
 
 Autor: Xabier Pereira - Modificado por Ignacio Peroni (v0.5)
@@ -673,7 +673,7 @@ def test_internet_speed():
                 error_msg = (
                     result.stderr.decode() if result.stderr else "Error desconocido"
                 )
-                print(f"      {name}: Error - {error_msg[:30]}")
+                print(f"      {name}: Error del servidor")
         except Exception as e:
             print(f"      {name}: Error - {str(e)[:30]}")
 
@@ -704,7 +704,7 @@ def test_internet_speed():
                 error_msg = (
                     result.stderr.decode() if result.stderr else "Error desconocido"
                 )
-                print(f"      {name}: Error - {error_msg[:30]}")
+                print(f"      {name}: Error del servidor")
         except Exception as e:
             print(f"      {name}: Error - {str(e)[:30]}")
 

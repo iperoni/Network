@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Network Diagnostic Tool (v0.5)
+Network Diagnostic Tool (v0.6)
 Diagnóstico completo de conectividad de red mejorado para Windows/Linux
 
 Autor: Xabier Pereira - Modificado por Ignacio Peroni (v0.5)
@@ -232,6 +232,32 @@ def test_wifi_signal():
     return wifi_info if wifi_info else None
 
 
+def get_public_ip_and_isp():
+    """Obtiene IP pública y datos del ISP"""
+    import json
+
+    try:
+        result = subprocess.run(
+            ["curl", "-s", "http://ip-api.com/json"], capture_output=True, timeout=10
+        )
+        data = json.loads(result.stdout.decode())
+        return {
+            "public_ip": data.get("query"),
+            "isp": data.get("isp"),
+            "org": data.get("org"),
+            "city": data.get("city"),
+            "country": data.get("country"),
+        }
+    except:
+        try:
+            result = subprocess.run(
+                ["curl", "-s", "ifconfig.me"], capture_output=True, timeout=10
+            )
+            return {"public_ip": result.stdout.decode().strip()}
+        except:
+            return None
+
+
 def main():
     is_windows = platform.system().lower() == "windows"
 
@@ -347,6 +373,20 @@ def main():
     else:
         print(f"   ℹ️ Sin adaptador WiFi detectado")
         print(f"   💡 Tipo de conexión: ETHERNET")
+
+    # ========== INFO ISP ==========
+    print_header("TEST 6: INFORMACIÓN DEL ISP")
+    print("   🌐 Consultando información del ISP...")
+    isp_info = get_public_ip_and_isp()
+    if isp_info:
+        print(f"   IP Pública: {isp_info.get('public_ip', 'N/A')}")
+        print(f"   ISP: {isp_info.get('isp', 'N/A')}")
+        print(f"   Organización: {isp_info.get('org', 'N/A')}")
+        print(
+            f"   Ubicación: {isp_info.get('city', 'N/A')}, {isp_info.get('country', 'N/A')}"
+        )
+    else:
+        print("   ⚠️ No se pudo obtener información del ISP")
 
     # ========== RESUMEN ==========
     print_header("RESULTADO FINAL")
@@ -480,6 +520,20 @@ def main():
                 f.write(f"{key}: {value}\n")
         elif conn_type != "wifi":
             f.write(f"Conexión {conn_type} - Test WiFi no aplicable\n")
+
+        # TEST 6: ISP INFO
+        f.write("\n" + "=" * 60 + "\n")
+        f.write("   TEST 6: INFORMACIÓN DEL ISP\n")
+        f.write("=" * 60 + "\n")
+        if isp_info:
+            f.write(f"IP Pública: {isp_info.get('public_ip', 'N/A')}\n")
+            f.write(f"ISP: {isp_info.get('isp', 'N/A')}\n")
+            f.write(f"Organización: {isp_info.get('org', 'N/A')}\n")
+            f.write(
+                f"Ubicación: {isp_info.get('city', 'N/A')}, {isp_info.get('country', 'N/A')}\n"
+            )
+        else:
+            f.write("No se pudo obtener información del ISP\n")
 
         # RESULTADO FINAL
         f.write("\n" + "=" * 60 + "\n")

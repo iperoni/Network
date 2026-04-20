@@ -1,4 +1,4 @@
-# Network Diagnostic Tool (v1.2.5)
+# Network Diagnostic Tool (v1.3)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux.
 
@@ -57,6 +57,13 @@ chmod +x network_diagnostic.py
 ```
 
 ## Historial de Cambios
+
+### v1.3 (2026)
+**Modificado por: Ignacio Peroni**
+
+- Agregado Test 12: Información DHCP
+- Muestra estado DHCP (habilitado/deshabilitado)
+- Detecta IP estática vs dinámica
 
 ### v1.2.5 (2026)
 **Modificado por: Ignacio Peroni**

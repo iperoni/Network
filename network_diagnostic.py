@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Network Diagnostic Tool (v1.3)
+Network Diagnostic Tool (v1.4)
 Diagnóstico completo de conectividad de red mejorado para Windows/Linux
 
 Autor: Xabier Pereira - Modificado por Ignacio Peroni (v0.5)
@@ -13,7 +13,6 @@ import platform
 import time
 import sys
 import os
-import os
 from datetime import datetime
 
 if platform.system().lower() == "windows":
@@ -22,6 +21,50 @@ if platform.system().lower() == "windows":
         subprocess.run("chcp 65001", shell=True, capture_output=True)
     except Exception:
         pass
+
+
+def check_linux_dependencies():
+    """Verifica que las dependencias opcionales estén instaladas en Linux"""
+    is_windows = platform.system().lower() == "windows"
+    if is_windows:
+        return {}
+
+    deps = {}
+    required_cmds = {
+        "iw": "Test WiFi (signal)",
+        "ethtool": "Network interface details",
+        "traceroute": "Test traceroute",
+        "ufw": "Firewall status (UFW)",
+        "iptables": "Firewall status (iptables)",
+    }
+
+    for cmd, feature in required_cmds.items():
+        result = subprocess.run(f"which {cmd}", shell=True, capture_output=True)
+        deps[cmd] = result.returncode == 0
+
+    return deps
+
+
+def print_dependencies_warning(deps):
+    """Imprime advertencia sobre dependencias faltantes en Linux"""
+    is_windows = platform.system().lower() == "windows"
+    if is_windows:
+        return
+
+    missing = [cmd for cmd, installed in deps.items() if not installed]
+    if missing:
+        print("\n⚠️  ADVERTENCIA: Dependencias opcionales faltantes en Linux:")
+        for cmd in missing:
+            feature = {
+                "iw": "WiFi signal",
+                "ethtool": "Interface details",
+                "traceroute": "Traceroute",
+                "ufw": "UFW firewall",
+                "iptables": "iptables firewall",
+            }.get(cmd, cmd)
+            print(f"   - {cmd}: {feature}")
+        print("   Instalar con: sudo apt install " + " ".join(missing))
+        print()
 
 
 def print_header(title):
@@ -790,10 +833,16 @@ def test_internet_speed():
 def main():
     is_windows = platform.system().lower() == "windows"
 
+    # Verificar dependencias en Linux
+    linux_deps = check_linux_dependencies()
+
     print("╔" + "═" * 58 + "╗")
     print("║" + " " * 20 + "DIAGNÓSTICO DE RED" + " " * 20 + "║")
     print("╚" + "═" * 58 + "╝")
     print(f"\nFecha: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
+    # Mostrar advertencias de dependencias en Linux
+    print_dependencies_warning(linux_deps)
 
     # ========== INFORMACIÓN LOCAL ==========
     print_header("INFORMACIÓN LOCAL")

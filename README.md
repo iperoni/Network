@@ -1,4 +1,4 @@
-# Network Diagnostic Tool (v1.3)
+# Network Diagnostic Tool (v1.4)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux.
 
@@ -18,9 +18,17 @@ Herramienta de diagnóstico de conectividad de red para Windows y Linux.
 - Test de ping a múltiples hosts (Google DNS, Cloudflare, servidores local)
 - Verificación de resolución DNS para múltiples dominios
 - Test de conectividad a puertos comunes (HTTP, HTTPS, SSH, FTP, etc.)
+- Información del servidor DNS configurado
+- Detección de pérdida de paquetes
+- Detalles del interfaz de red (Windows)
+- Estado del firewall (Windows)
+- Traceroute
+- Test de velocidad de internet (download/upload)
+- Información DHCP
 - Compatible con Windows y Linux
 - Soporte para codificación UTF-8 en Windows
 - Detección automática del sistema operativo
+- Verificación de dependencias opcionales en Linux
 
 ## Requisitos
 
@@ -30,7 +38,13 @@ Herramienta de diagnóstico de conectividad de red para Windows y Linux.
 
 ### Linux
 - Python 3.x instalado
-- Paquete `iw` instalado (para test WiFi): `sudo apt install iw`
+- Dependencias opcionales (se verifica automáticamente):
+  - `iw` - Test de señal WiFi
+  - `ethtool` - Detalles del interfaz de red
+  - `traceroute` - Test traceroute
+  - `ufw` - Estado del firewall (UFW)
+  - `iptables` - Estado del firewall (iptables)
+- Instalación: `sudo apt install iw ethtool traceroute ufw iptables`
 - Módulos estándar de Python:
   - socket
   - subprocess
@@ -57,6 +71,14 @@ chmod +x network_diagnostic.py
 ```
 
 ## Historial de Cambios
+
+### v1.4 (2026)
+**Modificado por: Ignacio Peroni**
+
+- Agregada verificación de dependencias opcionales en Linux
+- Muestra advertencia al inicio si faltan зависиcias
+- Dependencias verificadas: iw, ethtool, traceroute, ufw, iptables
+- Código limpio: eliminado import os duplicado
 
 ### v1.3 (2026)
 **Modificado por: Ignacio Peroni**

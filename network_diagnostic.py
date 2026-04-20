@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Network Diagnostic Tool (v1.1)
+Network Diagnostic Tool (v1.2)
 Diagnóstico completo de conectividad de red mejorado para Windows/Linux
 
 Autor: Xabier Pereira - Modificado por Ignacio Peroni (v0.5)
@@ -613,6 +613,76 @@ def run_traceroute(host, max_hops=30):
     return hops
 
 
+def test_internet_speed():
+    """Test de velocidad de internet (download + upload)"""
+    import time
+
+    test_size_mb = 5
+    test_size_bytes = test_size_mb * 1024 * 1024
+    test_data = b"X" * test_size_bytes
+
+    download_servers = [
+        ("Cloudflare", "https://speed.cloudflare.com/__down?bytes=5000000"),
+        ("nperf", "https://speedtest.nperf.net/5MB.bin"),
+        ("Tele2", "http://speedtest.tele2.net/5MB.zip"),
+    ]
+
+    upload_servers = [
+        ("Cloudflare", "https://speed.cloudflare.com/__up"),
+        ("nperf", "https://speedtest.nperf.net/upload"),
+        ("Tele2", "http://speedtest.tele2.net/upload.php"),
+    ]
+
+    download_results = []
+    upload_results = []
+
+    print("\n   📶 Download:")
+    for name, url in download_servers:
+        try:
+            start = time.time()
+            result = subprocess.run(
+                ["curl", "-o", "NUL", "-s", url], capture_output=True, timeout=60
+            )
+            elapsed = time.time() - start
+
+            if result.returncode == 0 and elapsed > 0:
+                speed_mbps = (test_size_mb * 8) / elapsed
+                download_results.append((name, speed_mbps, elapsed))
+                print(
+                    f"      {name}: {speed_mbps:.1f} Mbps ({test_size_mb}MB en {elapsed:.1f}s)"
+                )
+            else:
+                print(f"      {name}: Error en la descarga")
+        except Exception as e:
+            print(f"      {name}: Error - {str(e)[:30]}")
+
+    print("\n   📶 Upload:")
+    for name, url in upload_servers:
+        try:
+            start = time.time()
+            result = subprocess.run(
+                ["curl", "-X", "POST", "-o", "NUL", "-s", "--data-binary", "@-", url],
+                input=test_data,
+                capture_output=True,
+                timeout=60,
+            )
+            elapsed = time.time() - start
+
+            if result.returncode == 0 and elapsed > 0:
+                speed_mbps = (test_size_mb * 8) / elapsed
+                upload_results.append((name, speed_mbps, elapsed))
+                print(
+                    f"      {name}: {speed_mbps:.1f} Mbps ({test_size_mb}MB en {elapsed:.1f}s)"
+                )
+            else:
+                print(f"      {name}: Error en la subida")
+        except Exception as e:
+            print(f"      {name}: Error - {str(e)[:30]}")
+
+    summary = {"download": download_results, "upload": upload_results}
+    return summary
+
+
 def main():
     is_windows = platform.system().lower() == "windows"
 
@@ -813,6 +883,29 @@ def main():
         else:
             print("      ⚠️ No se pudo obtener ruta")
             traceroute_results.append((name, None))
+
+    # ========== VELOCIDAD DE INTERNET ==========
+    print_header("TEST 11: VELOCIDAD DE INTERNET")
+    speed_results = test_internet_speed()
+
+    if speed_results["download"] or speed_results["upload"]:
+        print("\n   📊 Resumen:")
+        if speed_results["download"]:
+            avg_dl = sum(r[1] for r in speed_results["download"]) / len(
+                speed_results["download"]
+            )
+            max_dl = max(r[1] for r in speed_results["download"])
+            print(f"      Download promedio: {avg_dl:.1f} Mbps")
+            print(f"      Download máxima: {max_dl:.1f} Mbps")
+        if speed_results["upload"]:
+            avg_ul = sum(r[1] for r in speed_results["upload"]) / len(
+                speed_results["upload"]
+            )
+            max_ul = max(r[1] for r in speed_results["upload"])
+            print(f"      Upload promedio: {avg_ul:.1f} Mbps")
+            print(f"      Upload máxima: {max_ul:.1f} Mbps")
+    else:
+        print("   ⚠️ No se pudo obtener información de velocidad")
 
     # ========== RESUMEN ==========
     print_header("RESULTADO FINAL")
@@ -1019,6 +1112,42 @@ def main():
                     f.write(f"   ... y {len(hops) - 20} saltos más\n")
             else:
                 f.write("   No se pudo obtener ruta\n")
+
+        # TEST 11: VELOCIDAD
+        f.write("\n" + "=" * 60 + "\n")
+        f.write("   TEST 11: VELOCIDAD DE INTERNET\n")
+        f.write("=" * 60 + "\n")
+
+        dl_results = speed_results.get("download", [])
+        ul_results = speed_results.get("upload", [])
+
+        f.write("\nDownload:\n")
+        if dl_results:
+            for name, speed, time_sec in dl_results:
+                f.write(f"   {name}: {speed:.1f} Mbps\n")
+        else:
+            f.write("   No disponible\n")
+
+        f.write("\nUpload:\n")
+        if ul_results:
+            for name, speed, time_sec in ul_results:
+                f.write(f"   {name}: {speed:.1f} Mbps\n")
+        else:
+            f.write("   No disponible\n")
+
+        if dl_results:
+            avg_dl = sum(r[1] for r in dl_results) / len(dl_results)
+            max_dl = max(r[1] for r in dl_results)
+            f.write(f"\nResumen Download:\n")
+            f.write(f"   Promedio: {avg_dl:.1f} Mbps\n")
+            f.write(f"   Maxima: {max_dl:.1f} Mbps\n")
+
+        if ul_results:
+            avg_ul = sum(r[1] for r in ul_results) / len(ul_results)
+            max_ul = max(r[1] for r in ul_results)
+            f.write(f"\nResumen Upload:\n")
+            f.write(f"   Promedio: {avg_ul:.1f} Mbps\n")
+            f.write(f"   Maxima: {max_ul:.1f} Mbps\n")
 
         # RESULTADO FINAL
         f.write("\n" + "=" * 60 + "\n")

@@ -301,6 +301,17 @@ def main():
     test_port("google.com", 443, "HTTPS")
     test_port("8.8.8.8", 53, "DNS")
 
+    # ========== LATENCIA DETALLADA ==========
+    print_header("TEST 4: ESTADÍSTICAS DE LATENCIA")
+    targets = [("8.8.8.8", "Google"), ("1.1.1.1", "Cloudflare")]
+    for ip, name in targets:
+        print(f"\n📡 {name}:")
+        param = "-n" if is_windows else "-c"
+        output = run_command(f"ping {param} 5 {ip}")
+        for line in output.split("\n"):
+            if any(k in line.lower() for k in ["average", "media", "min", "max"]):
+                print(f"   {line.strip()}")
+
     # ========== SEÑAL WIFI ==========
     print_header("TEST 5: SEÑAL WI-FI")
     conn_type = get_connection_type()
@@ -478,7 +489,8 @@ def main():
         f.write(f"Puntuación: {puntos}/3\n")
 
         f.write("\n" + "=" * 60 + "\n")
-        f.write(f"Autor: Xabier Pereira\n")
+        f.write(f"Autor: Ignacio Peroni\n")
+        f.write(f"GitHub: github.com/iperoni\n")
         f.write("=" * 60 + "\n")
 
     print(f"\n💾 Resultados guardados en: {nombre_archivo}")

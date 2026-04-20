@@ -2,6 +2,16 @@
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux.
 
+## Tabla de Contenidos
+
+- [Funcionalidades](#funcionalidades)
+- [Requisitos](#requisitos)
+- [Instalación](#instalación)
+- [Uso](#uso)
+- [Historial de Cambios](#historial-de-cambios)
+- [Autor](#autor)
+- [Licencia](#licencia)
+
 ## Funcionalidades
 
 - Detección de IP real de la interfaz de red activa
@@ -9,6 +19,8 @@ Herramienta de diagnóstico de conectividad de red para Windows y Linux.
 - Verificación de resolución DNS para múltiples dominios
 - Test de conectividad a puertos comunes (HTTP, HTTPS, SSH, FTP, etc.)
 - Compatible con Windows y Linux
+- Soporte para codificación UTF-8 en Windows
+- Detección automática del sistema operativo
 
 ## Requisitos
 
@@ -43,10 +55,31 @@ chmod +x network_diagnostic.py
 ./network_diagnostic.py
 ```
 
+## Historial de Cambios
+
+### v0.4 (2025) - Beta
+**Modificado por: Ignacio Peroni**
+
+- Actualización a versión v0.4
+- Mejoras en兼容性 con Windows/Linux
+- Soporte para codificación UTF-8 en Windows
+- Actualización de información del autor
+
+### v2.0 (Original)
+**Autor: Xabier Pereira**
+
+- Diagnóstico completo de conectividad de red
+- Test de ping a hosts (Google DNS, Cloudflare)
+- Verificación de resolución DNS
+- Test de conectividad a puertos comunes
+- Compatible con Windows y Linux
+
+---
+
 ## Autor
 
-- Original: Xabier Pereira
-- Modificado por: Ignacio Peroni
+- Original: [Xabier Pereira](https://github.com/xabierpereira)
+- Modificado por: [Ignacio Peroni](https://github.com/iperoni)
 
 ## Licencia
 

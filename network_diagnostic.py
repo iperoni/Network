@@ -503,6 +503,8 @@ def get_firewall_status():
 
 def run_traceroute(host, max_hops=30):
     """Ejecuta traceroute y parsea resultados"""
+    import re
+
     is_windows = platform.system().lower() == "windows"
     hops = []
 
@@ -527,22 +529,28 @@ def run_traceroute(host, max_hops=30):
                     ip = None
                     tiempos = []
 
-                    for i, part in enumerate(parts):
-                        if (
-                            part.replace(".", "").replace(":", "").isdigit()
-                            and len(part) > 3
-                        ):
-                            ip = part.replace(":", "")
-                            break
+                    # Extraer tiempos usando regex
+                    tiempos_raw = re.findall(r"<?\d+>?\s*ms", line)
+                    for t in tiempos_raw:
+                        tiempo_clean = (
+                            t.replace("<", "")
+                            .replace(">", "")
+                            .replace("ms", "")
+                            .strip()
+                        )
+                        if tiempo_clean.replace(".", "").isdigit():
+                            tiempos.append(tiempo_clean)
 
-                    for part in parts:
-                        if "ms" in part:
-                            try:
-                                tiempo = part.replace("ms", "").strip()
-                                if tiempo.replace(".", "").isdigit():
-                                    tiempos.append(tiempo)
-                            except:
-                                pass
+                    # Extraer IP
+                    for part in parts[1:]:
+                        part_clean = part.replace(":", "").strip()
+                        if (
+                            part_clean.replace(".", "").isdigit()
+                            and len(part_clean) > 3
+                            and part_clean.count(".") == 3
+                        ):
+                            ip = part_clean
+                            break
 
                     if ip:
                         try:
@@ -552,7 +560,7 @@ def run_traceroute(host, max_hops=30):
 
                         tiempo_str = f"{tiempos[0]} ms" if tiempos else "N/A"
                         hops.append(f"{hop_num}. {ip} ({hostname}) - {tiempo_str}")
-                    elif "* * *" in line:
+                    elif "* * *" in line or not ip:
                         hops.append(f"{hop_num}. * * * (Timeout)")
         else:
             result = subprocess.run(

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Network Diagnostic Tool (v0.9)
+Network Diagnostic Tool (v1.0)
 Diagnóstico completo de conectividad de red mejorado para Windows/Linux
 
 Autor: Xabier Pereira - Modificado por Ignacio Peroni (v0.5)
@@ -426,6 +426,81 @@ def get_network_interface_details():
     return details
 
 
+def get_firewall_status():
+    """Obtiene estado del firewall"""
+    is_windows = platform.system().lower() == "windows"
+    firewall_info = {}
+
+    if is_windows:
+        result = subprocess.run(
+            [
+                "powershell",
+                "-Command",
+                "Get-NetFirewallProfile | Select-Object Name, Enabled | ConvertTo-Json",
+            ],
+            capture_output=True,
+            timeout=15,
+        )
+        output = result.stdout.decode("utf-8", errors="replace")
+
+        import json
+
+        try:
+            data = json.loads(output)
+            if isinstance(data, list):
+                for profile in data:
+                    name = profile.get("Name", "")
+                    enabled = profile.get("Enabled", False)
+                    if name == "Domain":
+                        firewall_info["Dominio"] = "ON" if enabled else "OFF"
+                    elif name == "Private":
+                        firewall_info["Privado"] = "ON" if enabled else "OFF"
+                    elif name == "Public":
+                        firewall_info["Publico"] = "ON" if enabled else "OFF"
+            elif isinstance(data, dict):
+                name = data.get("Name", "")
+                enabled = data.get("Enabled", False)
+                firewall_info[name] = "ON" if enabled else "OFF"
+        except:
+            pass
+
+        if not firewall_info:
+            output = run_command("netsh advfirewall show allprofiles")
+            if "Configuración de Perfil de dominio" in output:
+                firewall_info["Dominio"] = "ON"
+            if "Configuración de Perfil privado" in output:
+                firewall_info["Privado"] = "ON"
+            if "Configuración de Perfil público" in output:
+                firewall_info["Publico"] = "ON"
+
+        output = run_command("netsh advfirewall show rule name=all")
+        reglas_count = len(
+            [l for l in output.split("\n") if "Regla name" in l or "Rule name" in l]
+        )
+        firewall_info["Reglas activas"] = str(reglas_count)
+    else:
+        output = run_command(
+            "sudo ufw status verbose 2>/dev/null || echo 'UFW not available'"
+        )
+        for line in output.split("\n"):
+            line_lower = line.lower()
+            if "status" in line_lower:
+                if "active" in line_lower:
+                    firewall_info["UFW"] = "Active"
+                elif "inactive" in line_lower:
+                    firewall_info["UFW"] = "Inactive"
+
+        output = run_command(
+            "sudo iptables -L -n 2>/dev/null || echo 'iptables not available'"
+        )
+        reglas_count = len(
+            [l for l in output.split("\n") if l.strip() and "Chain" not in l]
+        )
+        firewall_info["iptables rules"] = str(reglas_count)
+
+    return firewall_info
+
+
 def main():
     is_windows = platform.system().lower() == "windows"
 
@@ -598,6 +673,16 @@ def main():
             print(f"      {key}: {value}")
     else:
         print("   ⚠️ No se pudo obtener información del interfaz")
+
+    # ========== ESTADO DEL FIREWALL ==========
+    print_header("TEST 9: ESTADO DEL FIREWALL")
+    firewall_info = get_firewall_status()
+    if firewall_info:
+        print(f"   🔥 Estado del firewall:")
+        for key, value in firewall_info.items():
+            print(f"      {key}: {value}")
+    else:
+        print("   ⚠️ No se pudo obtener información del firewall")
 
     # ========== RESUMEN ==========
     print_header("RESULTADO FINAL")
@@ -780,6 +865,16 @@ def main():
                 f.write(f"{key}: {value}\n")
         else:
             f.write("No se pudo obtener información del interfaz\n")
+
+        # TEST 9: ESTADO DEL FIREWALL
+        f.write("\n" + "=" * 60 + "\n")
+        f.write("   TEST 9: ESTADO DEL FIREWALL\n")
+        f.write("=" * 60 + "\n")
+        if firewall_info:
+            for key, value in firewall_info.items():
+                f.write(f"{key}: {value}\n")
+        else:
+            f.write("No se pudo obtener información del firewall\n")
 
         # RESULTADO FINAL
         f.write("\n" + "=" * 60 + "\n")

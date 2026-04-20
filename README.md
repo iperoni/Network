@@ -1,4 +1,4 @@
-# Network Diagnostic Tool (v1.2)
+# Network Diagnostic Tool (v1.2.1)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux.
 
@@ -57,6 +57,12 @@ chmod +x network_diagnostic.py
 ```
 
 ## Historial de Cambios
+
+### v1.2.1 (2026)
+**Modificado por: Ignacio Peroni**
+
+- Fix: Traceroute ahora muestra tiempos de ping correctamente
+- Mejor parsing con regex
 
 ### v1.2 (2026)
 **Modificado por: Ignacio Peroni**

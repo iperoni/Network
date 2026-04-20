@@ -1,4 +1,4 @@
-# Network Diagnostic Tool (v0.5)
+# Network Diagnostic Tool (v0.6)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux.
 
@@ -57,6 +57,13 @@ chmod +x network_diagnostic.py
 ```
 
 ## Historial de Cambios
+
+### v0.6 (2026) - Beta
+**Modificado por: Ignacio Peroni**
+
+- Agregado Test 6: Información del ISP
+- Muestra: IP pública, ISP, Organización, Ubicación
+- Usa ip-api.com (gratuito)
 
 ### v0.5 (2026) - Beta
 **Modificado por: Ignacio Peroni**

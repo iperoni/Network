@@ -15,9 +15,10 @@ import sys
 import os
 import argparse
 import configparser
+import concurrent.futures
 from datetime import datetime
 
-VERSION = "v1.6"
+VERSION = "v1.7"
 
 TESTS_MAP = {
     "1": "connectivity",
@@ -189,6 +190,11 @@ def parse_args():
     parser.add_argument(
         "--speed-servers",
         help="Servidores para speed test (cloudflare,nperf,tele2)",
+    )
+    parser.add_argument(
+        "--parallel",
+        action="store_true",
+        help="Ejecutar tests independientes en paralelo",
     )
 
     return parser.parse_args()
@@ -1063,6 +1069,150 @@ def test_internet_speed(test_size_mb=5, server_filter=None):
     return summary
 
 
+PARALLEL_TESTS = ["1", "2", "2b", "3", "4", "5", "6", "8", "9", "12"]
+SLOW_TESTS = ["7", "10", "11"]
+
+
+def run_test_by_id(test_id, args, is_windows):
+    """Ejecuta un test específico y retorna sus resultados"""
+    results = {}
+
+    if test_id == "1":
+        loopback_ok = test_ping("127.0.0.1", "Loopback (Interno)")
+        gateway = None
+        if is_windows:
+            output = run_command("ipconfig")
+            for line in output.split("\n"):
+                if (
+                    "puerta de enlace" in line.lower()
+                    or "default gateway" in line.lower()
+                ):
+                    parts = line.split(":")
+                    if len(parts) > 1 and parts[1].strip():
+                        gateway = parts[1].strip()
+                        break
+        else:
+            output = run_command("ip route | grep default")
+            if output:
+                parts = output.split()
+                if len(parts) > 2:
+                    gateway = parts[2]
+        gateway_ok = False
+        if gateway:
+            gateway_ok = test_ping(gateway, f"Gateway ({gateway})")
+        results = {
+            "gateway": gateway,
+            "loopback_ok": loopback_ok,
+            "gateway_ok": gateway_ok,
+        }
+
+    elif test_id == "2":
+        internet_ok = test_ping("8.8.8.8", "Google DNS")
+        dns_ok, dns_ip = test_dns("google.com")
+        results = {"internet_ok": internet_ok, "dns_ok": dns_ok}
+
+    elif test_id == "2b":
+        dns_servers = get_configured_dns()
+        for dns in dns_servers:
+            test_dns_verification(dns)
+        results = {"dns_servers": dns_servers}
+
+    elif test_id == "3":
+        test_port("google.com", 443, "HTTPS")
+        test_port("8.8.8.8", 53, "DNS")
+
+    elif test_id == "4":
+        targets = [("8.8.8.8", "Google"), ("1.1.1.1", "Cloudflare")]
+        for ip, name in targets:
+            param = "-n" if is_windows else "-c"
+            output = run_command(f"ping {param} 5 {ip}")
+            for line in output.split("\n"):
+                if any(k in line.lower() for k in ["average", "media", "min", "max"]):
+                    pass
+
+    elif test_id == "5":
+        conn_type = get_connection_type()
+        wifi_info = None
+        if is_windows:
+            wifi_info = test_wifi_signal()
+        else:
+            if conn_type == "wifi":
+                wifi_info = test_wifi_signal()
+        results = {"conn_type": conn_type, "wifi_info": wifi_info}
+
+    elif test_id == "6" and not args.no_isp:
+        isp_info = get_public_ip_and_isp()
+        results = {"isp_info": isp_info}
+
+    elif test_id == "8":
+        interface_details = get_network_interface_details()
+        results = {"interface_details": interface_details}
+
+    elif test_id == "9":
+        firewall_info = get_firewall_status()
+        results = {"firewall_info": firewall_info}
+
+    elif test_id == "12":
+        dhcp_info = get_dhcp_lease_info()
+        results = {"dhcp_info": dhcp_info}
+
+    return results
+
+
+def run_parallel_tests(selected_tests, args, is_windows):
+    """Ejecuta tests independientes en paralelo"""
+    parallel = [t for t in selected_tests if t in PARALLEL_TESTS]
+    slow = [t for t in selected_tests if t in SLOW_TESTS]
+
+    results = {}
+
+    print("\n⚡ Ejecutando tests en paralelo...")
+
+    if parallel:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+            futures = {
+                test_id: executor.submit(run_test_by_id, test_id, args, is_windows)
+                for test_id in parallel
+            }
+
+            for test_id, future in futures.items():
+                try:
+                    results[test_id] = future.result()
+                except Exception as e:
+                    results[test_id] = {"error": str(e)}
+
+    print("✅ Tests paralelos completados")
+
+    if slow:
+        print("\n⏳ Ejecutando tests secuenciales...")
+        for test_id in slow:
+            if test_id == "7":
+                print_header("TEST 7: PÉRDIDA DE PAQUETES")
+                hosts = [("8.8.8.8", "Google DNS"), ("1.1.1.1", "Cloudflare")]
+                for host, name in hosts:
+                    test_packet_loss(host, count=10)
+            elif test_id == "10":
+                print_header("TEST 10: TRACEROUTE")
+                targets = [("youtube.com", "YouTube"), ("yahoo.com", "Yahoo")]
+                for host, name in targets:
+                    run_traceroute(host, max_hops=30)
+            elif test_id == "11" and not args.no_speed:
+                print_header("TEST 11: VELOCIDAD DE INTERNET")
+                speed_size = 5
+                if args.speed_size:
+                    parts = args.speed_size.split(",")
+                    if len(parts) == 2:
+                        speed_size = (int(parts[0]), int(parts[1]))
+                    else:
+                        speed_size = int(parts[0])
+                speed_servers = None
+                if args.speed_servers:
+                    speed_servers = [s.strip() for s in args.speed_servers.split(",")]
+                test_internet_speed(speed_size, speed_servers)
+
+    return results
+
+
 def main():
     args = parse_args()
 
@@ -1096,6 +1246,28 @@ def main():
 
     # Verificar dependencias en Linux
     linux_deps = check_linux_dependencies()
+
+    # Si no hay tests selecionados (compatibilidad atrás), ejecutar todos
+    if not selected_tests:
+        selected_tests = list(TEST_NAMES.keys())
+
+    # Ejecutar en paralelo si se pide
+    if args.parallel and len(selected_tests) > 1:
+        print("╔" + "═" * 58 + "╗")
+        print("║" + " " * 20 + "DIAGNÓSTICO DE RED" + " " * 20 + "║")
+        print("╚" + "═" * 58 + "╝")
+        print(f"\nFecha: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"Versión: {VERSION}")
+        print_dependencies_warning(linux_deps)
+
+        # Info local siempre
+        print_header("INFORMACIÓN LOCAL")
+        print(f"📌 Hostname: {socket.gethostname()}")
+        print(f"📌 IP Local Detectada: {get_real_ip()}")
+
+        # Ejecutar tests
+        run_parallel_tests(selected_tests, args, is_windows)
+        return
 
     print("╔" + "═" * 58 + "╗")
     print("║" + " " * 20 + "DIAGNÓSTICO DE RED" + " " * 20 + "║")

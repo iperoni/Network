@@ -1,4 +1,4 @@
-# Network Diagnostic Tool (v1.6)
+# Network Diagnostic Tool (v1.7)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux.
 
@@ -110,6 +110,7 @@ python network_diagnostic.py -v                   # Verbose
 python network_diagnostic.py --version             # Mostrar versión
 python network_diagnostic.py --help               # Ver ayuda
 python network_diagnostic.py --save-prefs          # Guardar preferencias
+python network_diagnostic.py --parallel            # Ejecutar tests en paralelo
 ```
 
 ### Tabla de Tests
@@ -134,7 +135,28 @@ python network_diagnostic.py --save-prefs          # Guardar preferencias
 
 Las preferencias se guardan en `network_diagnostic.cfg` en el directorio del script.
 
+### Tests Paralelos
+
+Por defecto, los tests se ejecutan secuencialmente. Con `--parallel` se ejecutan en paralelo:
+
+```bash
+python network_diagnostic.py --parallel              # Todos los tests en paralelo
+python network_diagnostic.py --parallel --tests 1,2,5,6  # Solo tests específicos
+```
+
+**Tests que se ejecutan en paralelo**: 1, 2, 2b, 3, 4, 5, 6, 8, 9, 12
+
+**Tests que siempre son secuenciales**: 7 (pérdida), 10 (traceroute), 11 (speed)
+
 ## Historial de Cambios
+
+### v1.7 (2026)
+**Modificado por: Ignacio Peroni**
+
+- Tests paralelos con `--parallel` (usa ThreadPoolExecutor)
+- Tests rápidos en paralelo: 1, 2, 2b, 3, 4, 5, 6, 8, 9, 12
+- Tests lentos secuenciales: 7 (pérdida), 10 (traceroute), 11 (speed)
+- Backward compatible: sin `--parallel` ejecuta secuencialmente
 
 ### v1.6 (2026)
 **Modificado por: Ignacio Peroni**

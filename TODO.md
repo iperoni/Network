@@ -4,7 +4,7 @@ Lista de mejoras pendientes para el proyecto.
 
 ## Alta Prioridad
 
-- [ ] Tests paralelos - Ejecutar tests independientes (ping, DNS, speed) en paralelo para reducir tiempo total
+- [x] Tests paralelos - Ejecutar tests independientes (ping, DNS, speed) en paralelo para reducir tiempo total
 - [x] Menú interactivo - Permitir seleccionar qué tests ejecutar
 - [x] Args/flags - Añadir argumentos CLI (`--no-speed`, `--wifi-only`, etc.)
 - [x] Modo verbose - Añadir flag `-v` para ver output completo

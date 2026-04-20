@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Network Diagnostic Tool (v0.8)
+Network Diagnostic Tool (v0.9)
 Diagnóstico completo de conectividad de red mejorado para Windows/Linux
 
 Autor: Xabier Pereira - Modificado por Ignacio Peroni (v0.5)
@@ -357,6 +357,75 @@ def test_dns_verification(dns_server):
         print(f"         ❌ {dns_server}:53 (Error: {str(e)[:30]})")
 
 
+def get_network_interface_details():
+    """Obtiene detalles del interfaz de red"""
+    is_windows = platform.system().lower() == "windows"
+    details = {}
+
+    if is_windows:
+        try:
+            result = subprocess.run(
+                [
+                    "powershell",
+                    "-Command",
+                    "Get-NetAdapter | Where-Object Status -eq 'Up' | Select-Object Name, InterfaceDescription, Status, MacAddress, LinkSpeed | ConvertTo-Json",
+                ],
+                capture_output=True,
+                timeout=15,
+            )
+            output = result.stdout.decode("utf-8", errors="replace")
+            if output.strip().startswith("["):
+                import json
+
+                data = json.loads(output)
+                if isinstance(data, list) and len(data) > 0:
+                    data = data[0]
+            elif output.strip().startswith("{"):
+                import json
+
+                data = json.loads(output)
+            else:
+                return details
+
+            if data:
+                details["Nombre"] = data.get("Name", "N/A")
+                details["Descripcion"] = data.get("InterfaceDescription", "N/A")
+                details["Estado"] = data.get("Status", "N/A")
+                details["MAC"] = data.get("MacAddress", "N/A")
+                details["Velocidad"] = data.get("LinkSpeed", "N/A")
+        except Exception as e:
+            pass
+    else:
+        output = run_command("ip link show")
+        for line in output.split("\n"):
+            if "state UP" in line or "state UNKNOWN" in line:
+                parts = line.split(":")
+                if len(parts) > 1:
+                    details["Interfaz"] = parts[1].strip().split()[0]
+                    for part in parts[1:]:
+                        if "metric" not in part.lower():
+                            details["Estado"] = "UP"
+                if "link/ether" in line:
+                    mac = line.split("link/ether")[1].strip().split()[0]
+                    details["MAC"] = mac
+                if "mtu" in line:
+                    mtu = line.split("mtu")[1].strip().split()[0]
+                    details["MTU"] = mtu
+
+        try:
+            output = run_command("ethtool " + details.get("Interfaz", "eth0"))
+            for line in output.split("\n"):
+                line_lower = line.lower()
+                if "speed" in line_lower:
+                    details["Velocidad"] = line.split(":")[-1].strip()
+                elif "duplex" in line_lower:
+                    details["Duplex"] = line.split(":")[-1].strip()
+        except:
+            pass
+
+    return details
+
+
 def main():
     is_windows = platform.system().lower() == "windows"
 
@@ -519,6 +588,16 @@ def main():
         else:
             print(f"   ⚠️ No se pudo obtener información de {name}")
             packet_loss_results.append((name, None))
+
+    # ========== DETALLES INTERFAZ DE RED ==========
+    print_header("TEST 8: DETALLES DEL INTERFAZ DE RED")
+    interface_details = get_network_interface_details()
+    if interface_details:
+        print(f"   📡 Información del interfaz de red:")
+        for key, value in interface_details.items():
+            print(f"      {key}: {value}")
+    else:
+        print("   ⚠️ No se pudo obtener información del interfaz")
 
     # ========== RESUMEN ==========
     print_header("RESULTADO FINAL")
@@ -691,6 +770,16 @@ def main():
                 f.write(f"   Porcentaje: {packet_info.get('% perda', 'N/A')}\n")
             else:
                 f.write(f"{name}: No disponible\n")
+
+        # TEST 8: DETALLES INTERFAZ DE RED
+        f.write("\n" + "=" * 60 + "\n")
+        f.write("   TEST 8: DETALLES DEL INTERFAZ DE RED\n")
+        f.write("=" * 60 + "\n")
+        if interface_details:
+            for key, value in interface_details.items():
+                f.write(f"{key}: {value}\n")
+        else:
+            f.write("No se pudo obtener información del interfaz\n")
 
         # RESULTADO FINAL
         f.write("\n" + "=" * 60 + "\n")

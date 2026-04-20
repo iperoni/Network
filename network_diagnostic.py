@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Network Diagnostic Tool (v1.2.5)
+Network Diagnostic Tool (v1.3)
 Diagnóstico completo de conectividad de red mejorado para Windows/Linux
 
 Autor: Xabier Pereira - Modificado por Ignacio Peroni (v0.5)
@@ -621,6 +621,73 @@ def run_traceroute(host, max_hops=30):
     return hops
 
 
+def get_dhcp_lease_info():
+    """Obtiene información del lease DHCP"""
+    is_windows = platform.system().lower() == "windows"
+    lease_info = {}
+
+    if is_windows:
+        output = run_command("ipconfig /all")
+
+        dhcp_enabled = False
+        for line in output.split("\n"):
+            line_lower = line.lower()
+            if "dhcp habilitado" in line_lower or "dhcp enabled" in line_lower:
+                if "si" in line_lower or "yes" in line_lower:
+                    dhcp_enabled = True
+                    lease_info["DHCP"] = "Habilitado"
+                else:
+                    lease_info["DHCP"] = "Deshabilitado (IP Estática)"
+
+        if dhcp_enabled:
+            for line in output.split("\n"):
+                line_lower = line.lower()
+                if "fecha de obtención" in line_lower or "obtain date" in line_lower:
+                    if ":" in line:
+                        lease_info["Fecha obtencion"] = line.split(":", 1)[1].strip()
+                elif "vencimiento" in line_lower or "lease expires" in line_lower:
+                    if ":" in line:
+                        lease_info["Vencimiento"] = line.split(":", 1)[1].strip()
+                elif "servidor dhcp" in line_lower or "dhcp server" in line_lower:
+                    if ":" in line:
+                        dhcp_server = line.split(":", 1)[1].strip()
+                        if (
+                            dhcp_server
+                            and dhcp_server != "fec0:0:0ffff::1"
+                            and dhcp_server != "fe80::1"
+                        ):
+                            lease_info["Servidor DHCP"] = dhcp_server
+    else:
+        output = run_command(
+            "cat /var/lib/dhcp/dhclient.leases 2>/dev/null || echo 'No disponible'"
+        )
+        lines = output.split("\n")
+        current_lease = {}
+        for line in lines:
+            line = line.strip()
+            if "lease" in line and "{" in line:
+                current_lease = {}
+            if "}" in line and current_lease:
+                if not lease_info or "ip" not in lease_info:
+                    lease_info = current_lease
+            if "interface" in line:
+                current_lease["Interface"] = line.split()[-1].rstrip(";")
+            elif "fixed-address" in line:
+                current_lease["IP"] = line.split()[-1].rstrip(";")
+            elif "option dhcp-lease-time" in line:
+                current_lease["Tiempo lease"] = line.split()[-1].rstrip(";")
+            elif "option dhcp-message-type" in line:
+                current_lease["Tipo"] = line.split()[-1].rstrip(";")
+            elif "renew" in line:
+                current_lease["Renew"] = line.split()[1].rstrip(";")
+            elif "rebind" in line:
+                current_lease["Rebind"] = line.split()[1].rstrip(";")
+            elif "expire" in line:
+                current_lease["Expire"] = line.split()[1].rstrip(";")
+
+    return lease_info
+
+
 def test_internet_speed():
     """Test de velocidad de internet (download + upload)"""
     import time
@@ -944,6 +1011,16 @@ def main():
     else:
         print("   ⚠️ No se pudo obtener información de velocidad")
 
+    # ========== INFORMACIÓN DHCP ==========
+    print_header("TEST 12: INFORMACIÓN DHCP")
+    dhcp_info = get_dhcp_lease_info()
+    if dhcp_info:
+        print(f"   📋 Información del lease DHCP:")
+        for key, value in dhcp_info.items():
+            print(f"      {key}: {value}")
+    else:
+        print("   ⚠️ No se pudo obtener información DHCP")
+
     # ========== RESUMEN ==========
     print_header("RESULTADO FINAL")
     puntos = 0
@@ -1185,6 +1262,16 @@ def main():
             f.write(f"\nResumen Upload:\n")
             f.write(f"   Promedio: {avg_ul:.1f} Mbps\n")
             f.write(f"   Maxima: {max_ul:.1f} Mbps\n")
+
+        # TEST 12: DHCP INFO
+        f.write("\n" + "=" * 60 + "\n")
+        f.write("   TEST 12: INFORMACIÓN DHCP\n")
+        f.write("=" * 60 + "\n")
+        if dhcp_info:
+            for key, value in dhcp_info.items():
+                f.write(f"{key}: {value}\n")
+        else:
+            f.write("No se pudo obtener información DHCP\n")
 
         # RESULTADO FINAL
         f.write("\n" + "=" * 60 + "\n")

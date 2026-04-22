@@ -22,7 +22,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.11"
+VERSION = "v1.12"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -137,20 +137,23 @@ SPEED_SERVERS = {
     "cloudflare": {
         "download": "https://speed.cloudflare.com/__down?bytes={size}",
         "upload": "https://speed.cloudflare.com/__up",
+        "upload_method": "formdata",  # Cloudflare requiere FormData
     },
     "nperf": {
         "download": "https://www.nperf.com/__down?bytes={size}",
-        "upload": None,  # nperf no soporta upload
+        "upload": None,
+        "upload_method": None,  # nperf no soporta upload
     },
     "tele2": {
         "download": "http://speedtest.tele2.net/{size}MB.zip",
         "upload": "http://speedtest.tele2.net/upload.php",
+        "upload_method": "databinary",  # Tele2 requiere --data-binary (pero necesita auth)
     },
 }
 
 # Orden de fallback para download y upload
 DOWNLOAD_ORDER = ["cloudflare", "nperf", "tele2"]
-UPLOAD_ORDER = ["cloudflare", "tele2"]  # nperf no soporta upload
+UPLOAD_ORDER = ["cloudflare"]  # Tele2 requiere auth, solo Cloudflare disponible
 
 
 # ==============================================================================
@@ -1053,6 +1056,7 @@ def test_internet_speed(test_size_mb=20):
     def try_upload(server_name, server_urls, size_mb):
         """Intenta upload con un servidor específico"""
         url = server_urls.get("upload")
+        upload_method = server_urls.get("upload_method", "databinary")
         if not url:
             return None, False  # No soporta upload
 
@@ -1060,7 +1064,15 @@ def test_internet_speed(test_size_mb=20):
             start = time.time()
             with open("temp_upload.bin", "wb") as f:
                 f.write(test_data)
-            cmd = f'curl -X POST -o NUL --connect-timeout 30 --max-time 120 -A "Mozilla/5.0" --data-binary "@temp_upload.bin" "{url}"'
+
+            # Construir comando según el método del servidor
+            if upload_method == "formdata":
+                # Cloudflare requiere FormData
+                cmd = f'curl -k -s -X POST --connect-timeout 30 --max-time 120 -A "Mozilla/5.0" -F "file=@temp_upload.bin" "{url}"'
+            else:
+                # Otros servidores: --data-binary
+                cmd = f'curl -s -X POST --connect-timeout 30 --max-time 120 -A "Mozilla/5.0" --data-binary "@temp_upload.bin" "{url}"'
+
             result = subprocess.run(cmd, shell=True, capture_output=True, timeout=125)
 
             try:

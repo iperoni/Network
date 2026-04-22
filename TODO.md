@@ -48,12 +48,13 @@ Lista de mejoras pendientes para el proyecto.
 - [x] --tests no funciona correctamente (fix v1.9)
 - [x] Reporte TXT incluye tests no ejecutados (fix v1.10)
 - [x] Speed test simplificado con fallback (v1.11)
+- [x] Upload no funciona (fix v1.12 - Cloudflare usa FormData)
 
 ---
 
 *Última actualización: 2026-04-22*
 
-*Completado en v1.11: Speed test simplificado*
+*Completado en v1.12: Upload fix - Cloudflare FormData*
 
 *Completado en v1.8: Refactorización - constantes, código limpio*
 

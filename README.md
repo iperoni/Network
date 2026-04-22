@@ -1,4 +1,4 @@
-# Network Diagnostic Tool (v1.11)
+# Network Diagnostic Tool (v1.12)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux.
 
@@ -146,6 +146,13 @@ python network_diagnostic.py --parallel --tests 1,2,5,6  # Solo tests específic
 **Tests que siempre son secuenciales**: 7 (pérdida), 10 (traceroute), 11 (speed)
 
 ## Historial de Cambios
+
+### v1.12 (2026)
+**Modificado por: Ignacio Peroni**
+
+- Fix upload: Cloudflare ahora usa FormData (`-F`) en lugar de `--data-binary`
+- Tele2暂时不可用（需要认证）
+- Upload修复成功
 
 ### v1.11 (2026)
 **Modificado por: Ignacio Peroni**

@@ -46,12 +46,13 @@ Lista de mejoras pendientes para el proyecto.
 ## Bugs (Resueltos)
 
 - [x] --tests no funciona correctamente (fix v1.9)
+- [x] Reporte TXT incluye tests no ejecutados (fix v1.10)
 
 ---
 
 *Última actualización: 2026-04-22*
 
-*Completado en v1.9: Bugfix --tests*
+*Completado en v1.10: Fix reporte TXT*
 
 *Completado en v1.8: Refactorización - constantes, código limpio*
 

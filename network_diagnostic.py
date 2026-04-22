@@ -22,7 +22,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.9"
+VERSION = "v1.10"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -1378,6 +1378,9 @@ def main():
     global packet_loss_results, interface_details, firewall_info
     global traceroute_results, speed_results, dhcp_info
 
+    # Trackear tests ejecutados
+    executed_tests = set()
+
     loopback_ok = False
     gateway = None
     gateway_ok = False
@@ -1396,6 +1399,7 @@ def main():
 
     # Test 1: Conectividad local
     if "1" in selected_tests:
+        executed_tests.add("1")
         print_header("TEST 1: CONECTIVIDAD LOCAL")
         loopback_ok = test_ping("127.0.0.1", "Loopback (Interno)")
 
@@ -1427,6 +1431,7 @@ def main():
 
     # Test 2: Internet y DNS
     if "2" in selected_tests:
+        executed_tests.add("2")
         print_header("TEST 2: INTERNET Y DNS")
 
         internet_ok = test_ping("8.8.8.8", "Google DNS")
@@ -1434,6 +1439,7 @@ def main():
 
     # Test 2B: DNS configurados
     if "2b" in selected_tests:
+        executed_tests.add("2b")
         print_header("TEST 2B: SERVIDORES DNS CONFIGURADOS")
         dns_servers = get_configured_dns()
         if dns_servers:
@@ -1446,12 +1452,14 @@ def main():
 
     # Test 3: Puertos
     if "3" in selected_tests:
+        executed_tests.add("3")
         print_header("TEST 3: PUERTOS CRÍTICOS")
         test_port("google.com", 443, "HTTPS")
         test_port("8.8.8.8", 53, "DNS")
 
     # Test 4: Latencia
     if "4" in selected_tests:
+        executed_tests.add("4")
         print_header("TEST 4: ESTADÍSTICAS DE LATENCIA")
         targets = [("8.8.8.8", "Google"), ("1.1.1.1", "Cloudflare")]
         for ip, name in targets:
@@ -1464,6 +1472,7 @@ def main():
 
     # Test 5: WiFi
     if "5" in selected_tests:
+        executed_tests.add("5")
         print_header("TEST 5: SEÑAL WI-FI")
         conn_type = get_connection_type()
 
@@ -1503,6 +1512,7 @@ def main():
 
     # Test 6: ISP
     if "6" in selected_tests and not args.no_isp:
+        executed_tests.add("6")
         print_header("TEST 6: INFORMACIÓN DEL ISP")
         print("   🌐 Consultando información del ISP...")
         isp_info = get_public_ip_and_isp()
@@ -1518,6 +1528,7 @@ def main():
 
     # Test 7: Pérdida de paquetes
     if "7" in selected_tests:
+        executed_tests.add("7")
         print_header("TEST 7: PÉRDIDA DE PAQUETES")
         hosts = [("8.8.8.8", "Google DNS"), ("1.1.1.1", "Cloudflare")]
         packet_loss_results = []
@@ -1541,6 +1552,7 @@ def main():
 
     # Test 8: Interfaz de red
     if "8" in selected_tests:
+        executed_tests.add("8")
         print_header("TEST 8: DETALLES DEL INTERFAZ DE RED")
         interface_details = get_network_interface_details()
         if interface_details:
@@ -1552,6 +1564,7 @@ def main():
 
     # Test 9: Firewall
     if "9" in selected_tests:
+        executed_tests.add("9")
         print_header("TEST 9: ESTADO DEL FIREWALL")
         firewall_info = get_firewall_status()
         if firewall_info:
@@ -1563,6 +1576,7 @@ def main():
 
     # Test 10: Traceroute
     if "10" in selected_tests:
+        executed_tests.add("10")
         print_header("TEST 10: TRACEROUTE")
         targets = [("youtube.com", "YouTube (CDN)"), ("yahoo.com", "Yahoo (IPTransit)")]
         traceroute_results = []
@@ -1582,6 +1596,7 @@ def main():
 
     # Test 11: Velocidad (omitir si --no-speed)
     if "11" in selected_tests and not args.no_speed:
+        executed_tests.add("11")
         speed_size = 5
         if args.speed_size:
             parts = args.speed_size.split(",")
@@ -1618,6 +1633,7 @@ def main():
 
     # Test 12: DHCP
     if "12" in selected_tests:
+        executed_tests.add("12")
         print_header("TEST 12: INFORMACIÓN DHCP")
         dhcp_info = get_dhcp_lease_info()
         if dhcp_info:
@@ -1703,68 +1719,76 @@ def main():
                         f.write(f"   {line.strip()}\n")
 
         # TEST 1: CONECTIVIDAD LOCAL
-        f.write("\n" + "=" * 60 + "\n")
-        f.write("   TEST 1: CONECTIVIDAD LOCAL\n")
-        f.write("=" * 60 + "\n")
-        f.write(f"Loopback (127.0.0.1): {'OK' if loopback_ok else 'FALLO'}\n")
-        f.write(f"Gateway ({gateway}): {'OK' if gateway_ok else 'FALLO'}\n")
+        if "1" in executed_tests:
+            f.write("\n" + "=" * 60 + "\n")
+            f.write("   TEST 1: CONECTIVIDAD LOCAL\n")
+            f.write("=" * 60 + "\n")
+            f.write(f"Loopback (127.0.0.1): {'OK' if loopback_ok else 'FALLO'}\n")
+            f.write(f"Gateway ({gateway}): {'OK' if gateway_ok else 'FALLO'}\n")
 
         # TEST 2: INTERNET Y DNS
-        f.write("\n" + "=" * 60 + "\n")
-        f.write("   TEST 2: INTERNET Y DNS\n")
-        f.write("=" * 60 + "\n")
-        f.write(f"Internet (8.8.8.8): {'OK' if internet_ok else 'FALLO'}\n")
-        f.write(f"DNS (google.com): {'OK' if dns_ok else 'FALLO'}\n")
+        if "2" in executed_tests:
+            f.write("\n" + "=" * 60 + "\n")
+            f.write("   TEST 2: INTERNET Y DNS\n")
+            f.write("=" * 60 + "\n")
+            f.write(f"Internet (8.8.8.8): {'OK' if internet_ok else 'FALLO'}\n")
+            f.write(f"DNS (google.com): {'OK' if dns_ok else 'FALLO'}\n")
 
         # TEST 2B: DNS CONFIGURADOS
-        f.write("\n" + "=" * 60 + "\n")
-        f.write("   TEST 2B: SERVIDORES DNS CONFIGURADOS\n")
-        f.write("=" * 60 + "\n")
-        if dns_servers:
-            f.write(f"Servidores DNS ({len(dns_servers)}):\n")
-            for dns in dns_servers:
-                f.write(f"   - {dns}\n")
-        else:
-            f.write("No se detectaron servidores DNS configurados\n")
+        if "2b" in executed_tests:
+            f.write("\n" + "=" * 60 + "\n")
+            f.write("   TEST 2B: SERVIDORES DNS CONFIGURADOS\n")
+            f.write("=" * 60 + "\n")
+            if dns_servers:
+                f.write(f"Servidores DNS ({len(dns_servers)}):\n")
+                for dns in dns_servers:
+                    f.write(f"   - {dns}\n")
+            else:
+                f.write("No se detectaron servidores DNS configurados\n")
 
         # TEST 3: PUERTOS
-        f.write("\n" + "=" * 60 + "\n")
-        f.write("   TEST 3: PUERTOS CRÍTICOS\n")
-        f.write("=" * 60 + "\n")
+        if "3" in executed_tests:
+            f.write("\n" + "=" * 60 + "\n")
+            f.write("   TEST 3: PUERTOS CRÍTICOS\n")
+            f.write("=" * 60 + "\n")
 
-        def test_port_check(host, port, service_name):
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(3)
-            try:
-                result = sock.connect_ex((host, port))
-                sock.close()
-                return "ABIERTO" if result == 0 else "CERRADO"
-            except:
-                sock.close()
-                return "ERROR"
+            def test_port_check(host, port, service_name):
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(3)
+                try:
+                    result = sock.connect_ex((host, port))
+                    sock.close()
+                    return "ABIERTO" if result == 0 else "CERRADO"
+                except:
+                    sock.close()
+                    return "ERROR"
 
-        https_status = test_port_check("google.com", 443, "HTTPS")
-        dns_status = test_port_check("8.8.8.8", 53, "DNS")
-        f.write(f"Puerto 443 (HTTPS): {https_status}\n")
-        f.write(f"Puerto 53 (DNS): {dns_status}\n")
+            https_status = test_port_check("google.com", 443, "HTTPS")
+            dns_status = test_port_check("8.8.8.8", 53, "DNS")
+            f.write(f"Puerto 443 (HTTPS): {https_status}\n")
+            f.write(f"Puerto 53 (DNS): {dns_status}\n")
 
         # TEST 4: LATENCIA
-        f.write("\n" + "=" * 60 + "\n")
-        f.write("   TEST 4: ESTADÍSTICAS DE LATENCIA\n")
-        f.write("=" * 60 + "\n")
+        if "4" in executed_tests:
+            f.write("\n" + "=" * 60 + "\n")
+            f.write("   TEST 4: ESTADÍSTICAS DE LATENCIA\n")
+            f.write("=" * 60 + "\n")
 
-        for ip, name in [("8.8.8.8", "Google"), ("1.1.1.1", "Cloudflare")]:
-            param = "-n" if is_windows else "-c"
-            output = run_command(f"ping {param} 5 {ip}")
-            for line in output.split("\n"):
-                if any(k in line.lower() for k in ["average", "media", "min", "max"]):
-                    f.write(f"{name}: {line.strip()}\n")
+            for ip, name in [("8.8.8.8", "Google"), ("1.1.1.1", "Cloudflare")]:
+                param = "-n" if is_windows else "-c"
+                output = run_command(f"ping {param} 5 {ip}")
+                for line in output.split("\n"):
+                    if any(
+                        k in line.lower() for k in ["average", "media", "min", "max"]
+                    ):
+                        f.write(f"{name}: {line.strip()}\n")
 
         # TEST 5: SEÑAL WIFI
-        f.write("\n" + "=" * 60 + "\n")
-        f.write("   TEST 5: SEÑAL WI-FI\n")
-        f.write("=" * 60 + "\n")
-        f.write(f"Tipo de conexión: {conn_type}\n")
+        if "5" in executed_tests:
+            f.write("\n" + "=" * 60 + "\n")
+            f.write("   TEST 5: SEÑAL WI-FI\n")
+            f.write("=" * 60 + "\n")
+            f.write(f"Tipo de conexión: {conn_type}\n")
         if conn_type == "wifi" and wifi_info:
             for key, value in wifi_info.items():
                 f.write(f"{key}: {value}\n")
@@ -1772,112 +1796,119 @@ def main():
             f.write(f"Conexión {conn_type} - Test WiFi no aplicable\n")
 
         # TEST 6: ISP INFO
-        f.write("\n" + "=" * 60 + "\n")
-        f.write("   TEST 6: INFORMACIÓN DEL ISP\n")
-        f.write("=" * 60 + "\n")
-        if isp_info:
-            f.write(f"IP Pública: {isp_info.get('public_ip', 'N/A')}\n")
-            f.write(f"ISP: {isp_info.get('isp', 'N/A')}\n")
-            f.write(f"Organización: {isp_info.get('org', 'N/A')}\n")
-            f.write(
-                f"Ubicación: {isp_info.get('city', 'N/A')}, {isp_info.get('country', 'N/A')}\n"
-            )
-        else:
-            f.write("No se pudo obtener información del ISP\n")
+        if "6" in executed_tests:
+            f.write("\n" + "=" * 60 + "\n")
+            f.write("   TEST 6: INFORMACIÓN DEL ISP\n")
+            f.write("=" * 60 + "\n")
+            if isp_info:
+                f.write(f"IP Pública: {isp_info.get('public_ip', 'N/A')}\n")
+                f.write(f"ISP: {isp_info.get('isp', 'N/A')}\n")
+                f.write(f"Organización: {isp_info.get('org', 'N/A')}\n")
+                f.write(
+                    f"Ubicación: {isp_info.get('city', 'N/A')}, {isp_info.get('country', 'N/A')}\n"
+                )
+            else:
+                f.write("No se pudo obtener información del ISP\n")
 
         # TEST 7: PÉRDIDA DE PAQUETES
-        f.write("\n" + "=" * 60 + "\n")
-        f.write("   TEST 7: PÉRDIDA DE PAQUETES\n")
-        f.write("=" * 60 + "\n")
-        for name, packet_info in packet_loss_results:
-            if packet_info:
-                f.write(f"{name}:\n")
-                f.write(f"   Enviados: {packet_info.get('enviados', 'N/A')}\n")
-                f.write(f"   Recibidos: {packet_info.get('recibidos', 'N/A')}\n")
-                f.write(f"   Perdidos: {packet_info.get('perdidos', 'N/A')}\n")
-                f.write(f"   Porcentaje: {packet_info.get('% perda', 'N/A')}\n")
-            else:
-                f.write(f"{name}: No disponible\n")
+        if "7" in executed_tests:
+            f.write("\n" + "=" * 60 + "\n")
+            f.write("   TEST 7: PÉRDIDA DE PAQUETES\n")
+            f.write("=" * 60 + "\n")
+            for name, packet_info in packet_loss_results:
+                if packet_info:
+                    f.write(f"{name}:\n")
+                    f.write(f"   Enviados: {packet_info.get('enviados', 'N/A')}\n")
+                    f.write(f"   Recibidos: {packet_info.get('recibidos', 'N/A')}\n")
+                    f.write(f"   Perdidos: {packet_info.get('perdidos', 'N/A')}\n")
+                    f.write(f"   Porcentaje: {packet_info.get('% perda', 'N/A')}\n")
+                else:
+                    f.write(f"{name}: No disponible\n")
 
         # TEST 8: DETALLES INTERFAZ DE RED
-        f.write("\n" + "=" * 60 + "\n")
-        f.write("   TEST 8: DETALLES DEL INTERFAZ DE RED\n")
-        f.write("=" * 60 + "\n")
-        if interface_details:
-            for key, value in interface_details.items():
-                f.write(f"{key}: {value}\n")
-        else:
-            f.write("No se pudo obtener información del interfaz\n")
+        if "8" in executed_tests:
+            f.write("\n" + "=" * 60 + "\n")
+            f.write("   TEST 8: DETALLES DEL INTERFAZ DE RED\n")
+            f.write("=" * 60 + "\n")
+            if interface_details:
+                for key, value in interface_details.items():
+                    f.write(f"{key}: {value}\n")
+            else:
+                f.write("No se pudo obtener información del interfaz\n")
 
         # TEST 9: ESTADO DEL FIREWALL
-        f.write("\n" + "=" * 60 + "\n")
-        f.write("   TEST 9: ESTADO DEL FIREWALL\n")
-        f.write("=" * 60 + "\n")
-        if firewall_info:
-            for key, value in firewall_info.items():
-                f.write(f"{key}: {value}\n")
-        else:
-            f.write("No se pudo obtener información del firewall\n")
+        if "9" in executed_tests:
+            f.write("\n" + "=" * 60 + "\n")
+            f.write("   TEST 9: ESTADO DEL FIREWALL\n")
+            f.write("=" * 60 + "\n")
+            if firewall_info:
+                for key, value in firewall_info.items():
+                    f.write(f"{key}: {value}\n")
+            else:
+                f.write("No se pudo obtener información del firewall\n")
 
         # TEST 10: TRACEROUTE
-        f.write("\n" + "=" * 60 + "\n")
-        f.write("   TEST 10: TRACEROUTE\n")
-        f.write("=" * 60 + "\n")
-        for name, hops in traceroute_results:
-            f.write(f"\n{name}:\n")
-            if hops:
-                for hop in hops[:20]:
-                    f.write(f"   {hop}\n")
-                if len(hops) > 20:
-                    f.write(f"   ... y {len(hops) - 20} saltos más\n")
-            else:
-                f.write("   No se pudo obtener ruta\n")
+        if "10" in executed_tests:
+            f.write("\n" + "=" * 60 + "\n")
+            f.write("   TEST 10: TRACEROUTE\n")
+            f.write("=" * 60 + "\n")
+            for name, hops in traceroute_results:
+                f.write(f"\n{name}:\n")
+                if hops:
+                    for hop in hops[:20]:
+                        f.write(f"   {hop}\n")
+                    if len(hops) > 20:
+                        f.write(f"   ... y {len(hops) - 20} saltos más\n")
+                else:
+                    f.write("   No se pudo obtener ruta\n")
 
         # TEST 11: VELOCIDAD
-        f.write("\n" + "=" * 60 + "\n")
-        f.write("   TEST 11: VELOCIDAD DE INTERNET\n")
-        f.write("=" * 60 + "\n")
+        if "11" in executed_tests:
+            f.write("\n" + "=" * 60 + "\n")
+            f.write("   TEST 11: VELOCIDAD DE INTERNET\n")
+            f.write("=" * 60 + "\n")
 
-        dl_results = speed_results.get("download", [])
-        ul_results = speed_results.get("upload", [])
+            dl_results = speed_results.get("download", [])
+            ul_results = speed_results.get("upload", [])
 
-        f.write("\nDownload:\n")
-        if dl_results:
-            for name, speed, time_sec in dl_results:
-                f.write(f"   {name}: {speed:.1f} Mbps\n")
-        else:
-            f.write("   No disponible\n")
+            f.write("\nDownload:\n")
+            if dl_results:
+                for name, speed, time_sec in dl_results:
+                    f.write(f"   {name}: {speed:.1f} Mbps\n")
+            else:
+                f.write("   No disponible\n")
 
-        f.write("\nUpload:\n")
-        if ul_results:
-            for name, speed, time_sec in ul_results:
-                f.write(f"   {name}: {speed:.1f} Mbps\n")
-        else:
-            f.write("   No disponible\n")
+            f.write("\nUpload:\n")
+            if ul_results:
+                for name, speed, time_sec in ul_results:
+                    f.write(f"   {name}: {speed:.1f} Mbps\n")
+            else:
+                f.write("   No disponible\n")
 
-        if dl_results:
-            avg_dl = sum(r[1] for r in dl_results) / len(dl_results)
-            max_dl = max(r[1] for r in dl_results)
-            f.write(f"\nResumen Download:\n")
-            f.write(f"   Promedio: {avg_dl:.1f} Mbps\n")
-            f.write(f"   Maxima: {max_dl:.1f} Mbps\n")
+            if dl_results:
+                avg_dl = sum(r[1] for r in dl_results) / len(dl_results)
+                max_dl = max(r[1] for r in dl_results)
+                f.write(f"\nResumen Download:\n")
+                f.write(f"   Promedio: {avg_dl:.1f} Mbps\n")
+                f.write(f"   Maxima: {max_dl:.1f} Mbps\n")
 
-        if ul_results:
-            avg_ul = sum(r[1] for r in ul_results) / len(ul_results)
-            max_ul = max(r[1] for r in ul_results)
-            f.write(f"\nResumen Upload:\n")
-            f.write(f"   Promedio: {avg_ul:.1f} Mbps\n")
-            f.write(f"   Maxima: {max_ul:.1f} Mbps\n")
+            if ul_results:
+                avg_ul = sum(r[1] for r in ul_results) / len(ul_results)
+                max_ul = max(r[1] for r in ul_results)
+                f.write(f"\nResumen Upload:\n")
+                f.write(f"   Promedio: {avg_ul:.1f} Mbps\n")
+                f.write(f"   Maxima: {max_ul:.1f} Mbps\n")
 
         # TEST 12: DHCP INFO
-        f.write("\n" + "=" * 60 + "\n")
-        f.write("   TEST 12: INFORMACIÓN DHCP\n")
-        f.write("=" * 60 + "\n")
-        if dhcp_info:
-            for key, value in dhcp_info.items():
-                f.write(f"{key}: {value}\n")
-        else:
-            f.write("No se pudo obtener información DHCP\n")
+        if "12" in executed_tests:
+            f.write("\n" + "=" * 60 + "\n")
+            f.write("   TEST 12: INFORMACIÓN DHCP\n")
+            f.write("=" * 60 + "\n")
+            if dhcp_info:
+                for key, value in dhcp_info.items():
+                    f.write(f"{key}: {value}\n")
+            else:
+                f.write("No se pudo obtener información DHCP\n")
 
         # RESULTADO FINAL
         f.write("\n" + "=" * 60 + "\n")

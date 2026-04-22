@@ -1,4 +1,4 @@
-# Network Diagnostic Tool (v1.9)
+# Network Diagnostic Tool (v1.10)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux.
 
@@ -149,6 +149,12 @@ python network_diagnostic.py --parallel --tests 1,2,5,6  # Solo tests específic
 **Tests que siempre son secuenciales**: 7 (pérdida), 10 (traceroute), 11 (speed)
 
 ## Historial de Cambios
+
+### v1.10 (2026)
+**Modificado por: Ignacio Peroni**
+
+- Fix: Reporte TXT solo incluye tests ejecutados
+- Tests no ejecutados no se escriben en el archivo
 
 ### v1.9 (2026)
 **Modificado por: Ignacio Peroni**

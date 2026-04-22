@@ -22,7 +22,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.8"
+VERSION = "v1.9"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -272,9 +272,15 @@ def parse_test_string(test_str):
     while i < len(parts):
         part = parts[i]
 
+        # Si ya es un número, usarlo directamente
+        if part.isdigit():
+            tests.add(part)
+            i += 1
+            continue
+
         # Verificar rango (ej: 5-7)
         if i + 1 < len(parts) and parts[i + 1].isdigit():
-            start = int(part) if part.isdigit() else TESTS_MAP.get(part, part)
+            start = TESTS_MAP.get(part, part)
             end = int(parts[i + 1])
             if isinstance(start, str):
                 start_num = (

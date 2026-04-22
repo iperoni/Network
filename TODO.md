@@ -43,7 +43,15 @@ Lista de mejoras pendientes para el proyecto.
 
 ---
 
+## Bugs (Resueltos)
+
+- [x] --tests no funciona correctamente (fix v1.9)
+
+---
+
 *Última actualización: 2026-04-22*
+
+*Completado en v1.9: Bugfix --tests*
 
 *Completado en v1.8: Refactorización - constantes, código limpio*
 

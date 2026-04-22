@@ -22,7 +22,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.12"
+VERSION = "v1.13"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -137,23 +137,34 @@ SPEED_SERVERS = {
     "cloudflare": {
         "download": "https://speed.cloudflare.com/__down?bytes={size}",
         "upload": "https://speed.cloudflare.com/__up",
-        "upload_method": "formdata",  # Cloudflare requiere FormData
+        "upload_method": "formdata",
     },
     "nperf": {
         "download": "https://www.nperf.com/__down?bytes={size}",
         "upload": None,
-        "upload_method": None,  # nperf no soporta upload
+        "upload_method": None,
     },
     "tele2": {
         "download": "http://speedtest.tele2.net/{size}MB.zip",
         "upload": "http://speedtest.tele2.net/upload.php",
-        "upload_method": "databinary",  # Tele2 requiere --data-binary (pero necesita auth)
+        "upload_method": "databinary",
+    },
+    "tempfile": {
+        "download": None,
+        "upload": "https://tempfile.org/api/upload/local",
+        "upload_method": "formdata",
+        "upload_field": "files",
+    },
+    "oshi": {
+        "download": None,
+        "upload": "https://oshi.io/upload",
+        "upload_method": "formdata",
     },
 }
 
 # Orden de fallback para download y upload
 DOWNLOAD_ORDER = ["cloudflare", "nperf", "tele2"]
-UPLOAD_ORDER = ["cloudflare"]  # Tele2 requiere auth, solo Cloudflare disponible
+UPLOAD_ORDER = ["cloudflare", "tempfile", "oshi"]
 
 
 # ==============================================================================
@@ -1057,6 +1068,7 @@ def test_internet_speed(test_size_mb=20):
         """Intenta upload con un servidor específico"""
         url = server_urls.get("upload")
         upload_method = server_urls.get("upload_method", "databinary")
+        upload_field = server_urls.get("upload_field", "file")
         if not url:
             return None, False  # No soporta upload
 
@@ -1067,8 +1079,8 @@ def test_internet_speed(test_size_mb=20):
 
             # Construir comando según el método del servidor
             if upload_method == "formdata":
-                # Cloudflare requiere FormData
-                cmd = f'curl -k -s -X POST --connect-timeout 30 --max-time 120 -A "Mozilla/5.0" -F "file=@temp_upload.bin" "{url}"'
+                # Cloudflare, tempfile.org, oshi.io: FormData
+                cmd = f'curl -k -s -X POST --connect-timeout 30 --max-time 120 -A "Mozilla/5.0" -F "{upload_field}=@temp_upload.bin" "{url}"'
             else:
                 # Otros servidores: --data-binary
                 cmd = f'curl -s -X POST --connect-timeout 30 --max-time 120 -A "Mozilla/5.0" --data-binary "@temp_upload.bin" "{url}"'

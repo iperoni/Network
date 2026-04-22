@@ -1,4 +1,4 @@
-# Network Diagnostic Tool (v1.12)
+# Network Diagnostic Tool (v1.13)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux.
 
@@ -146,6 +146,15 @@ python network_diagnostic.py --parallel --tests 1,2,5,6  # Solo tests específic
 **Tests que siempre son secuenciales**: 7 (pérdida), 10 (traceroute), 11 (speed)
 
 ## Historial de Cambios
+
+### v1.13 (2026)
+**Modificado por: Ignacio Peroni**
+
+- Servidores de upload adicionales: tempfile.org y oshi.io como fallback
+- Orden de upload: cloudflare → tempfile.org → oshi.io
+- Fallback automático: si cloudflare falla, prueba tempfile.org, si falla, prueba oshi.io
+- tempfile.org: ~2 Mbps upload (servidor temporal de archivos, expira en 1-48h)
+- oshi.io: ~1 Mbps upload
 
 ### v1.12 (2026)
 **Modificado por: Ignacio Peroni**

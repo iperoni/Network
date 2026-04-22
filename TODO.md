@@ -14,7 +14,8 @@ Lista de mejoras pendientes para el proyecto.
 - [x] Exportar JSON - Opción para exportar resultados a JSON además de TXT (--format json)
 - [x] Speed test configurable - Tamaño de archivo personalizable para speed test
 - [ ] Timeouts configurables - Timeouts ajustables para conexiones lentas
-- [ ] Retry logic - Reintentos automáticos en tests quefallen
+- [ ] Retry logic - Reintentos automáticos en tests que fallen
+- [x] Upload fallback servers - Múltiples servidores de upload con fallback automático
 
 ## Baja Prioridad
 
@@ -49,10 +50,13 @@ Lista de mejoras pendientes para el proyecto.
 - [x] Reporte TXT incluye tests no ejecutados (fix v1.10)
 - [x] Speed test simplificado con fallback (v1.11)
 - [x] Upload no funciona (fix v1.12 - Cloudflare usa FormData)
+- [x] Upload solo un servidor (fix v1.13 - tempfile.org + oshi.io fallback)
 
 ---
 
 *Última actualización: 2026-04-22*
+
+*Completado en v1.13: Upload fallback - tempfile.org + oshi.io*
 
 *Completado en v1.12: Upload fix - Cloudflare FormData*
 

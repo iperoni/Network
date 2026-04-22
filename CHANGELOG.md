@@ -6,6 +6,18 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [v1.13] - 2026-04-22
+
+### Agregado
+- tempfile.org como servidor de upload fallback (~2 Mbps)
+- oshi.io como servidor de upload fallback (~1 Mbps)
+- Orden de upload: cloudflare → tempfile.org → oshi.io (fallback automático)
+
+### Fixed
+- Upload usa campo configurable (`upload_field`) para diferentes APIs
+
+---
+
 ## [v1.7] - 2026-04-20
 
 ### Agregado

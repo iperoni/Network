@@ -31,6 +31,22 @@ Lista de mejoras pendientes para el proyecto.
 
 ---
 
-*Última actualización: 2026-04-20*
+## Refactorización
 
-*Completado en v1.5: Args/flags, menú interactivo, selección por nombre/número, preferencias CFG*
+- [x] Eliminar duplicados en TESTS_MAP
+- [x] Crear constantes globales (IS_WINDOWS, TIMEOUTS, etc.)
+- [x] Extraer configuración a constantes
+- [x] Reducir duplicación de código
+- [ ] Dividir funciones largas (main(), test_internet_speed())
+- [ ] Agregar type hints
+- [ ] Unificar manejo de errores
+
+---
+
+*Última actualización: 2026-04-22*
+
+*Completado en v1.8: Refactorización - constantes, código limpio*
+
+*Completado en v1.7: Tests paralelos y releases*
+
+*Pendiente: Timeouts, Retry, macOS, Dashboard, Comparar resultados, Notificaciones, Tests unitarios, Logging*

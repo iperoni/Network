@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Network Diagnostic Tool (v1.5)
+Network Diagnostic Tool (v1.7)
 Diagnóstico completo de conectividad de red mejorado para Windows/Linux
 
 Autor: Xabier Pereira - Modificado por Ignacio Peroni (v0.5)
@@ -18,9 +18,33 @@ import configparser
 import concurrent.futures
 from datetime import datetime
 
-VERSION = "v1.7"
+# ==============================================================================
+# CONSTANTES GLOBALES
+# ==============================================================================
 
+VERSION = "v1.8"
+IS_WINDOWS = platform.system().lower() == "windows"
+
+# Timeout configurations
+TIMEOUT_DEFAULT = 10  # Timeout general para comandos
+TIMEOUT_LONG = 30  # Timeout largo (speed test, traceroute)
+TIMEOUT_CONNECT = 3  # Timeout para conexión de sockets
+
+# Test configurations
+PING_COUNT = 4  # Número de pings por test
+PACKET_LOSS_COUNT = 10  # Paquetes para test de pérdida
+TRACEROUTE_HOPS = 30  # Saltos máximos para traceroute
+
+# Test hosts
+TEST_HOSTS = {
+    "loopback": "127.0.0.1",
+    "google_dns": "8.8.8.8",
+    "cloudflare_dns": "1.1.1.1",
+}
+
+# Mapeo de tests: número -> nombre y nombre -> número
 TESTS_MAP = {
+    # Número a nombre
     "1": "connectivity",
     "2": "internet",
     "2b": "dns-configured",
@@ -34,16 +58,14 @@ TESTS_MAP = {
     "10": "traceroute",
     "11": "speed",
     "12": "dhcp",
-    # Nombres también
+    # Nombre a número
     "connectivity": "1",
     "internet": "2",
-    "dns-configured": "2b",
     "dns-configured": "2b",
     "ports": "3",
     "latency": "4",
     "wifi": "5",
     "isp": "6",
-    "packet-loss": "7",
     "packet-loss": "7",
     "interface": "8",
     "firewall": "9",
@@ -68,7 +90,34 @@ TEST_NAMES = {
     "12": "Test 12: DHCP",
 }
 
-if platform.system().lower() == "windows":
+# ==============================================================================
+# CONFIGURACIONES DE PLATAFORMA
+# ==============================================================================
+
+# Linux: dependencias opcionales para ciertas funciones
+LINUX_DEPS = {
+    "iw": "Test WiFi (signal)",
+    "ethtool": "Network interface details",
+    "traceroute": "Test traceroute",
+    "ufw": "Firewall status (UFW)",
+    "iptables": "Firewall status (iptables)",
+}
+
+# Linux: features que requieren dependencias
+LINUX_FEATURES = {
+    "iw": "WiFi signal",
+    "ethtool": "Interface details",
+    "traceroute": "Traceroute",
+    "ufw": "UFW firewall",
+    "iptables": "iptables firewall",
+}
+
+# ==============================================================================
+# CONFIGURACIÓN DE PLATAFORMA
+# ==============================================================================
+
+# Configurar UTF-8 en Windows
+if IS_WINDOWS:
     try:
         sys.stdout.reconfigure(encoding="utf-8")
         subprocess.run("chcp 65001", shell=True, capture_output=True)
@@ -76,22 +125,35 @@ if platform.system().lower() == "windows":
         pass
 
 
+# ==============================================================================
+# CONFIGURACIONES DE TESTS
+# ==============================================================================
+
+# Servidores para test de velocidad
+DOWNLOAD_SERVERS = [
+    ("Cloudflare", "https://speed.cloudflare.com/__down?bytes={size}", 5000000),
+    ("nperf", "https://www.nperf.com/__down?bytes={size}", 5000000),
+    ("Tele2", "http://speedtest.tele2.net/{size}MB.zip", 5),
+]
+
+UPLOAD_SERVERS = [
+    ("Cloudflare", "https://speed.cloudflare.com/__up", None),
+    ("Tele2", "http://speedtest.tele2.net/upload.php", None),
+]
+
+
+# ==============================================================================
+# FUNCIONES DE DEPENDENCIAS (LINUX)
+# ==============================================================================
+
+
 def check_linux_dependencies():
     """Verifica que las dependencias opcionales estén instaladas en Linux"""
-    is_windows = platform.system().lower() == "windows"
-    if is_windows:
+    if IS_WINDOWS:
         return {}
 
     deps = {}
-    required_cmds = {
-        "iw": "Test WiFi (signal)",
-        "ethtool": "Network interface details",
-        "traceroute": "Test traceroute",
-        "ufw": "Firewall status (UFW)",
-        "iptables": "Firewall status (iptables)",
-    }
-
-    for cmd, feature in required_cmds.items():
+    for cmd in LINUX_DEPS:
         result = subprocess.run(f"which {cmd}", shell=True, capture_output=True)
         deps[cmd] = result.returncode == 0
 
@@ -100,24 +162,22 @@ def check_linux_dependencies():
 
 def print_dependencies_warning(deps):
     """Imprime advertencia sobre dependencias faltantes en Linux"""
-    is_windows = platform.system().lower() == "windows"
-    if is_windows:
+    if IS_WINDOWS:
         return
 
     missing = [cmd for cmd, installed in deps.items() if not installed]
     if missing:
         print("\n⚠️  ADVERTENCIA: Dependencias opcionales faltantes en Linux:")
         for cmd in missing:
-            feature = {
-                "iw": "WiFi signal",
-                "ethtool": "Interface details",
-                "traceroute": "Traceroute",
-                "ufw": "UFW firewall",
-                "iptables": "iptables firewall",
-            }.get(cmd, cmd)
+            feature = LINUX_FEATURES.get(cmd, cmd)
             print(f"   - {cmd}: {feature}")
         print("   Instalar con: sudo apt install " + " ".join(missing))
         print()
+
+
+# ==============================================================================
+# FUNCIONES DE CONFIGURACIÓN
+# ==============================================================================
 
 
 def get_config_path():
@@ -1377,50 +1437,6 @@ def main():
                 test_dns_verification(dns)
         else:
             print("   ⚠️ No se detectaron servidores DNS configurados")
-
-    # ========== TEST CONECTIVIDAD LOCAL ==========
-    print_header("TEST 1: CONECTIVIDAD LOCAL")
-    loopback_ok = test_ping("127.0.0.1", "Loopback (Interno)")
-
-    gateway = None
-    if is_windows:
-        output = run_command("ipconfig")
-        for line in output.split("\n"):
-            if "puerta de enlace" in line.lower() or "default gateway" in line.lower():
-                parts = line.split(":")
-                if len(parts) > 1 and parts[1].strip():
-                    gateway = parts[1].strip()
-                    break
-    else:
-        output = run_command("ip route | grep default")
-        if output:
-            parts = output.split()
-            if len(parts) > 2:
-                gateway = parts[2]
-
-    gateway_ok = False
-    if gateway:
-        print(f"\n📍 Gateway detectado: {gateway}")
-        gateway_ok = test_ping(gateway, f"Gateway ({gateway})")
-    else:
-        print("\n⚠️ No se detectó Gateway automáticamente.")
-
-    # ========== TEST INTERNET Y DNS ==========
-    print_header("TEST 2: INTERNET Y DNS")
-
-    internet_ok = test_ping("8.8.8.8", "Google DNS")
-    dns_ok, _ = test_dns("google.com")
-
-    # ========== DNS CONFIGURADOS ==========
-    print_header("TEST 2B: SERVIDORES DNS CONFIGURADOS")
-    dns_servers = get_configured_dns()
-    if dns_servers:
-        print(f"   📋 Servidores DNS configurados ({len(dns_servers)}):")
-        for dns in dns_servers:
-            print(f"      - {dns}")
-            test_dns_verification(dns)
-    else:
-        print("   ⚠️ No se detectaron servidores DNS configurados")
 
     # Test 3: Puertos
     if "3" in selected_tests:

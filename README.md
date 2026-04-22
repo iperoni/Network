@@ -1,4 +1,4 @@
-# Network Diagnostic Tool (v1.10)
+# Network Diagnostic Tool (v1.11)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux.
 
@@ -95,11 +95,8 @@ python network_diagnostic.py --no-speed            # Omitir test de velocidad
 python network_diagnostic.py --no-isp             # Omitir consulta ISP
 
 # Speed test configurable
-python network_diagnostic.py --speed-size 10         # 10MB para download y upload
-python network_diagnostic.py --speed-size 5,10      # 5MB download, 10MB upload
-python network_diagnostic.py --speed-servers cloudflare  # Solo Cloudflare
-python network_diagnostic.py --speed-servers cloudflare,nperf  # Cloudflare y nperf
-python network_diagnostic.py --speed-size 10 --speed-servers cloudflare,tele2  # Combinado
+python network_diagnostic.py --speed-size 20         # 20MB (default)
+python network_diagnostic.py --speed-size 10         # 10MB personalizado
 
 # Formato de output
 python network_diagnostic.py -o mis-resultados.txt
@@ -149,6 +146,14 @@ python network_diagnostic.py --parallel --tests 1,2,5,6  # Solo tests específic
 **Tests que siempre son secuenciales**: 7 (pérdida), 10 (traceroute), 11 (speed)
 
 ## Historial de Cambios
+
+### v1.11 (2026)
+**Modificado por: Ignacio Peroni**
+
+- Speed test simplificado con fallback automático
+- Orden de servidores: cloudflare → nperf → tele2
+- Tamaño por defecto: 20MB
+- Muestra solo el resultado del servidor que funcionó
 
 ### v1.10 (2026)
 **Modificado por: Ignacio Peroni**

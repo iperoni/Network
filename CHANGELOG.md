@@ -6,6 +6,13 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [v1.24.1] - 2026-04-23
+
+### Added
+- Help mejorado con ejemplos y lista de tests disponibles
+
+---
+
 ## [v1.24.0] - 2026-04-23
 
 ### Added

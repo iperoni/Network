@@ -1,11 +1,10 @@
-# Diagnóstico y Troubleshooting - v1.24.0
+# Diagnóstico y Troubleshooting - v1.24.1
 
-## Estado: ✅ Test 16 implementado
+## Estado: ✅ Help mejorado
 
+- v1.24.1: Help con ejemplos y lista de tests
 - v1.24.0: Test 16 Conexiones Simultáneas
 - v1.23.1: Fix DNS y doble título
-- v1.23.0: Comparación DNS
-- v1.22.0: Test 15 DNS Alternativos
 
 ## MEJORAS IMPLEMENTADAS
 

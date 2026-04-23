@@ -25,7 +25,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.24.0"
+VERSION = "v1.24.1"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -933,6 +933,39 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description="Network Diagnostic Tool - Herramienta de diagnóstico de red",
         formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Ejemplos:
+  %(prog)s                           # Ejecutar todos los tests
+  %(prog)s --tests 1                 # Solo test de conectividad
+  %(prog)s --tests 1,2,3             # Tests 1, 2 y 3
+  %(prog)s --tests 1-5               # Tests del 1 al 5
+  %(prog)s --tests internet          # Por nombre (equivale a test 2)
+  %(prog)s --tests 2b                # Test de DNS configurados
+  %(prog)s --tests 1-16              # Todos los tests disponibles
+  %(prog)s --no-speed                # Omite test de velocidad
+  %(prog)s --no-isp                  # Omite consulta al ISP
+  %(prog)s -i                        # Menú interactivo
+  %(prog)s --parallel                # Tests independientes en paralelo
+  %(prog)s --format json -o out.json # Output en JSON
+  %(prog)s --speed-size 10           # Test de velocidad con 10MB
+  %(prog)s -v                         # Output detallado
+  %(prog)s --version                 # Mostrar versión
+
+Tests disponibles:
+  1  - Conectividad local      | 9  - Firewall
+  2  - Internet y DNS          | 10 - Traceroute
+  2b - DNS configurados        | 11 - Velocidad internet
+  3  - Puertos críticos        | 12 - DHCP
+  4  - Latencia                | 13 - Bufferbloat (QoS)
+  5  - WiFi                    | 14 - MTU
+  6  - ISP                     | 15 - DNS alternativos
+  7  - Pérdida de paquetes     | 16 - Conexiones simultáneas
+  8  - Interfaz de red
+
+Nombres alternativos: connectivity, internet, dns-configured, ports, latency,
+                      wifi, isp, packet-loss, interface, firewall, traceroute,
+                      speed, dhcp, simul-connections
+""",
     )
     parser.add_argument(
         "-i",
@@ -941,33 +974,56 @@ def parse_args():
         help="Abrir menú interactivo para seleccionar tests",
     )
     parser.add_argument(
-        "--tests", help="Tests a executar (ej: 1,2,5-7 ou internet,dns,wifi)"
+        "--tests",
+        metavar="TESTS",
+        help="Tests a ejecutar (ej: 1,2,5-7 o internet,dns,wifi). "
+        "Use números (1,2,3), rangos (1-5), o nombres (internet,latency)",
     )
     parser.add_argument(
-        "--no-speed", action="store_true", help="Omitir test de velocidade"
+        "--no-speed",
+        action="store_true",
+        help="Omitir test de velocidad (test 11)",
     )
-    parser.add_argument("--no-isp", action="store_true", help="Omitir consulta ISP")
+    parser.add_argument(
+        "--no-isp",
+        action="store_true",
+        help="Omitir consulta al ISP (test 6)",
+    )
     parser.add_argument(
         "--format",
         choices=["txt", "json"],
         default="txt",
+        metavar="{txt,json}",
         help="Formato de output (default: txt)",
     )
     parser.add_argument(
-        "-o", "--output", help="Archivo de output (default: automático)"
+        "-o",
+        "--output",
+        metavar="FILE",
+        help="Archivo de output (default: automático)",
     )
-    parser.add_argument("-v", "--verbose", action="store_true", help="Output detallado")
-    parser.add_argument("--version", action="store_true", help="Mostrar versión")
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Output detallado",
+    )
+    parser.add_argument(
+        "--version",
+        action="store_true",
+        help="Mostrar versión del programa",
+    )
     parser.add_argument(
         "--save-prefs",
         action="store_true",
-        help="Gardar preferencias actuales como defecto",
+        help="Guardar preferencias actuales como defecto",
     )
     parser.add_argument(
         "--speed-size",
         type=int,
         default=20,
-        help="Tamano del test de velocidad en MB (default: 20)",
+        metavar="MB",
+        help="Tamaño del test de velocidad en MB (default: 20)",
     )
     parser.add_argument(
         "--parallel",

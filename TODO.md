@@ -51,17 +51,15 @@ Lista de mejoras pendientes para el proyecto.
 - [x] Speed test simplificado con fallback (v1.11)
 - [x] Upload no funciona (fix v1.12 - Cloudflare usa FormData)
 - [x] Upload solo un servidor (fix v1.13 - tempfile.org + oshi.io fallback)
+- [x] Troubleshooting suggestions (v1.14-v1.17 - tests 1-9)
+- [x] Funciones faltantes packet_loss, test_internet_speed (v1.17)
 
 ---
 
-*Última actualización: 2026-04-22*
+*Última actualización: 2026-04-23*
 
-*Completado en v1.13: Upload fallback - tempfile.org + oshi.io*
+*Completado en v1.17: Troubleshooting sistema completo para tests 1-9 + fixing functions*
 
-*Completado en v1.12: Upload fix - Cloudflare FormData*
+*Completado en v1.14-v1.16: Sugerencias de troubleshooting para tests 1-9*
 
-*Completado en v1.8: Refactorización - constantes, código limpio*
-
-*Completado en v1.7: Tests paralelos y releases*
-
-*Pendiente: Timeouts, Retry, macOS, Dashboard, Comparar resultados, Notificaciones, Tests unitarios, Logging*
+*Pendiente: Tests 10-12, macOS, Dashboard, Comparar resultados, Notificaciones*

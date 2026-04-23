@@ -1,6 +1,12 @@
-# Network Diagnostic Tool (v1.13)
+# Network Diagnostic Tool (v1.17)
 
-Herramienta de diagnóstico de conectividad de red para Windows y Linux.
+Herramienta de diagnóstico de conectividad de red para Windows y Linux con sugerencias de troubleshooting automatizadas.
+
+## Novedades en v1.17
+
+- **Sugerencias de troubleshooting automáticas** para los tests 1-9
+- Análisis de resultados con recomendaciones de acción
+- Niveles: 🔴 CRÍTICO, 🟡 ADVERTENCIA, ℹ️ INFO
 
 ## Tabla de Contenidos
 
@@ -146,6 +152,35 @@ python network_diagnostic.py --parallel --tests 1,2,5,6  # Solo tests específic
 **Tests que siempre son secuenciales**: 7 (pérdida), 10 (traceroute), 11 (speed)
 
 ## Historial de Cambios
+
+### v1.17 (2026)
+**Modificado por: Ignacio Peroni**
+
+- Sistema de sugerencias de troubleshooting automático
+- Análisis de resultados con niveles: 🔴 CRÍTICO, 🟡 ADVERTENCIA, ℹ️ INFO
+- Nuevas funciones analyze_test_1() a analyze_test_9()
+- Tests 1-9 con sugerencias automáticas basadas en resultados
+- Fix: test_packet_loss, test_internet_speed funciones agregadas
+
+### v1.16 (2026)
+**Modificado por: Ignacio Peroni**
+
+- Fix: test_ping ahora retorna (ok, latency)
+- Fix: test_port retorna True/False
+- Fix: test_dns_verification retorna True/False
+- Fix: parse_test_string maneja "2b"
+
+### v1.15 (2026)
+**Modificado por: Ignacio Peroni**
+
+- Agregado troubleshooting para tests 1-7: latency, wifi, isp, packet loss
+- Funciones analyze_test_4() a analyze_test_7()
+
+### v1.14 (2026)
+**Modificado por: Ignacio Peroni**
+
+- Sistema de sugerencias de troubleshooting inicial
+- Tests 1, 2, 2B, 3 con análisis de resultados
 
 ### v1.13 (2026)
 **Modificado por: Ignacio Peroni**

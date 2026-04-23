@@ -6,6 +6,31 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [v1.17] - 2026-04-23
+
+### Agregado
+- Sistema completo de sugerencias de troubleshooting automático
+- Funciones analyze_test_1() a analyze_test_9() para análisis de resultados
+- Niveles de severidad: 🔴 CRÍTICO, 🟡 ADVERTENCIA, ℹ️ INFO
+
+### Fixed
+- test_packet_loss() función restaurada
+- test_internet_speed() función restaurada
+- test_ping() retorna (ok, latency)
+- test_port() retorna True/False
+- test_dns_verification() retorna True/False
+- parse_test_string() maneja "2b"
+
+---
+
+## [v1.14] - 2026-04-23
+
+### Agregado
+- Primeros analyze_test para tests 1, 2, 2b, 3
+- Sistema de sugerencias con niveles
+
+---
+
 ## [v1.13] - 2026-04-22
 
 ### Agregado

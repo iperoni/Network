@@ -6,6 +6,19 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [v1.18] - 2026-04-23
+
+### Agregado
+- Tests 10-12 con sugerencias de troubleshooting
+- analyze_test_10() para traceroute (timeouts, ruta degradada)
+- analyze_test_11() para velocidad (download/upload bajo)
+- analyze_test_12() para DHCP (IP estática)
+
+### Fixed
+- analyze_test_10() llamado desde main()
+
+---
+
 ## [v1.17] - 2026-04-23
 
 ### Agregado

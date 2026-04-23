@@ -2,14 +2,14 @@
 ║                    DIAGNÓSTICO DE RED                    ║
 ╚══════════════════════════════════════════════════════════╝
 
-Fecha: 2026-04-23 08:39:09
+Fecha: 2026-04-23 08:47:17
 
 ============================================================
    INFORMACIÓN LOCAL
 ============================================================
 Hostname: DESKTOP-HO53BJ5
 IP Local: 192.168.100.203
-Gateway: 192.168.100.1
+Gateway: None
 
 Adaptadores de red:
    Adaptador de Ethernet VirtualBox Host-Only Network:
@@ -18,80 +18,18 @@ Adaptadores de red:
    Adaptador de Ethernet Ethernet 4:
    Dirección IPv4. . . . . . . . . . . . . . : 192.168.100.203
    Puerta de enlace predeterminada . . . . . : 192.168.100.1
+Conexión unknown - Test WiFi no aplicable
 
 ============================================================
-   TEST 1: CONECTIVIDAD LOCAL
+   TEST 12: INFORMACIÓN DHCP
 ============================================================
-Loopback (127.0.0.1): OK
-Gateway (192.168.100.1): OK
-
-============================================================
-   TEST 2: INTERNET Y DNS
-============================================================
-Internet (8.8.8.8): OK
-DNS (google.com): OK
-
-============================================================
-   TEST 3: PUERTOS CRÍTICOS
-============================================================
-Puerto 443 (HTTPS): ABIERTO
-Puerto 53 (DNS): ABIERTO
-
-============================================================
-   TEST 4: ESTADÍSTICAS DE LATENCIA
-============================================================
-Google: Mínimo = 29ms, Máximo = 30ms, Media = 29ms
-Cloudflare: Mínimo = 29ms, Máximo = 29ms, Media = 29ms
-
-============================================================
-   TEST 5: SEÑAL WI-FI
-============================================================
-Tipo de conexión: ethernet
-Conexión ethernet - Test WiFi no aplicable
-
-============================================================
-   TEST 6: INFORMACIÓN DEL ISP
-============================================================
-IP Pública: 45.236.33.60
-ISP: Cooperativa De Provision De Servicios Publicos De Sarmiento Limitada
-Organización: Cooperativa De Provision De Servicios Publicos De Sarmiento Limitada
-Ubicación: Sarmiento, Argentina
-
-============================================================
-   TEST 7: PÉRDIDA DE PAQUETES
-============================================================
-Google DNS:
-   Enviados: 10
-   Recibidos: 10
-   Perdidos: 0
-   Porcentaje: 0%
-Cloudflare:
-   Enviados: 10
-   Recibidos: 10
-   Perdidos: 0
-   Porcentaje: 0%
-
-============================================================
-   TEST 8: DETALLES DEL INTERFAZ DE RED
-============================================================
-Nombre: Ethernet 4
-Descripcion: Realtek PCIe GbE Family Controller
-Estado: Up
-MAC: D8-5E-D3-D5-10-37
-Velocidad: 1 Gbps
-
-============================================================
-   TEST 9: ESTADO DEL FIREWALL
-============================================================
-Dominio: ON
-Privado: ON
-Reglas activas: 0
+DHCP: Deshabilitado (IP Estática)
 
 ============================================================
    RESULTADO FINAL
 ============================================================
-Estado: 🟢 TODO OK
-Puntuación: 3/3
+Estado: 🔴 SIN CONEXIÓN
+Puntuación: 0/3
 
 ============================================================
 Autor: Ignacio Peroni

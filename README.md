@@ -1,6 +1,11 @@
-# Network Diagnostic Tool (v1.17)
+# Network Diagnostic Tool (v1.18)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux con sugerencias de troubleshooting automatizadas.
+
+## Novedades en v1.18
+
+- **Tests 10-12 con sugerencias**: Traceroute, Velocidad, DHCP
+- Sistema completo de troubleshooting para todos los tests (1-12)
 
 ## Novedades en v1.17
 

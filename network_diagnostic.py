@@ -22,7 +22,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.17"
+VERSION = "v1.18"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -1858,6 +1858,8 @@ def main():
             else:
                 print("      ⚠️ No se pudo obtener ruta")
                 traceroute_results.append((name, None))
+
+        analyze_test_10({"routes": traceroute_results})
 
     # Test 11: Velocidad (simplificado con fallback automático)
     if "11" in selected_tests and not args.no_speed:

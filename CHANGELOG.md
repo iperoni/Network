@@ -6,6 +6,14 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [v1.21.0] - 2026-04-23
+
+### Added
+- Test 14: MTU (fragmentación)
+- Test 13: Bufferbloat separado
+
+---
+
 ## [v1.20.1] - 2026-04-23
 
 ### Changed

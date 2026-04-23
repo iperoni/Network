@@ -1,6 +1,11 @@
-# Network Diagnostic Tool (v1.20.1)
+# Network Diagnostic Tool (v1.21.0)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux con sugerencias de troubleshooting automatizadas.
+
+## Novedades en v1.21.0
+
+- **Added**: Test 14: MTU (fragmentación)
+- **Added**: Test 13: Bufferbloat separado
 
 ## Novedades en v1.20.1
 

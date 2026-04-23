@@ -2,11 +2,12 @@
 
 Lista de mejoras pendientes para el proyecto.
 
-## v1.20.1 - Completado
+## v1.21.0 - Completado
 
 - [x] Test 13: Bufferbloat (QoS) separado
+- [x] Test 14: MTU (fragmentación)
 
-## v1.20.0 - Completado
+## v1.20.1 - Completado
 
 ## v1.19.9 - Completado
 

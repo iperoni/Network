@@ -23,7 +23,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.20.1"
+VERSION = "v1.21.0"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -90,6 +90,7 @@ TEST_NAMES = {
     "11": "Test 11: Velocidad internet",
     "12": "Test 12: DHCP",
     "13": "Test 13: Bufferbloat (QoS)",
+    "14": "Test 14: MTU",
 }
 
 # ==============================================================================
@@ -2187,6 +2188,13 @@ def main():
         bb_result = test_bufferbloat()
         analyze_bufferbloat(bb_result)
 
+    # Test 14: MTU
+    if "14" in selected_tests:
+        executed_tests.add("14")
+        print_header("TEST 14: MTU")
+        mtu_result = test_mtu()
+        analyze_mtu(mtu_result)
+
     # ========== RESUMEN ==========
     print_header("RESULTADO FINAL")
     puntos = 0
@@ -2373,6 +2381,78 @@ def analyze_bufferbloat(results):
             "Bufferbloat Leve",
             f"+{bloat:.0f}ms bajo carga",
             "Aceptable para mayoría de usos",
+            "",
+        )
+
+
+# ==============================================================================
+# TEST DE MTU (Mejora 3)
+# ==============================================================================
+
+
+def test_mtu(host="8.8.8.8"):
+    """Test de MTU - fragmentación"""
+    is_windows = platform.system().lower() == "windows"
+    results = {}
+
+    print("\n" + "=" * 60)
+    print("   TEST DE MTU")
+    print("=" * 60)
+
+    test_sizes = [1472, 1400, 1300, 1200]
+
+    for size in test_sizes:
+        if is_windows:
+            cmd = f"ping -n 1 -f -l {size} {host}"
+        else:
+            cmd = f"ping -M do -s {size} -c 1 {host}"
+
+        try:
+            result = subprocess.run(cmd, shell=True, capture_output=True, timeout=5)
+            output = result.stdout.decode(
+                "cp437" if is_windows else "utf-8", errors="replace"
+            )
+
+            if "packets need to be fragmented" in output.lower():
+                results[size] = False
+            else:
+                results[size] = True
+                print(f"   {size + 28} bytes: OK")
+        except:
+            results[size] = False
+
+        time.sleep(0.5)
+
+    working = [k for k, v in results.items() if v]
+    max_mtu = (max(working) + 28) if working else 0
+
+    print(f"   MTU máximo: {max_mtu} bytes")
+
+    return {"mtu": max_mtu, "details": results}
+
+
+def analyze_mtu(results):
+    """Analizar resultados MTU"""
+    mtu = results.get("mtu", 0)
+
+    if mtu == 0:
+        return
+
+    if mtu > 1500:
+        suggest(
+            "warning",
+            "mtu",
+            "MTU Alto",
+            f"MTU = {mtu} bytes (puede causar fragmentación)",
+            "Verificar configuración del router o ISP",
+            "",
+        )
+    elif mtu > 0:
+        suggest(
+            "info",
+            "mtu",
+            "MTU Óptimo",
+            f"MTU = {mtu} bytes",
             "",
         )
 

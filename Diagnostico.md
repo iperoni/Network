@@ -1,7 +1,8 @@
-# Diagnóstico y Troubleshooting - v1.20.1
+# Diagnóstico y Troubleshooting - v1.21.0
 
-## Estado: ✅ Test 13 AGREGADO
+## Estado: ✅ Tests 13 y 14 agregados
 
+- v1.21.0: Test 14 MTU + Test 13 Bufferbloat
 - v1.20.1: Test de Bufferbloat separado como Test 13
 - v1.20.0: Test de Bufferbloat (QoS)
 
@@ -14,6 +15,7 @@
 | 8 | Duplex mismatch | v1.19.8 | ✅ IMPLEMENTADO |
 | 10 | Latencia por hop | v1.19.9 | ✅ IMPLEMENTADO |
 | 13 | Bufferbloat (QoS) | v1.20.1 | ✅ IMPLEMENTADO |
+| 14 | MTU | v1.21.0 | ✅ IMPLEMENTADO |
 
 ---
 

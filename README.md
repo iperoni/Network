@@ -1,10 +1,14 @@
-# Network Diagnostic Tool (v1.19.3)
+# Network Diagnostic Tool (v1.19.4)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux con sugerencias de troubleshooting automatizadas.
 
+## Novedades en v1.19.4
+
+- **Fix**: Sugerencias de troubleshooting y pie de página ahora se guardan en archivo de texto
+
 ## Novedades en v1.19.3
 
-- **Fix**: Archivo de texto ahora es idéntico al output de pantalla
+- **Fix**: Archivo de texto idéntico al output de pantalla
 
 ## Novedades en v1.19.2
 

@@ -1,7 +1,8 @@
-# Diagnóstico y Troubleshooting - v1.19.3
+# Diagnóstico y Troubleshooting - v1.19.4
 
 ## Estado: ✅ COMPLETADO para tests 1-12
 
+- v1.19.4: Sugerencias y pie de página ahora se guardan en archivo
 - v1.19.3: Archivo de texto idéntico al output de pantalla
 - v1.19.2: Sugerencias ahora se guardan en archivo de texto
 - v1.19.1: Fix parse_test_string() soporta "dns-configured"

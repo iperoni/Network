@@ -23,7 +23,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.19.3"
+VERSION = "v1.19.4"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -2075,14 +2075,8 @@ def main():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     ruta_archivo = os.path.join(script_dir, nombre_archivo)
 
-    # Usar captura de stdout para archivo idéntico
-    end_capture(ruta_archivo)
-
-    # Información adicional al archivo (solo lo que no se muestra en pantalla)
-
+    # Mostrar sugerencias de troubleshooting ANTES de guardar (para que se capturen)
     print(f"\n💾 Resultados guardados en: {nombre_archivo}")
-
-    # Mostrar sugerencias de troubleshooting
     print_all_suggestions()
 
     # ========== PIE DE PÁGINA ==========
@@ -2091,6 +2085,9 @@ def main():
     print(f"Autor: Xabier Pereira - Modificado por Ignacio Peroni")
     print("github.com/xabierpereira |  github.com/iperoni")
     print("=" * 60)
+
+    # GUARDAR RESULTADOS (ahora sí incluye sugerencias y pie)
+    end_capture(ruta_archivo)
 
 
 if __name__ == "__main__":

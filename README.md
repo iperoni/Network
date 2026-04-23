@@ -208,8 +208,8 @@ python network_diagnostic.py --parallel --tests 1,2,5,6  # Solo tests específic
 **Modificado por: Ignacio Peroni**
 
 - Fix upload: Cloudflare ahora usa FormData (`-F`) en lugar de `--data-binary`
-- Tele2暂时不可用（需要认证）
-- Upload修复成功
+- Tele2 NO DISPONIBLE (requiere autenticación)
+- Upload reparado exitosamente
 
 ### v1.11 (2026)
 **Modificado por: Ignacio Peroni**
@@ -381,7 +381,7 @@ python network_diagnostic.py --parallel --tests 1,2,5,6  # Solo tests específic
 **Modificado por: Ignacio Peroni**
 
 - Actualización a versión v0.4
-- Mejoras en兼容性 con Windows/Linux
+- Mejoras en compatibilidad con Windows/Linux
 - Soporte para codificación UTF-8 en Windows
 - Actualización de información del autor
 

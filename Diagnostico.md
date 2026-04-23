@@ -1,12 +1,22 @@
-# Diagnóstico y Troubleshooting - v1.19.5
+# Diagnóstico y Troubleshooting - v1.19.6
 
 ## Estado: ✅ COMPLETADO para tests 1-12
 
+- v1.19.6: Detección de DNS lento (>2s)
 - v1.19.5: Comandos compatibles con Windows y Linux
 - v1.19.4: Sugerencias y pie de página ahora se guardan en archivo
 - v1.19.3: Archivo de texto idéntico al output de pantalla
 - v1.19.2: Sugerencias ahora se guardan en archivo de texto
-- v1.19.1: Fix parse_test_string() soporta "dns-configured"
+- v1.19.1: Fix parse_test_string() soporta "dns-configured""
+
+## Nuevas mejoras implementadas
+
+| Test | Mejora | Estado |
+|------|-------|--------|
+| 2 | DNS lento (>2s) | ✅ IMPLEMENTADO |
+| 4 | Latencia base alta (>50ms) | ⏳ PENDIENTE |
+| 8 | Duplex mismatch | ⏳ PENDIENTE |
+| 10 | Latencia por hop | ⏳ PENDIENTE |
 
 **Todas las funciones analyze_test_N() para tests 1-12 están implementadas y funcionando.**
 

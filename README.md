@@ -1,6 +1,10 @@
-# Network Diagnostic Tool (v1.19.5)
+# Network Diagnostic Tool (v1.19.6)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux con sugerencias de troubleshooting automatizadas.
+
+## Novedades en v1.19.6
+
+- **Added**: Detección de DNS lento (>2s)
 
 ## Novedades en v1.19.5
 

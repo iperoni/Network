@@ -2,6 +2,10 @@
 
 Lista de mejoras pendientes para el proyecto.
 
+## v1.19.6 - Completado
+
+- [x] Test 2: Detección de DNS lento (>2s)
+
 ## v1.19.5 - Completado
 
 - [x] Fix: Comandos compatibles Windows/Linux

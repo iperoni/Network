@@ -23,7 +23,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.19.5"
+VERSION = "v1.19.6"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -384,6 +384,7 @@ def analyze_test_2(results):
     """Test 2: Internet y DNS"""
     internet_ok = results.get("internet_ok", False)
     dns_ok = results.get("dns_ok", False)
+    dns_time = results.get("dns_time", 0)
 
     if not internet_ok and not dns_ok:
         suggest(
@@ -401,6 +402,26 @@ def analyze_test_2(results):
             "Internet y DNS",
             "ICMP bloqueado",
             "Ping bloqueado por ISP (normal). Web debería funcionar",
+            "",
+        )
+    elif internet_ok and not dns_ok:
+        suggest(
+            "critical",
+            "2",
+            "Internet y DNS",
+            "DNS no resuelve",
+            "Verificar DNS configurado. Probar 8.8.8.8",
+            "",
+        )
+
+    # DNS lento
+    if dns_ok and dns_time > 2000:
+        suggest(
+            "warning",
+            "2",
+            "DNS Lento",
+            f"Resolución lenta ({dns_time:.0f}ms)",
+            "Cambiar DNS a 8.8.8.8 o 1.1.1.1 para mejor velocidad",
             "",
         )
     elif internet_ok and not dns_ok:
@@ -1094,15 +1115,20 @@ def test_ping(host, name=""):
 
 
 def test_dns(domain):
-    """Test resolución DNS"""
+    """Test resolución DNS. Retorna (ok, ip, tiempo_ms)"""
     print(f"\n🔍 Resolviendo DNS: {domain}")
+    start_time = time.time()
     try:
         ip = socket.gethostbyname(domain)
+        elapsed_ms = (time.time() - start_time) * 1000
         print(f"   ✅ {domain} → {ip}")
-        return True, ip
+        if elapsed_ms > 500:
+            print(f"      ⚠️ Tiempo: {elapsed_ms:.0f}ms")
+        return True, ip, elapsed_ms
     except:
+        elapsed_ms = (time.time() - start_time) * 1000
         print(f"   ❌ No se pudo resolver {domain}")
-        return False, None
+        return False, None, elapsed_ms
 
 
 def test_port(host, port, service_name=""):
@@ -1554,8 +1580,8 @@ def run_test_by_id(test_id, args, is_windows):
 
     elif test_id == "2":
         internet_ok = test_ping("8.8.8.8", "Google DNS")
-        dns_ok, dns_ip = test_dns("google.com")
-        results = {"internet_ok": internet_ok, "dns_ok": dns_ok}
+        dns_ok, dns_ip, dns_time = test_dns("google.com")
+        results = {"internet_ok": internet_ok, "dns_ok": dns_ok, "dns_time": dns_time}
         analyze_test_2(results)
 
     elif test_id == "2b":
@@ -1850,8 +1876,10 @@ def main():
         print_header("TEST 2: INTERNET Y DNS")
 
         internet_ok, _ = test_ping("8.8.8.8", "Google DNS")
-        dns_ok, _ = test_dns("google.com")
-        analyze_test_2({"internet_ok": internet_ok, "dns_ok": dns_ok})
+        dns_ok, dns_ip, dns_time = test_dns("google.com")
+        analyze_test_2(
+            {"internet_ok": internet_ok, "dns_ok": dns_ok, "dns_time": dns_time}
+        )
 
     # Test 2B: DNS configurados
     if "2b" in selected_tests:

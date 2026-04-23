@@ -22,7 +22,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.15"
+VERSION = "v1.16"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -1034,555 +1034,133 @@ def analyze_test_7(results):
             )
 
 
-def test_packet_loss(host, count=10):
-    """Test de pérdida de paquetes"""
-    is_windows = platform.system().lower() == "windows"
-    param = "-n" if is_windows else "-c"
+def analyze_test_8(results):
+    """Test 8: Interfaz de red"""
+    iface = results.get("interface_details", {})
+    estado = iface.get("Estado", "").lower()
 
-    result = subprocess.run(
-        f"ping {param} {count} {host}", shell=True, capture_output=True, timeout=30
-    )
-    output = (
-        result.stdout.decode("cp437", errors="replace")
-        if is_windows
-        else result.stdout.decode("utf-8", errors="replace")
-    )
+    if estado and estado != "up":
+        suggest(
+            "critical",
+            "8",
+            "Interfaz de Red",
+            f"Interfaz caído ({estado})",
+            "Habilitar interfaz",
+            'netsh interface set interface "Ethernet" admin=enabled',
+        )
 
-    packet_info = {}
-
-    if is_windows:
-        for line in output.split("\n"):
-            line_lower = line.lower()
-            if "paquetes" in line_lower and "enviados" in line_lower:
-                try:
-                    parts = line.split(",")
-                    for part in parts:
-                        if "enviados" in part.lower():
-                            packet_info["enviados"] = part.split("=")[1].strip()
-                        elif "recibidos" in part.lower():
-                            packet_info["recibidos"] = part.split("=")[1].strip()
-                        elif "perdidos" in part.lower():
-                            packet_info["perdidos"] = part.split("=")[1].strip()
-                    if "perdidos" in packet_info and "enviados" in packet_info:
-                        try:
-                            p_perdidos = int(packet_info["perdidos"])
-                            p_enviados = int(packet_info["enviados"])
-                            if p_enviados > 0:
-                                pct = (p_perdidos / p_enviados) * 100
-                                packet_info["% perda"] = f"{pct:.0f}%"
-                        except:
-                            pass
-                except:
-                    pass
-    else:
-        for line in output.split("\n"):
-            line_lower = line.lower()
-            if "packets transmitted" in line_lower:
-                try:
-                    parts = line.split(",")
-                    for part in parts:
-                        part = part.strip()
-                        if "transmitted" in part:
-                            packet_info["enviados"] = part.split()[0]
-                        elif "received" in part:
-                            packet_info["recibidos"] = part.split()[0]
-                        elif "%" in part and "loss" in part:
-                            packet_info["% perda"] = part.split()[0]
-                except:
-                    pass
-
-    return packet_info
-
-
-def get_configured_dns():
-    """Obtiene servidores DNS configurados"""
-    is_windows = platform.system().lower() == "windows"
-    dns_servers = []
-
-    if is_windows:
-        output = run_command("netsh interface ipv4 show dns")
-        ip_pattern = r"\b(?:\d{1,3}\.){3}\d{1,3}\b"
-        matches = re.findall(ip_pattern, output)
-        for ip in matches:
-            if ip not in dns_servers:
-                dns_servers.append(ip)
-    else:
-        output = run_command("cat /etc/resolv.conf")
-        for line in output.split("\n"):
-            if line.strip().startswith("nameserver"):
-                parts = line.split()
-                if len(parts) > 1:
-                    dns_servers.append(parts[1])
-
-    return dns_servers
-
-
-def test_dns_verification(dns_server):
-    """Prueba un servidor DNS específico. Retorna True si abre."""
-    try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(2)
-        result = sock.connect_ex((dns_server, 53))
-        sock.close()
-        if result == 0:
-            print(f"         ✅ {dns_server}:53 (Puerto DNS abierto)")
-            return True
-        else:
-            print(f"         ⚠️ {dns_server}:53 (Puerto DNS cerrado)")
-            return False
-    except Exception as e:
-        print(f"         ❌ {dns_server}:53 (Error: {str(e)[:30]})")
-        return False
-
-
-def get_network_interface_details():
-    """Obtiene detalles del interfaz de red"""
-    is_windows = platform.system().lower() == "windows"
-    details = {}
-
-    if is_windows:
+    velocidad = iface.get("Velocidad", "")
+    if velocidad:
+        speed_gbps = 0
         try:
-            result = subprocess.run(
-                [
-                    "powershell",
-                    "-Command",
-                    "Get-NetAdapter | Where-Object Status -eq 'Up' | Select-Object Name, InterfaceDescription, Status, MacAddress, LinkSpeed | ConvertTo-Json",
-                ],
-                capture_output=True,
-                timeout=15,
-            )
-            output = result.stdout.decode("utf-8", errors="replace")
-            if output.strip().startswith("["):
-                import json
-
-                data = json.loads(output)
-                if isinstance(data, list) and len(data) > 0:
-                    data = data[0]
-            elif output.strip().startswith("{"):
-                import json
-
-                data = json.loads(output)
-            else:
-                return details
-
-            if data:
-                details["Nombre"] = data.get("Name", "N/A")
-                details["Descripcion"] = data.get("InterfaceDescription", "N/A")
-                details["Estado"] = data.get("Status", "N/A")
-                details["MAC"] = data.get("MacAddress", "N/A")
-                details["Velocidad"] = data.get("LinkSpeed", "N/A")
-        except Exception as e:
-            pass
-    else:
-        output = run_command("ip link show")
-        for line in output.split("\n"):
-            if "state UP" in line or "state UNKNOWN" in line:
-                parts = line.split(":")
-                if len(parts) > 1:
-                    details["Interfaz"] = parts[1].strip().split()[0]
-                    for part in parts[1:]:
-                        if "metric" not in part.lower():
-                            details["Estado"] = "UP"
-                if "link/ether" in line:
-                    mac = line.split("link/ether")[1].strip().split()[0]
-                    details["MAC"] = mac
-                if "mtu" in line:
-                    mtu = line.split("mtu")[1].strip().split()[0]
-                    details["MTU"] = mtu
-
-        try:
-            output = run_command("ethtool " + details.get("Interfaz", "eth0"))
-            for line in output.split("\n"):
-                line_lower = line.lower()
-                if "speed" in line_lower:
-                    details["Velocidad"] = line.split(":")[-1].strip()
-                elif "duplex" in line_lower:
-                    details["Duplex"] = line.split(":")[-1].strip()
+            speed_gbps = int(velocidad.replace("Gbps", "").replace("Mbps", ""))
         except:
             pass
+        if speed_gbps < 1:
+            suggest(
+                "info",
+                "8",
+                "Interfaz de Red",
+                f"Velocidad link baja ({velocidad})",
+                "Verificar cable o comparar con plan contratado",
+                "",
+            )
 
-    return details
 
+def analyze_test_9(results):
+    """Test 9: Firewall"""
+    fw = results.get("firewall_info", {})
 
-def get_firewall_status():
-    """Obtiene estado del firewall"""
-    is_windows = platform.system().lower() == "windows"
-    firewall_info = {}
+    profiles = ["Dominio", "Privado", "Publico"]
+    all_off = all(fw.get(p, "").lower() != "on" for p in profiles)
 
-    if is_windows:
-        result = subprocess.run(
-            [
-                "powershell",
-                "-Command",
-                "Get-NetFirewallProfile | Select-Object Name, Enabled | ConvertTo-Json",
-            ],
-            capture_output=True,
-            timeout=15,
+    if all_off:
+        suggest(
+            "warning",
+            "9",
+            "Firewall",
+            "Todos los perfiles desactivados",
+            "Considerar activar firewall",
+            "netsh advfirewall set allprofiles state on",
         )
-        output = result.stdout.decode("utf-8", errors="replace")
 
-        import json
 
+def analyze_test_10(results):
+    """Test 10: Traceroute"""
+    routes = results.get("routes", [])
+
+    for route_name, hops in routes:
+        if not hops:
+            continue
+        timeouts = sum(1 for h in hops if "*" in h)
+        if timeouts > 5:
+            suggest(
+                "warning",
+                "10",
+                f"Traceroute {route_name}",
+                f"{timeouts} hops con timeout",
+                "Ruta degradada, verificar conexión",
+                "",
+            )
+
+
+def analyze_test_11(results):
+    """Test 11: Velocidad"""
+    dl = results.get("download", 0)
+    ul = results.get("upload", 0)
+
+    if dl > 0 and dl < 1:
+        suggest(
+            "critical",
+            "11",
+            "Velocidad Download",
+            f"Velocidad muy baja ({dl} Mbps)",
+            "Verificar línea; llamar ISP",
+            "",
+        )
+    elif dl > 0 and dl < 10:
+        suggest(
+            "warning",
+            "11",
+            "Velocidad Download",
+            f"Velocidad baja ({dl} Mbps)",
+            "Verificar plan o congestión",
+            "",
+        )
+
+    if ul > 0 and ul < 0.5:
+        suggest(
+            "warning",
+            "11",
+            "Velocidad Upload",
+            f"Upload muy bajo ({ul} Mbps)",
+            "Verificar QoS del ISP",
+            "",
+        )
+
+
+def analyze_test_12(results):
+    """Test 12: DHCP"""
+    dhcp = results.get("dhcp_info", {})
+    lease = dhcp.get("LeaseExpires", "")
+
+    if lease:
         try:
-            data = json.loads(output)
-            if isinstance(data, list):
-                for profile in data:
-                    name = profile.get("Name", "")
-                    enabled = profile.get("Enabled", False)
-                    if name == "Domain":
-                        firewall_info["Dominio"] = "ON" if enabled else "OFF"
-                    elif name == "Private":
-                        firewall_info["Privado"] = "ON" if enabled else "OFF"
-                    elif name == "Public":
-                        firewall_info["Publico"] = "ON" if enabled else "OFF"
-            elif isinstance(data, dict):
-                name = data.get("Name", "")
-                enabled = data.get("Enabled", False)
-                firewall_info[name] = "ON" if enabled else "OFF"
+            from datetime import datetime
+
+            exp = datetime.strptime(lease, "%d/%m/%Y %H:%M:%S")
+            now = datetime.now()
+            if exp - now < 3600:
+                suggest(
+                    "warning",
+                    "12",
+                    "DHCP",
+                    "Lease por expirar pronto",
+                    "Renovar: ipconfig /renew",
+                    "",
+                )
         except:
             pass
-
-        if not firewall_info:
-            output = run_command("netsh advfirewall show allprofiles")
-            if "Configuración de Perfil de dominio" in output:
-                firewall_info["Dominio"] = "ON"
-            if "Configuración de Perfil privado" in output:
-                firewall_info["Privado"] = "ON"
-            if "Configuración de Perfil público" in output:
-                firewall_info["Publico"] = "ON"
-
-        output = run_command("netsh advfirewall show rule name=all")
-        reglas_count = len(
-            [l for l in output.split("\n") if "Regla name" in l or "Rule name" in l]
-        )
-        firewall_info["Reglas activas"] = str(reglas_count)
-    else:
-        output = run_command(
-            "sudo ufw status verbose 2>/dev/null || echo 'UFW not available'"
-        )
-        for line in output.split("\n"):
-            line_lower = line.lower()
-            if "status" in line_lower:
-                if "active" in line_lower:
-                    firewall_info["UFW"] = "Active"
-                elif "inactive" in line_lower:
-                    firewall_info["UFW"] = "Inactive"
-
-        output = run_command(
-            "sudo iptables -L -n 2>/dev/null || echo 'iptables not available'"
-        )
-        reglas_count = len(
-            [l for l in output.split("\n") if l.strip() and "Chain" not in l]
-        )
-        firewall_info["iptables rules"] = str(reglas_count)
-
-    return firewall_info
-
-
-def run_traceroute(host, max_hops=30):
-    """Ejecuta traceroute y parsea resultados"""
-    import re
-
-    is_windows = platform.system().lower() == "windows"
-    hops = []
-
-    try:
-        if is_windows:
-            result = subprocess.run(
-                f"tracert -d -h {max_hops} {host}",
-                shell=True,
-                capture_output=True,
-                timeout=60,
-            )
-            output = result.stdout.decode("cp437", errors="replace")
-
-            for line in output.split("\n"):
-                line = line.strip()
-                if not line:
-                    continue
-
-                parts = line.split()
-                if len(parts) > 0 and parts[0].isdigit():
-                    hop_num = parts[0]
-                    ip = None
-                    tiempos = []
-
-                    # Extraer tiempos usando regex
-                    tiempos_raw = re.findall(r"<?\d+>?\s*ms", line)
-                    for t in tiempos_raw:
-                        tiempo_clean = (
-                            t.replace("<", "")
-                            .replace(">", "")
-                            .replace("ms", "")
-                            .strip()
-                        )
-                        if tiempo_clean.replace(".", "").isdigit():
-                            tiempos.append(tiempo_clean)
-
-                    # Extraer IP
-                    for part in parts[1:]:
-                        part_clean = part.replace(":", "").strip()
-                        if (
-                            part_clean.replace(".", "").isdigit()
-                            and len(part_clean) > 3
-                            and part_clean.count(".") == 3
-                        ):
-                            ip = part_clean
-                            break
-
-                    if ip:
-                        try:
-                            hostname, _, _ = socket.gethostbyaddr(ip)
-                        except:
-                            hostname = "N/A"
-
-                        tiempo_str = f"{tiempos[0]} ms" if tiempos else "N/A"
-                        hops.append(f"{hop_num}. {ip} ({hostname}) - {tiempo_str}")
-                    elif "* * *" in line or not ip:
-                        hops.append(f"{hop_num}. * * * (Timeout)")
-        else:
-            result = subprocess.run(
-                f"traceroute -m {max_hops} -I {host}",
-                shell=True,
-                capture_output=True,
-                timeout=60,
-            )
-            output = result.stdout.decode("utf-8", errors="replace")
-
-            for line in output.split("\n"):
-                line = line.strip()
-                if not line:
-                    continue
-
-                parts = line.split()
-                if len(parts) > 0 and parts[0].isdigit():
-                    hop_num = parts[0]
-                    ip = None
-                    hostname = "N/A"
-                    tiempos = []
-
-                    for part in parts:
-                        if "(" in part and ")" in part:
-                            ip = part.replace("(", "").replace(")", "")
-                            break
-                        elif (
-                            part.replace(".", "").replace(":", "").isdigit()
-                            and len(part) > 3
-                        ):
-                            ip = part
-                            break
-
-                    if ip and ip != "*":
-                        try:
-                            hostname, _, _ = socket.gethostbyaddr(ip)
-                        except:
-                            pass
-
-                    for part in parts:
-                        if "ms" in part:
-                            try:
-                                tiempo = part.replace("ms", "").strip()
-                                if tiempo.replace(".", "").replace("<", "").isdigit():
-                                    tiempos.append(tiempo)
-                            except:
-                                pass
-
-                    if ip:
-                        if ip == "*":
-                            hops.append(f"{hop_num}. * * * (Timeout)")
-                        else:
-                            tiempo_str = f"{tiempos[0]} ms" if tiempos else "N/A"
-                            hops.append(f"{hop_num}. {ip} ({hostname}) - {tiempo_str}")
-    except Exception as e:
-        hops.append(f"Error: {str(e)[:50]}")
-
-    return hops
-
-
-def get_dhcp_lease_info():
-    """Obtiene información del lease DHCP"""
-    is_windows = platform.system().lower() == "windows"
-    lease_info = {}
-
-    if is_windows:
-        output = run_command("ipconfig /all")
-
-        dhcp_enabled = False
-        for line in output.split("\n"):
-            line_lower = line.lower()
-            if "dhcp habilitado" in line_lower or "dhcp enabled" in line_lower:
-                if "si" in line_lower or "yes" in line_lower:
-                    dhcp_enabled = True
-                    lease_info["DHCP"] = "Habilitado"
-                else:
-                    lease_info["DHCP"] = "Deshabilitado (IP Estática)"
-
-        if dhcp_enabled:
-            for line in output.split("\n"):
-                line_lower = line.lower()
-                if "fecha de obtención" in line_lower or "obtain date" in line_lower:
-                    if ":" in line:
-                        lease_info["Fecha obtencion"] = line.split(":", 1)[1].strip()
-                elif "vencimiento" in line_lower or "lease expires" in line_lower:
-                    if ":" in line:
-                        lease_info["Vencimiento"] = line.split(":", 1)[1].strip()
-                elif "servidor dhcp" in line_lower or "dhcp server" in line_lower:
-                    if ":" in line:
-                        dhcp_server = line.split(":", 1)[1].strip()
-                        if (
-                            dhcp_server
-                            and dhcp_server != "fec0:0:0ffff::1"
-                            and dhcp_server != "fe80::1"
-                        ):
-                            lease_info["Servidor DHCP"] = dhcp_server
-    else:
-        output = run_command(
-            "cat /var/lib/dhcp/dhclient.leases 2>/dev/null || echo 'No disponible'"
-        )
-        lines = output.split("\n")
-        current_lease = {}
-        for line in lines:
-            line = line.strip()
-            if "lease" in line and "{" in line:
-                current_lease = {}
-            if "}" in line and current_lease:
-                if not lease_info or "ip" not in lease_info:
-                    lease_info = current_lease
-            if "interface" in line:
-                current_lease["Interface"] = line.split()[-1].rstrip(";")
-            elif "fixed-address" in line:
-                current_lease["IP"] = line.split()[-1].rstrip(";")
-            elif "option dhcp-lease-time" in line:
-                current_lease["Tiempo lease"] = line.split()[-1].rstrip(";")
-            elif "option dhcp-message-type" in line:
-                current_lease["Tipo"] = line.split()[-1].rstrip(";")
-            elif "renew" in line:
-                current_lease["Renew"] = line.split()[1].rstrip(";")
-            elif "rebind" in line:
-                current_lease["Rebind"] = line.split()[1].rstrip(";")
-            elif "expire" in line:
-                current_lease["Expire"] = line.split()[1].rstrip(";")
-
-    return lease_info
-
-
-def test_internet_speed(test_size_mb=20):
-    """Test de velocidad de internet con fallback automático.
-
-    Args:
-        test_size_mb: Tamaño en MB para el test (default: 20)
-    """
-    import time
-
-    size = test_size_mb * 1024 * 1024
-    test_data = b"X" * size
-
-    download_results = []
-    upload_results = []
-
-    def try_download(server_name, server_urls, size_mb):
-        """Intenta download con un servidor específico"""
-        url = server_urls.get("download")
-        if not url:
-            return None, False  # No soporta download
-
-        url = url.replace("{size}", str(size_mb))
-
-        try:
-            start = time.time()
-            cmd = f'curl -L -k -s -o NUL --connect-timeout 30 --max-time 120 -A "Mozilla/5.0" "{url}"'
-            result = subprocess.run(cmd, shell=True, capture_output=True, timeout=125)
-            elapsed = time.time() - start
-
-            if result.returncode == 0 and elapsed > 0:
-                speed_mbps = (size_mb * 8) / elapsed
-                return (server_name.capitalize(), speed_mbps, elapsed), True
-            return None, True  # Error del servidor
-        except Exception:
-            return None, True  # Error
-
-    def try_upload(server_name, server_urls, size_mb):
-        """Intenta upload con un servidor específico"""
-        url = server_urls.get("upload")
-        upload_method = server_urls.get("upload_method", "databinary")
-        upload_field = server_urls.get("upload_field", "file")
-        if not url:
-            return None, False  # No soporta upload
-
-        try:
-            start = time.time()
-            with open("temp_upload.bin", "wb") as f:
-                f.write(test_data)
-
-            # Construir comando según el método del servidor
-            if upload_method == "formdata":
-                # Cloudflare, tempfile.org, oshi.io: FormData
-                cmd = f'curl -k -s -X POST --connect-timeout 30 --max-time 120 -A "Mozilla/5.0" -F "{upload_field}=@temp_upload.bin" "{url}"'
-            else:
-                # Otros servidores: --data-binary
-                cmd = f'curl -s -X POST --connect-timeout 30 --max-time 120 -A "Mozilla/5.0" --data-binary "@temp_upload.bin" "{url}"'
-
-            result = subprocess.run(cmd, shell=True, capture_output=True, timeout=125)
-
-            try:
-                os.remove("temp_upload.bin")
-            except:
-                pass
-
-            elapsed = time.time() - start
-
-            if result.returncode == 0 and elapsed > 0:
-                speed_mbps = (size_mb * 8) / elapsed
-                return (server_name.capitalize(), speed_mbps, elapsed), True
-            return None, True  # Error del servidor
-        except Exception:
-            return None, True  # Error
-
-    # Download test
-    print(f"\n   📶 Download ({test_size_mb}MB):")
-    success = False
-    for server_name in DOWNLOAD_ORDER:
-        server_urls = SPEED_SERVERS.get(server_name, {})
-        result, tried = try_download(server_name, server_urls, test_size_mb)
-        if result:
-            name, speed_mbps, elapsed = result
-            download_results.append((name, speed_mbps, elapsed))
-            print(
-                f"      {name}: {speed_mbps:.1f} Mbps ({test_size_mb}MB en {elapsed:.1f}s)"
-            )
-            success = True
-            break
-        elif tried:
-            print(f"      ❌ {server_name.capitalize()}: Error del servidor")
-
-    if not success:
-        print(f"      ⚠️ Todos los servidores fallaron")
-
-    # Upload test
-    print(f"\n   📶 Upload ({test_size_mb}MB):")
-    success = False
-    for server_name in UPLOAD_ORDER:
-        server_urls = SPEED_SERVERS.get(server_name, {})
-        result, tried = try_upload(server_name, server_urls, test_size_mb)
-        if result:
-            name, speed_mbps, elapsed = result
-            upload_results.append((name, speed_mbps, elapsed))
-            print(
-                f"      {name}: {speed_mbps:.1f} Mbps ({test_size_mb}MB en {elapsed:.1f}s)"
-            )
-            success = True
-            break
-        elif tried:
-            print(f"      ❌ {server_name.capitalize()}: Error del servidor")
-
-    if not success:
-        print(f"      ⚠️ Todos los servidores fallaron")
-
-    return {"download": download_results, "upload": upload_results}
-
-
-PARALLEL_TESTS = ["1", "2", "2b", "3", "4", "5", "6", "8", "9", "12"]
-SLOW_TESTS = ["7", "10", "11"]
 
 
 def run_test_by_id(test_id, args, is_windows):
@@ -2079,6 +1657,7 @@ def main():
             print(f"   📡 Información del interfaz de red:")
             for key, value in interface_details.items():
                 print(f"      {key}: {value}")
+            analyze_test_8({"interface_details": interface_details})
         else:
             print("   ⚠️ No se pudo obtener información del interfaz")
 
@@ -2091,6 +1670,7 @@ def main():
             print(f"   🔥 Estado del firewall:")
             for key, value in firewall_info.items():
                 print(f"      {key}: {value}")
+            analyze_test_9({"firewall_info": firewall_info})
         else:
             print("   ⚠️ No se pudo obtener información del firewall")
 
@@ -2122,16 +1702,21 @@ def main():
         print_header("TEST 11: VELOCIDAD DE INTERNET")
         speed_results = test_internet_speed(speed_size)
 
-    if speed_results.get("download") or speed_results.get("upload"):
-        print("\n   📊 Resumen:")
-        if speed_results.get("download"):
-            name, speed, elapsed = speed_results["download"][0]
-            print(f"      Download ({name}): {speed:.1f} Mbps")
-        if speed_results.get("upload"):
-            name, speed, elapsed = speed_results["upload"][0]
-            print(f"      Upload ({name}): {speed:.1f} Mbps")
-    else:
-        print("   ⚠️ No se pudo obtener información de velocidad")
+        dl = 0
+        ul = 0
+        if speed_results.get("download") or speed_results.get("upload"):
+            print("\n   📊 Resumen:")
+            if speed_results.get("download"):
+                name, speed, elapsed = speed_results["download"][0]
+                dl = speed
+                print(f"      Download ({name}): {speed:.1f} Mbps")
+            if speed_results.get("upload"):
+                name, speed, elapsed = speed_results["upload"][0]
+                ul = speed
+                print(f"      Upload ({name}): {speed:.1f} Mbps")
+            analyze_test_11({"download": dl, "upload": ul})
+        else:
+            print("   ⚠️ No se pudo obtener información de velocidad")
 
     # Test 12: DHCP
     if "12" in selected_tests:
@@ -2142,6 +1727,7 @@ def main():
             print(f"   📋 Información del lease DHCP:")
             for key, value in dhcp_info.items():
                 print(f"      {key}: {value}")
+            analyze_test_12({"dhcp_info": dhcp_info})
         else:
             print("   ⚠️ No se pudo obtener información DHCP")
 

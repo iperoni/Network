@@ -2,7 +2,7 @@
 ║                    DIAGNÓSTICO DE RED                    ║
 ╚══════════════════════════════════════════════════════════╝
 
-Fecha: 2026-04-23 08:26:29
+Fecha: 2026-04-23 08:29:25
 
 ============================================================
    INFORMACIÓN LOCAL
@@ -70,6 +70,79 @@ Cloudflare:
    Recibidos: 10
    Perdidos: 0
    Porcentaje: 0%
+
+============================================================
+   TEST 8: DETALLES DEL INTERFAZ DE RED
+============================================================
+Nombre: Ethernet 4
+Descripcion: Realtek PCIe GbE Family Controller
+Estado: Up
+MAC: D8-5E-D3-D5-10-37
+Velocidad: 1 Gbps
+
+============================================================
+   TEST 9: ESTADO DEL FIREWALL
+============================================================
+Dominio: ON
+Privado: ON
+Publico: ON
+Reglas activas: 0
+
+============================================================
+   TEST 10: TRACEROUTE
+============================================================
+
+YouTube (CDN):
+   1. 192.168.100.1 (N/A) - 1 ms
+   2. 192.168.32.2 (N/A) - 1 ms
+   3. 45.236.33.1 (N/A) - 1 ms
+   4. 45.236.32.1 (N/A) - 1 ms
+   5. 10.32.196.13 (N/A) - 6 ms
+   6. 142.250.173.183 (N/A) - 30 ms
+   7. 142.250.173.182 (N/A) - 29 ms
+   8. 108.170.255.31 (N/A) - 31 ms
+   9. 142.251.77.171 (N/A) - 29 ms
+   10. 142.251.128.78 (gru06s69-in-f14.1e100.net) - 30 ms
+
+Yahoo (IPTransit):
+   1. 192.168.100.1 (N/A) - 1 ms
+   2. 192.168.32.2 (N/A) - 1 ms
+   3. 45.236.33.1 (N/A) - 1 ms
+   4. 45.236.32.1 (N/A) - 1 ms
+   5. 10.32.196.9 (N/A) - 6 ms
+   6. 198.32.243.180 (eqix-mi1.globenet-1.com) - 164 ms
+   7. 198.32.124.115 (N/A) - 165 ms
+   8. 209.191.65.140 (ae-18.pat2.dce.yahoo.com) - 189 ms
+   9. 209.191.68.34 (ae-23.pat2.che.yahoo.com) - 203 ms
+   10. 209.191.64.216 (ae-0.pat2.nez.yahoo.com) - 207 ms
+   11. 209.191.65.123 (et-10-1-1.msr2.ne1.yahoo.com) - 214 ms
+   12. 98.138.2.31 (et-8-1-0.clr2-a-gdc.ne1.yahoo.com) - 209 ms
+   13. 98.138.51.3 (lo0.fab4-2-gdc.ne1.yahoo.com) - 212 ms
+   14. 98.138.97.156 (usw1-1-lbd.ne1.yahoo.com) - 210 ms
+   15. 74.6.231.20 (media-router-fp73.prod.media.vip.ne1.yahoo.com) - 214 ms
+
+============================================================
+   TEST 11: VELOCIDAD DE INTERNET
+============================================================
+
+Download:
+   Cloudflare: 594.9 Mbps
+
+Upload:
+   Cloudflare: 10.0 Mbps
+
+Resumen Download:
+   Promedio: 594.9 Mbps
+   Maxima: 594.9 Mbps
+
+Resumen Upload:
+   Promedio: 10.0 Mbps
+   Maxima: 10.0 Mbps
+
+============================================================
+   TEST 12: INFORMACIÓN DHCP
+============================================================
+DHCP: Deshabilitado (IP Estática)
 
 ============================================================
    RESULTADO FINAL

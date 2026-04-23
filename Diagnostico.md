@@ -224,11 +224,72 @@ Extraer valor numérico de Signal (ej: "85%") para comparar.
 | Velocidad | INFO | Velocidad link | Comparar con plan contratado |
 | MTU < 1500 | INFO | MTU reducido | Puede indicar fragmentación |
 
-### Parsing nuevo
+### Estado: ⏳ PENDIENTE (faltan analyze_test_8)
 
-Extraer estado "Up" vs "Down" para comparar.
+---
 
-### Estado: PENDIENTE
+## TEST 9 — Firewall
+
+**Datos:** Estado por perfil (Dominio/Privado/Público), reglas activas
+
+### Reglas
+
+| Condición | Nivel | Problema | Sugerencia | Comando |
+|----------|-------|---------|----------|---------|
+| Todos OFF | WARNING | Firewall desactivado | Considerar activar firewall |
+| Perfil específico OFF | INFO | Perfil desactivado | `netsh advfirewall set allprofiles state on` |
+
+### Estado: ⏳ PENDIENTE (faltan analyze_test_9)
+
+---
+
+## TEST 10 — Traceroute
+
+**Datos:** lista de hops con IPs, hostnames, latencias
+
+### Reglas
+
+| Condición | Nivel | Problema | Sugerencia | Comando |
+|----------|-------|---------|----------|---------|
+| Hop > 15 | WARNING | Ruta larga | Normal para larga distancia |
+| Hop con * * * | INFO | Timeout en hop | Puede ser normal |
+| Aumento > 50ms entre hops | WARNING | Congestión en hop | Identificar ISP |
+| > 5 hops con timeout | WARNING | Ruta degradada | Verificar conexión |
+
+### Estado: ⏳ PENDIENTE (faltan analyze_test_10)
+
+---
+
+## TEST 11 — Velocidad
+
+**Datos:** download Mbps, upload Mbps
+
+### Reglas
+
+| Condición | Nivel | Problema | Sugerencia | Comando |
+|----------|-------|---------|----------|---------|
+| Download < 1 Mbps | CRÍTICO | Velocidad muy baja | Verificar línea; llamar ISP |
+| Download < 10 Mbps | WARNING | Velocidad baja | Verificar plan o congestión |
+| Upload < 0.5 Mbps | WARNING | Upload muy bajo | Verificar QoS del ISP |
+| Download OK pero Upload muy bajo | WARNING | Asimetría esperada | Normal en algunos planes |
+
+### Estado: ⏳ PENDIENTE (faltan analyze_test_11)
+
+---
+
+## TEST 12 — DHCP
+
+**Datos:** servidor DHCP, lease, IP estática vs dinámica
+
+### Reglas
+
+| Condición | Nivel | Problema | Sugerencia | Comando |
+|----------|-------|---------|----------|---------|
+| Lease expira pronto (< 1h) | WARNING | Lease por expirar | `ipconfig /renew` |
+| Sin servidor DHCP | INFO | IP estática | Normal si es estática |
+| Servidor DHCP en 192.168.x.x | INFO | DHCP del router | Normal en LAN doméstica |
+
+### Estado: ⏳ PENDIENTE (faltan analyze_test_12)
 
 ---
 

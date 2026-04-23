@@ -17,13 +17,15 @@ import argparse
 import configparser
 import concurrent.futures
 import io
+import urllib.request
+import urllib.error
 from datetime import datetime
 
 # ==============================================================================
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.23.1"
+VERSION = "v1.24.0"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -73,6 +75,22 @@ TESTS_MAP = {
     "traceroute": "10",
     "speed": "11",
     "dhcp": "12",
+    "16": "simul-connections",
+    # Nombre a número
+    "connectivity": "1",
+    "internet": "2",
+    "dns-configured": "2b",
+    "ports": "3",
+    "latency": "4",
+    "wifi": "5",
+    "isp": "6",
+    "packet-loss": "7",
+    "interface": "8",
+    "firewall": "9",
+    "traceroute": "10",
+    "speed": "11",
+    "dhcp": "12",
+    "simul-connections": "16",
 }
 
 TEST_NAMES = {
@@ -92,6 +110,7 @@ TEST_NAMES = {
     "13": "Test 13: Bufferbloat (QoS)",
     "14": "Test 14: MTU",
     "15": "Test 15: DNS Alternativos",
+    "16": "Test 16: Conexiones Simultáneas",
 }
 
 # ==============================================================================
@@ -2204,6 +2223,13 @@ def main():
         dns_result = test_dns_alternatives()
         analyze_dns_alternatives(dns_result)
 
+    # Test 16: Conexiones Simultáneas
+    if "16" in selected_tests:
+        executed_tests.add("16")
+        print_header("TEST 16: CONEXIONES SIMULTÁNEAS")
+        simul_result = test_simultaneous_connections()
+        analyze_simul_connections(simul_result)
+
     # ========== RESUMEN ==========
     print_header("RESULTADO FINAL")
     puntos = 0
@@ -2586,6 +2612,159 @@ def analyze_dns_alternatives(results):
             f"Considerar usar: {best[0]}",
             "",
         )
+
+
+# ==============================================================================
+# TEST DE CONEXIONES SIMULTÁNEAS (Test 16)
+# ==============================================================================
+
+
+def test_tcp_connection(host, port, timeout=5):
+    """Probar conexión TCP a un servidor"""
+    start = time.time()
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(timeout)
+        sock.connect((host, port))
+        sock.close()
+        return {"success": True, "time": (time.time() - start) * 1000}
+    except Exception as e:
+        return {"success": False, "time": None, "error": str(e)}
+
+
+def test_http_download(url, timeout=15):
+    """Descargar archivo pequeño vía HTTP"""
+    start = time.time()
+    try:
+        req = urllib.request.Request(url, method="GET")
+        req.add_header("User-Agent", "NetworkDiagnostic/1.0")
+        with urllib.request.urlopen(req, timeout=timeout) as response:
+            data = response.read(1024 * 500)  # Leer hasta 500KB
+            elapsed = time.time() - start
+            bytes_received = len(data)
+            return {
+                "success": True,
+                "time": elapsed * 1000,
+                "bytes": bytes_received,
+                "speed_mbps": (bytes_received * 8) / (elapsed * 1_000_000)
+                if elapsed > 0
+                else 0,
+            }
+    except Exception as e:
+        return {"success": False, "time": None, "error": str(e)}
+
+
+def test_simultaneous_connections():
+    """Test de conexiones simultáneas TCP + HTTP"""
+    print("\n   Probando conexiones TCP simultáneas...")
+
+    tcp_servers = [
+        ("8.8.8.8", 443, "Google"),
+        ("1.1.1.1", 443, "Cloudflare"),
+        ("9.9.9.9", 443, "Quad9"),
+    ]
+
+    tcp_results = []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        futures = {
+            name: executor.submit(test_tcp_connection, host, port)
+            for host, port, name in tcp_servers
+        }
+        for name, future in futures.items():
+            result = future.result()
+            tcp_results.append((name, result))
+            if result["success"]:
+                print(f"      {name}: {result['time']:.0f}ms")
+            else:
+                print(f"      {name}: FALLO")
+
+    print("\n   Probando descargas HTTP concurrentes...")
+    http_urls = [
+        ("https://speed.cloudflare.com/__down?bytes=5000000", "Cloudflare"),
+        ("https://httpbin.org/stream-bytes/5000000", "HTTPBin"),
+    ]
+
+    http_results = []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+        futures = {
+            name: executor.submit(test_http_download, url) for url, name in http_urls
+        }
+        for name, future in futures.items():
+            result = future.result()
+            http_results.append((name, result))
+            if result["success"]:
+                print(
+                    f"      {name}: {result['speed_mbps']:.1f} Mbps ({result['bytes']} bytes)"
+                )
+            else:
+                print(f"      {name}: FALLO")
+
+    return {
+        "tcp_results": tcp_results,
+        "http_results": http_results,
+    }
+
+
+def analyze_simul_connections(results):
+    """Analizar resultados de conexiones simultáneas"""
+    tcp_results = results.get("tcp_results", [])
+    http_results = results.get("http_results", [])
+
+    tcp_success = sum(1 for _, r in tcp_results if r.get("success", False))
+    http_success = sum(1 for _, r in http_results if r.get("success", False))
+    total_tcp = len(tcp_results)
+
+    if tcp_success == 0 and http_success == 0:
+        suggest(
+            "warning",
+            "simul",
+            "Conexiones Simultáneas",
+            "Todas las conexiones fallaron",
+            "Verificar conectividad a Internet",
+            "",
+        )
+        return
+
+    if tcp_success < total_tcp * 0.5:
+        suggest(
+            "warning",
+            "simul",
+            "Conexiones TCP Lentas",
+            f"Solo {tcp_success}/{total_tcp} conexiones TCP exitosas",
+            "Verificar latencia y límites del ISP",
+            "",
+        )
+        return
+
+    if tcp_success == total_tcp:
+        tcp_times = [r["time"] for _, r in tcp_results if r.get("success")]
+        avg_tcp = sum(tcp_times) / len(tcp_times) if tcp_times else 0
+        print(f"\n   📊 TCP promedio: {avg_tcp:.0f}ms")
+
+    if http_success > 0:
+        speeds = [r["speed_mbps"] for _, r in http_results if r.get("success")]
+        if speeds:
+            avg_speed = sum(speeds) / len(speeds)
+            print(f"   📊 HTTP concurrente promedio: {avg_speed:.1f} Mbps")
+    else:
+        suggest(
+            "info",
+            "simul",
+            "Conexiones Múltiples",
+            f"{tcp_success}/{total_tcp} conexiones TCP OK",
+            "Descarga HTTP no disponible",
+            "",
+        )
+        return
+
+    suggest(
+        "info",
+        "simul",
+        "Conexiones Múltiples",
+        f"{tcp_success} TCP, {http_success} HTTP concurrentes OK",
+        "La conexión maneja bien múltiples conexiones",
+        "",
+    )
 
 
 if __name__ == "__main__":

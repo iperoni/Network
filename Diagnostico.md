@@ -1,12 +1,11 @@
-# Diagnóstico y Troubleshooting - v1.23.1
+# Diagnóstico y Troubleshooting - v1.24.0
 
-## Estado: ✅ Comparación DNS implementada
+## Estado: ✅ Test 16 implementado
 
-- v1.23.1: Comparación DNS configurados vs alternativos
-- v1.23.0: Comparación DNS (sin sugerencia)
+- v1.24.0: Test 16 Conexiones Simultáneas
+- v1.23.1: Fix DNS y doble título
+- v1.23.0: Comparación DNS
 - v1.22.0: Test 15 DNS Alternativos
-- v1.21.1: Fix doble título y suggestions
-- v1.21.0: Tests 13 y 14 (Bufferbloat, MTU)
 
 ## MEJORAS IMPLEMENTADAS
 
@@ -19,6 +18,7 @@
 | 13 | Bufferbloat (QoS) | v1.21.0 | ✅ IMPLEMENTADO |
 | 14 | MTU | v1.21.0 | ✅ IMPLEMENTADO |
 | 15 | DNS Alternativos | v1.22.0 | ✅ IMPLEMENTADO |
+| 16 | Conexiones Simultáneas | v1.24.0 | ✅ IMPLEMENTADO |
 
 ---
 

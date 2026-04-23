@@ -1,6 +1,10 @@
-# Network Diagnostic Tool (v1.23.1)
+# Network Diagnostic Tool (v1.24.0)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux con sugerencias de troubleshooting automatizadas.
+
+## Novedades en v1.24.0
+
+- **Added**: Test 16: Conexiones Simultáneas (TCP + HTTP concurrentes)
 
 ## Novedades en v1.23.1
 

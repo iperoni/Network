@@ -23,7 +23,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.19.8"
+VERSION = "v1.19.9"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -771,11 +771,36 @@ def run_traceroute(host, max_hops=30):
 
     result = subprocess.run(cmd, shell=True, capture_output=True, timeout=60)
     output = result.stdout.decode("cp437" if is_windows else "utf-8", errors="replace")
-    return [
-        line.strip()
-        for line in output.split("\n")
-        if line.strip() and line.strip()[0].isdigit()
-    ][:15]
+
+    hops_data = []
+    for line in output.split("\n"):
+        if line.strip() and (
+            line.strip()[0].isdigit() or line.strip().startswith("1 ")
+        ):
+            line = line.strip()
+            latency = 0
+            times = []
+            for part in line.split():
+                if (
+                    part.replace("ms", "")
+                    .replace("<", "")
+                    .replace("s", "")
+                    .replace("m", "")
+                    .isdigit()
+                ):
+                    try:
+                        t = int(part.replace("ms", "").replace("<", ""))
+                        times.append(t)
+                    except:
+                        pass
+            if times:
+                latency = sum(times) / len(times)
+
+            ip_match = re.search(r"\d+\.\d+\.\d+\.\d+", line)
+            hop_ip = ip_match.group(0) if ip_match else line[:20]
+            hops_data.append({"ip": hop_ip, "latency": latency, "line": line})
+
+    return hops_data[:15]
 
 
 def get_configured_dns():
@@ -1492,7 +1517,13 @@ def analyze_test_10(results):
     for route_name, hops in routes:
         if not hops:
             continue
-        timeouts = sum(1 for h in hops if "*" in h)
+
+        # Detectar timeouts
+        if isinstance(hops[0], dict):
+            timeouts = sum(1 for h in hops if h.get("latency", 0) == 0)
+        else:
+            timeouts = sum(1 for h in hops if "*" in h)
+
         if timeouts > 5:
             suggest(
                 "warning",
@@ -1502,6 +1533,24 @@ def analyze_test_10(results):
                 "Ruta degradada, verificar conexión",
                 "",
             )
+
+        # Detectar aumento brusco de latencia (>50ms entre hops)
+        if isinstance(hops[0], dict):
+            for i in range(1, len(hops)):
+                prev_lat = hops[i - 1].get("latency", 0)
+                curr_lat = hops[i].get("latency", 0)
+                if prev_lat > 0 and curr_lat > 0:
+                    diff = curr_lat - prev_lat
+                    if diff > 50:
+                        suggest(
+                            "warning",
+                            "10",
+                            f"Traceroute {route_name}",
+                            f"Congestión en hop {i + 1} (+{diff:.0f}ms)",
+                            "Verificar ISP de ese salto",
+                            "",
+                        )
+                        break
 
 
 def analyze_test_11(results):

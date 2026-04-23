@@ -1,6 +1,10 @@
-# Network Diagnostic Tool (v1.19.8)
+# Network Diagnostic Tool (v1.19.9)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux con sugerencias de troubleshooting automatizadas.
+
+## Novedades en v1.19.9
+
+- **Added**: Detección de latencia por hop (congestión)
 
 ## Novedades en v1.19.8
 

@@ -2,6 +2,10 @@
 
 Lista de mejoras pendientes para el proyecto.
 
+## v1.19.9 - Completado
+
+- [x] Test 10: Detección de latencia por hop (congestión)
+
 ## v1.19.8 - Completado
 
 - [x] Test 8: Detección de half-duplex

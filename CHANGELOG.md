@@ -6,6 +6,13 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [v1.19.9] - 2026-04-23
+
+### Added
+- Test 10: Detección de latencia por hop (congestión)
+
+---
+
 ## [v1.19.8] - 2026-04-23
 
 ### Added

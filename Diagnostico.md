@@ -1,7 +1,8 @@
-# Diagnóstico y Troubleshooting - v1.19.8
+# Diagnóstico y Troubleshooting - v1.19.9
 
 ## Estado: ✅ COMPLETADO para tests 1-12
 
+- v1.19.9: Detección de latencia por hop (congestión)
 - v1.19.8: Detección de half-duplex
 - v1.19.7: Detección de latencia base alta (>50ms)
 - v1.19.6: Detección de DNS lento (>2s)
@@ -14,7 +15,7 @@
 | 2 | DNS lento (>2s) | ✅ IMPLEMENTADO |
 | 4 | Latencia base alta (>50ms) | ✅ IMPLEMENTADO |
 | 8 | Duplex mismatch | ✅ IMPLEMENTADO |
-| 10 | Latencia por hop | ⏳ PENDIENTE |
+| 10 | Latencia por hop | ✅ IMPLEMENTADO |
 
 **Todas las funciones analyze_test_N() para tests 1-12 están implementadas y funcionando.**
 

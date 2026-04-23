@@ -2,6 +2,10 @@
 
 Lista de mejoras pendientes para el proyecto.
 
+## v1.20.0 - Completado
+
+- [x] Test de Bufferbloat (QoS) integrado en Test 11
+
 ## v1.19.9 - Completado
 
 - [x] Test 10: Detección de latencia por hop (congestión)

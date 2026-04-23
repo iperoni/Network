@@ -6,6 +6,13 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [v1.20.0] - 2026-04-23
+
+### Added
+- Test de Bufferbloat (QoS) integrado en Test 11
+
+---
+
 ## [v1.19.9] - 2026-04-23
 
 ### Added

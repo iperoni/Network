@@ -1,10 +1,9 @@
-# Diagnóstico y Troubleshooting - v1.19.9
+# Diagnóstico y Troubleshooting - v1.20.0
 
-## Estado: ✅ TODAS LAS MEJORAS IMPLEMENTADAS
+## Estado: ✅ NUEVA MEJORA IMPLEMENTADA
 
-Todas las mejoras planificadas están implementadas en esta versión.
-
----
+- v1.20.0: Test de Bufferbloat (QoS)
+- v1.19.9: Detección de latencia por hop (congestión)
 
 ## MEJORAS IMPLEMENTADAS
 
@@ -14,6 +13,7 @@ Todas las mejoras planificadas están implementadas en esta versión.
 | 4 | Latencia base alta (>50ms) | v1.19.7 | ✅ IMPLEMENTADO |
 | 8 | Duplex mismatch | v1.19.8 | ✅ IMPLEMENTADO |
 | 10 | Latencia por hop | v1.19.9 | ✅ IMPLEMENTADO |
+| 11 | Bufferbloat (QoS) | v1.20.0 | ✅ IMPLEMENTADO |
 
 ---
 
@@ -166,16 +166,15 @@ Todas las mejoras planificadas están implementadas en esta versión.
 | # | Nueva Prueba | Complejidad | Beneficio |
 |---|--------------|-------------|-----------|
 | 1 | Ancho de banda por servidor | Media | Alto |
-| 2 | Bufferbloat (QoS) | Alta | Alto |
+| 2 | ~~Bufferbloat (QoS)~~ | ~~Alta~~ | ~~Alto~~ |
 
 **1. Test de Ancho de Banda por Servidor**
-- Medir velocidad por servidor individual (Netflix fast.com, Google QUIC, Cloudflare)
+- Medir velocidad por servidor individual (Cloudflare, nperf, Hetzner)
 - Detectar si un servidor específico está lento vs Internet lento
 
-**2. Test de Bufferbloat (QoS)**
+~~**2. Test de Bufferbloat (QoS)** - ✅ IMPLEMENTADO en v1.20.0~~
 - Medir latencia bajo carga de download
 - Diferencia >50ms indica QoS mal configurado en router
-- Necesita test de velocidad + ping simultáneo
 
 ---
 

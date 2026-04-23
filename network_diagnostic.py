@@ -23,7 +23,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.19.9"
+VERSION = "v1.20.0"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -757,6 +757,10 @@ def test_internet_speed(test_size_mb=20):
     ul_speed = test_size_mb * 8 / max(time.time() - start, 0.1)
     print(f"      Cloudflare: {ul_speed:.1f} Mbps")
     upload_results.append(("Cloudflare", ul_speed, time.time() - start))
+
+    # Test de Bufferbloat (QoS)
+    bb_result = test_bufferbloat()
+    analyze_bufferbloat(bb_result)
 
     return {"download": download_results, "upload": upload_results}
 
@@ -2242,6 +2246,131 @@ def main():
 
     # GUARDAR RESULTADOS (ahora sí incluye sugerencias y pie)
     end_capture(ruta_archivo)
+
+
+# ==============================================================================
+# TEST de BUFFERBLOAT (QoS) - Mejora Pendiente
+# ==============================================================================
+
+
+def measure_ping(host="8.8.8.8"):
+    """Medir latencia simple (retorna ms)"""
+    is_windows = platform.system().lower() == "windows"
+    param = "-n" if is_windows else "-c"
+
+    try:
+        result = subprocess.run(
+            f"ping {param} 1 {host}",
+            shell=True,
+            capture_output=True,
+            timeout=5,
+        )
+        output = result.stdout.decode(
+            "cp437" if is_windows else "utf-8", errors="replace"
+        )
+
+        for word in output.split():
+            word_lower = word.lower()
+            if "time=" in word_lower or "tiempo=" in word_lower:
+                ms = word.split("=")[-1].replace("ms", "").replace("TTL", "").strip()
+                return float(ms)
+    except:
+        pass
+    return None
+
+
+def test_bufferbloat():
+    """Test de Bufferbloat ( QoS)"""
+    results = {}
+
+    print("\n" + "=" * 60)
+    print("   TEST DE BUFFERBLOAT (QoS)")
+    print("=" * 60)
+
+    # 1. Medir latencia base (sin carga)
+    print(" Mediendo latencia base...")
+    base_samples = []
+    for i in range(5):
+        lat = measure_ping("8.8.8.8")
+        if lat:
+            base_samples.append(lat)
+        time.sleep(0.5)
+
+    if not base_samples:
+        print(" No se pudo medir latencia base")
+        return {"error": True}
+
+    results["base_latency"] = sum(base_samples) / len(base_samples)
+
+    # 2. Iniciar download en background
+    print(" Midiendo latencia bajo carga...")
+    download_proc = subprocess.Popen(
+        'curl -L -k -s -o NUL "https://speed.cloudflare.com/__down?bytes=50000000"',
+        shell=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+    time.sleep(2)
+
+    # 3. Medir latencia durante descarga
+    load_samples = []
+    for i in range(10):
+        lat = measure_ping("8.8.8.8")
+        if lat:
+            load_samples.append(lat)
+        time.sleep(0.3)
+
+    download_proc.wait(timeout=60)
+
+    if not load_samples:
+        print(" No se pudo medir latencia bajo carga")
+        return {"error": True}
+
+    results["load_latency"] = sum(load_samples) / len(load_samples)
+    results["bloat"] = results["load_latency"] - results["base_latency"]
+
+    print(f"   Base: {results['base_latency']:.1f}ms")
+    print(f"   Carga: {results['load_latency']:.1f}ms")
+    print(f"   Bufferbloat: {results['bloat']:.1f}ms")
+
+    return results
+
+
+def analyze_bufferbloat(results):
+    """Analizar resultados del test de Bufferbloat"""
+    if results.get("error"):
+        return
+
+    bloat = results.get("bloat", 0)
+
+    if bloat > 100:
+        suggest(
+            "critical",
+            "qos",
+            "Bufferbloat Severo",
+            f"+{bloat:.0f}ms bajo carga",
+            "Configurar QoS/SQM en el router. Usar Cake o fq_codel.",
+            "",
+        )
+    elif bloat > 50:
+        suggest(
+            "warning",
+            "qos",
+            "Bufferbloat Moderado",
+            f"+{bloat:.0f}ms bajo carga",
+            "Verificar configuración QoS del router",
+            "",
+        )
+    elif bloat > 20:
+        suggest(
+            "info",
+            "qos",
+            "Bufferbloat Leve",
+            f"+{bloat:.0f}ms bajo carga",
+            "Aceptable para mayoría de usos",
+            "",
+        )
 
 
 if __name__ == "__main__":

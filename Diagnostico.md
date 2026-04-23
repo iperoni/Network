@@ -1,9 +1,9 @@
-# Diagnóstico y Troubleshooting - v1.20.0
+# Diagnóstico y Troubleshooting - v1.20.1
 
-## Estado: ✅ NUEVA MEJORA IMPLEMENTADA
+## Estado: ✅ Test 13 AGREGADO
 
+- v1.20.1: Test de Bufferbloat separado como Test 13
 - v1.20.0: Test de Bufferbloat (QoS)
-- v1.19.9: Detección de latencia por hop (congestión)
 
 ## MEJORAS IMPLEMENTADAS
 
@@ -13,7 +13,7 @@
 | 4 | Latencia base alta (>50ms) | v1.19.7 | ✅ IMPLEMENTADO |
 | 8 | Duplex mismatch | v1.19.8 | ✅ IMPLEMENTADO |
 | 10 | Latencia por hop | v1.19.9 | ✅ IMPLEMENTADO |
-| 11 | Bufferbloat (QoS) | v1.20.0 | ✅ IMPLEMENTADO |
+| 13 | Bufferbloat (QoS) | v1.20.1 | ✅ IMPLEMENTADO |
 
 ---
 

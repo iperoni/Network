@@ -1,6 +1,10 @@
-# Network Diagnostic Tool (v1.20.0)
+# Network Diagnostic Tool (v1.20.1)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux con sugerencias de troubleshooting automatizadas.
+
+## Novedades en v1.20.1
+
+- **Changed**: Test de Bufferbloat separado como Test 13
 
 ## Novedades en v1.20.0
 

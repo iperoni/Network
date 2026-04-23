@@ -6,6 +6,13 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [v1.20.1] - 2026-04-23
+
+### Changed
+- Test de Bufferbloat separado como Test 13
+
+---
+
 ## [v1.20.0] - 2026-04-23
 
 ### Added

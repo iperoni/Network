@@ -2,9 +2,11 @@
 
 Lista de mejoras pendientes para el proyecto.
 
-## v1.20.0 - Completado
+## v1.20.1 - Completado
 
-- [x] Test de Bufferbloat (QoS) integrado en Test 11
+- [x] Test 13: Bufferbloat (QoS) separado
+
+## v1.20.0 - Completado
 
 ## v1.19.9 - Completado
 

@@ -23,7 +23,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.20.0"
+VERSION = "v1.20.1"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -89,6 +89,7 @@ TEST_NAMES = {
     "10": "Test 10: Traceroute",
     "11": "Test 11: Velocidad internet",
     "12": "Test 12: DHCP",
+    "13": "Test 13: Bufferbloat (QoS)",
 }
 
 # ==============================================================================
@@ -757,10 +758,6 @@ def test_internet_speed(test_size_mb=20):
     ul_speed = test_size_mb * 8 / max(time.time() - start, 0.1)
     print(f"      Cloudflare: {ul_speed:.1f} Mbps")
     upload_results.append(("Cloudflare", ul_speed, time.time() - start))
-
-    # Test de Bufferbloat (QoS)
-    bb_result = test_bufferbloat()
-    analyze_bufferbloat(bb_result)
 
     return {"download": download_results, "upload": upload_results}
 
@@ -2182,6 +2179,13 @@ def main():
             analyze_test_12({"dhcp_info": dhcp_info})
         else:
             print("   ⚠️ No se pudo obtener información DHCP")
+
+    # Test 13: Bufferbloat (QoS)
+    if "13" in selected_tests:
+        executed_tests.add("13")
+        print_header("TEST 13: BUFFERBLOAT (QoS)")
+        bb_result = test_bufferbloat()
+        analyze_bufferbloat(bb_result)
 
     # ========== RESUMEN ==========
     print_header("RESULTADO FINAL")

@@ -23,7 +23,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.21.1"
+VERSION = "v1.22.0"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -91,6 +91,7 @@ TEST_NAMES = {
     "12": "Test 12: DHCP",
     "13": "Test 13: Bufferbloat (QoS)",
     "14": "Test 14: MTU",
+    "15": "Test 15: DNS Alternativos",
 }
 
 # ==============================================================================
@@ -2196,6 +2197,13 @@ def main():
         mtu_result = test_mtu()
         analyze_mtu(mtu_result)
 
+    # Test 15: DNS Alternativos
+    if "15" in selected_tests:
+        executed_tests.add("15")
+        print_header("TEST 15: DNS ALTERNATIVOS")
+        dns_result = test_dns_alternatives()
+        analyze_dns_alternatives(dns_result)
+
     # ========== RESUMEN ==========
     print_header("RESULTADO FINAL")
     puntos = 0
@@ -2442,6 +2450,75 @@ def analyze_mtu(results):
         )
     elif mtu > 0:
         suggest("info", "mtu", "MTU Óptimo", f"MTU = {mtu} bytes", "")
+
+
+# ==============================================================================
+# TEST DE DNS ALTERNATIVOS (Mejora 5)
+# ==============================================================================
+
+
+def test_dns_alternatives():
+    """Test de servidores DNS alternativos"""
+    dns_servers = [
+        ("1.1.1.1", "Cloudflare"),
+        ("8.8.8.8", "Google"),
+        ("9.9.9.9", "Quad9"),
+        ("208.67.222.222", "OpenDNS"),
+    ]
+
+    results = []
+
+    print("\n" + "=" * 60)
+    print("   TEST DE DNS ALTERNATIVOS")
+    print("=" * 60)
+
+    for dns_ip, provider in dns_servers:
+        start = time.time()
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(3)
+            sock.connect((dns_ip, 53))
+            sock.close()
+            elapsed = (time.time() - start) * 1000
+            results.append((dns_ip, provider, elapsed, True))
+            print(f"   {provider} ({dns_ip}): {elapsed:.0f}ms")
+        except:
+            results.append((dns_ip, provider, 0, False))
+            print(f"   {provider} ({dns_ip}): NO DISPONIBLE")
+
+    return {"dns_results": results}
+
+
+def analyze_dns_alternatives(results):
+    """Analizar resultados de DNS alternativos"""
+    dns_list = results.get("dns_results", [])
+
+    working = [(ip, name, t) for ip, name, t, ok in dns_list if ok]
+
+    if not working:
+        suggest(
+            "warning",
+            "dns_alt",
+            "DNS Alternativos",
+            "Ningún DNS alternativo funciona",
+            "Verificar conectividad",
+            "",
+        )
+        return
+
+    working.sort(key=lambda x: x[2])
+
+    best = working[0]
+
+    if best[2] > 100:
+        suggest(
+            "info",
+            "dns_alt",
+            "DNS Lento",
+            f"Mejor DNS: {best[1]} ({best[0]}) - {best[2]:.0f}ms",
+            f"Considerar usar: {best[0]}",
+            "",
+        )
 
 
 if __name__ == "__main__":

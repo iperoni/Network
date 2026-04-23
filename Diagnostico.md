@@ -1,10 +1,10 @@
-# Diagnóstico y Troubleshooting - v1.21.0
+# Diagnóstico y Troubleshooting - v1.22.0
 
-## Estado: ✅ Tests 13 y 14 agregados
+## Estado: ✅ Test 15 agregado
 
-- v1.21.0: Test 14 MTU + Test 13 Bufferbloat
-- v1.20.1: Test de Bufferbloat separado como Test 13
-- v1.20.0: Test de Bufferbloat (QoS)
+- v1.22.0: Test 15 DNS Alternativos
+- v1.21.1: Fix doble título y suggestions
+- v1.21.0: Tests 13 y 14 (Bufferbloat, MTU)
 
 ## MEJORAS IMPLEMENTADAS
 
@@ -14,8 +14,9 @@
 | 4 | Latencia base alta (>50ms) | v1.19.7 | ✅ IMPLEMENTADO |
 | 8 | Duplex mismatch | v1.19.8 | ✅ IMPLEMENTADO |
 | 10 | Latencia por hop | v1.19.9 | ✅ IMPLEMENTADO |
-| 13 | Bufferbloat (QoS) | v1.20.1 | ✅ IMPLEMENTADO |
+| 13 | Bufferbloat (QoS) | v1.21.0 | ✅ IMPLEMENTADO |
 | 14 | MTU | v1.21.0 | ✅ IMPLEMENTADO |
+| 15 | DNS Alternativos | v1.22.0 | ✅ IMPLEMENTADO |
 
 ---
 

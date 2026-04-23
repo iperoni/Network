@@ -6,6 +6,13 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [v1.22.0] - 2026-04-23
+
+### Added
+- Test 15: DNS Alternativos
+
+---
+
 ## [v1.21.1] - 2026-04-23
 
 ### Fixed

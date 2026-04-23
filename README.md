@@ -1,6 +1,10 @@
-# Network Diagnostic Tool (v1.21.0)
+# Network Diagnostic Tool (v1.22.0)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux con sugerencias de troubleshooting automatizadas.
+
+## Novedades en v1.22.0
+
+- **Added**: Test 15: DNS Alternativos
 
 ## Novedades en v1.21.0
 

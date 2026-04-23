@@ -2,6 +2,10 @@
 
 Lista de mejoras pendientes para el proyecto.
 
+## v1.22.0 - Completado
+
+- [x] Test 15: DNS Alternativos
+
 ## v1.21.0 - Completado
 
 - [x] Test 13: Bufferbloat (QoS) separado

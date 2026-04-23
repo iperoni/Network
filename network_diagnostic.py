@@ -22,7 +22,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.13"
+VERSION = "v1.14"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -166,6 +166,204 @@ SPEED_SERVERS = {
 DOWNLOAD_ORDER = ["cloudflare", "nperf", "tele2"]
 UPLOAD_ORDER = ["cloudflare", "tempfile", "oshi"]
 
+# ==============================================================================
+# TROUBLESHOOTING - SUGERENCIAS AUTOMATIZADAS
+# ==============================================================================
+
+SUGGESTIONS = []
+
+
+def suggest(level, test_id, test_name, problem, suggestion, command=""):
+    """Agrega una sugerencia de troubleshooting"""
+    SUGGESTIONS.append(
+        {
+            "level": level,
+            "test_id": test_id,
+            "test_name": test_name,
+            "problem": problem,
+            "suggestion": suggestion,
+            "command": command,
+        }
+    )
+
+
+def print_suggestion(s):
+    """Imprime una sugerencia formateada"""
+    icon = {"critical": "🔴", "warning": "🟡", "info": "ℹ️"}.get(s["level"], "ℹ️")
+    print(f"   {icon} [{s['test_id']}] {s['test_name']}: {s['problem']}")
+    print(f"      → {s['suggestion']}")
+    if s["command"]:
+        print(f"      → {s['command']}")
+
+
+def print_all_suggestions():
+    """Imprime todas las sugerencias colectadas"""
+    if not SUGGESTIONS:
+        return
+    print("\n" + "=" * 60)
+    print("   SUGERENCIAS DE TROUBLESHOOTING")
+    print("=" * 60)
+    critical = [s for s in SUGGESTIONS if s["level"] == "critical"]
+    warning = [s for s in SUGGESTIONS if s["level"] == "warning"]
+    info = [s for s in SUGGESTIONS if s["level"] == "info"]
+    for s in critical:
+        print_suggestion(s)
+    for s in warning:
+        print_suggestion(s)
+    for s in info:
+        print_suggestion(s)
+    print()
+
+
+def analyze_test_1(results):
+    """Test 1: Conectividad local"""
+    gateway = results.get("gateway")
+    gateway_ok = results.get("gateway_ok", False)
+    local_ip = results.get("local_ip", "")
+
+    if local_ip.startswith("169.254."):
+        suggest(
+            "critical",
+            "1",
+            "Conectividad Local",
+            "APIPA detectada — DHCP falló",
+            "La IP 169.254.x.x indica que no se obtuvo lease DHCP",
+            "ipconfig /release && ipconfig /renew",
+        )
+    elif gateway is None:
+        suggest(
+            "critical",
+            "1",
+            "Conectividad Local",
+            "Gateway no detectado",
+            "Verificar que DHCP esté habilitado en el router, cables y adaptador",
+            "ipconfig /all",
+        )
+    elif not gateway_ok:
+        suggest(
+            "critical",
+            "1",
+            "Conectividad Local",
+            "Gateway inaccesible",
+            "El gateway no responde. Verificar router, cables o reiniciar",
+            f"Ping manual al gateway: ping {gateway}",
+        )
+    elif gateway_ok:
+        gw_latency = results.get("gateway_latency", 0)
+        if gw_latency > 10:
+            suggest(
+                "warning",
+                "1",
+                "Conectividad Local",
+                f"Gateway lento ({gw_latency}ms)",
+                "Latencia elevada al gateway. Verificar congestión LAN",
+                "",
+            )
+
+
+def analyze_test_2(results):
+    """Test 2: Internet y DNS"""
+    internet_ok = results.get("internet_ok", False)
+    dns_ok = results.get("dns_ok", False)
+
+    if not internet_ok and not dns_ok:
+        suggest(
+            "critical",
+            "2",
+            "Internet y DNS",
+            "Sin conectividad",
+            "Reiniciar módem y router. Si persiste, contactar ISP",
+            "",
+        )
+    elif not internet_ok and dns_ok:
+        suggest(
+            "warning",
+            "2",
+            "Internet y DNS",
+            "ICMP bloqueado",
+            "Ping bloqueado por ISP (normal). Web debería funcionar",
+            "",
+        )
+    elif internet_ok and not dns_ok:
+        suggest(
+            "critical",
+            "2",
+            "Internet y DNS",
+            "DNS no resuelve",
+            "Verificar configuración DNS. Probar nslookup",
+            "nslookup google.com 8.8.8.8",
+        )
+
+
+def analyze_test_2b(results):
+    """Test 2B: DNS configurados"""
+    dns_servers = results.get("dns_servers", [])
+    dns_open = results.get("dns_open", {})
+
+    if not dns_servers:
+        suggest(
+            "critical",
+            "2b",
+            "DNS Configurados",
+            "Sin servidores DNS",
+            "Configurar DNS manualmente",
+            'netsh interface ip set dns "Ethernet" static 8.8.8.8',
+        )
+    else:
+        closed = [d for d in dns_servers if dns_open.get(d, True) is False]
+        if closed:
+            suggest(
+                "critical",
+                "2b",
+                "DNS Configurados",
+                f"DNS caído: {closed[0]}",
+                "Cambiar DNS primario a 8.8.8.8",
+                'netsh interface ip set dns "Ethernet" static 8.8.8.8',
+            )
+        if len(dns_servers) == 1:
+            suggest(
+                "warning",
+                "2b",
+                "DNS Configurados",
+                "Sin redundancia DNS",
+                "Agregar DNS secundario 1.1.1.1",
+                'netsh interface ip add dns "Ethernet" 1.1.1.1 index=2',
+            )
+
+
+def analyze_test_3(results):
+    """Test 3: Puertos críticos"""
+    port_443 = results.get("port_443", False)
+    port_53 = results.get("port_53", False)
+
+    if not port_443:
+        suggest(
+            "critical",
+            "3",
+            "Puertos",
+            "Puerto 443 (HTTPS) cerrado",
+            "Verificar firewall, proxy o ISP bloquea HTTPS",
+            "netsh advfirewall show all profiles",
+        )
+    if not port_53:
+        suggest(
+            "critical",
+            "3",
+            "Puertos",
+            "Puerto 53 (DNS) cerrado",
+            "Firewall o ISP bloquea puerto 53",
+            "",
+        )
+    if port_443 and not port_53:
+        suggest(
+            "warning",
+            "3",
+            "Puertos",
+            "DNS interceptado por VPN",
+            "Verificar si VPN está activa y intercepta DNS",
+            "",
+        )
+
 
 # ==============================================================================
 # FUNCIONES DE DEPENDENCIAS (LINUX)
@@ -304,14 +502,19 @@ def parse_test_string(test_str):
         # Verificar rango (ej: 5-7)
         if i + 1 < len(parts) and parts[i + 1].isdigit():
             start = TESTS_MAP.get(part, part)
-            end = int(parts[i + 1])
-            if isinstance(start, str):
-                start_num = (
-                    int(start) if start.isdigit() else int(TESTS_MAP.get(start, "1"))
-                )
-            else:
+            if isinstance(start, str) and start.lower() == "2b":
+                start_num = 2
+            elif isinstance(start, str) and start.isdigit():
+                start_num = int(start)
+            elif isinstance(start, int):
                 start_num = start
-            for n in range(start_num, end + 1):
+            else:
+                start_num = TESTS_MAP.get(start, part)
+                if isinstance(start_num, str) and not start_num.isdigit():
+                    start_num = 1
+                else:
+                    start_num = int(start_num)
+            for n in range(start_num, int(parts[i + 1]) + 1):
                 tests.add(str(n))
             i += 2
         else:
@@ -409,13 +612,14 @@ def run_command(command):
 
 
 def test_ping(host, name=""):
-    """Test ping a un host"""
+    """Test ping a un host. Retorna (ok, latency_ms)"""
     is_win = platform.system().lower() == "windows"
     param = "-n" if is_win else "-c"
     command = f"ping {param} 4 {host}"
 
     print(f"\n🔍 Testing {name or host}...")
 
+    latency = 0
     try:
         result = subprocess.run(
             command,
@@ -437,12 +641,32 @@ def test_ping(host, name=""):
             ]
             if lines:
                 print(f"      {lines[-1].strip()}")
-            return True
+                try:
+                    for line in output.split("\n"):
+                        line_lower = line.lower()
+                        if "time=" in line_lower or "tiempo=" in line_lower:
+                            for part in line.split():
+                                if "time=" in part.lower() or "tiempo=" in part.lower():
+                                    time_val = (
+                                        part.split("=")[1]
+                                        .replace("ms", "")
+                                        .replace("tiempo=", "")
+                                    )
+                                    latency = float(time_val)
+                                    break
+                    if latency == 0 and lines:
+                        line = lines[-1]
+                        for part in line.split():
+                            if "time=" in part.lower():
+                                latency = float(part.split("=")[1].replace("ms", ""))
+                except:
+                    pass
+            return True, latency
         else:
             print(f"   ❌ {name or host} - NO RESPONDE")
-            return False
+            return False, 0
     except:
-        return False
+        return False, 0
 
 
 def test_dns(domain):
@@ -458,7 +682,7 @@ def test_dns(domain):
 
 
 def test_port(host, port, service_name=""):
-    """Test si un puerto está abierto"""
+    """Test si un puerto está abierto. Retorna True si abierto."""
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.settimeout(3)
     try:
@@ -470,6 +694,7 @@ def test_port(host, port, service_name=""):
             print(f"   ❌ Puerto {port} ({service_name}) CERRADO/BLOQUEADO")
             return False
     except:
+        print(f"   ❌ Puerto {port} ({service_name}) ERROR")
         return False
     finally:
         sock.close()
@@ -684,7 +909,7 @@ def get_configured_dns():
 
 
 def test_dns_verification(dns_server):
-    """Prueba un servidor DNS específico"""
+    """Prueba un servidor DNS específico. Retorna True si abre."""
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(2)
@@ -692,10 +917,13 @@ def test_dns_verification(dns_server):
         sock.close()
         if result == 0:
             print(f"         ✅ {dns_server}:53 (Puerto DNS abierto)")
+            return True
         else:
             print(f"         ⚠️ {dns_server}:53 (Puerto DNS cerrado)")
+            return False
     except Exception as e:
         print(f"         ❌ {dns_server}:53 (Error: {str(e)[:30]})")
+        return False
 
 
 def get_network_interface_details():
@@ -1153,11 +1381,16 @@ def run_test_by_id(test_id, args, is_windows):
     results = {}
 
     if test_id == "1":
-        loopback_ok = test_ping("127.0.0.1", "Loopback (Interno)")
+        loopback_ok, _ = test_ping("127.0.0.1", "Loopback (Interno)")
+
         gateway = None
+        local_ip = None
         if is_windows:
             output = run_command("ipconfig")
             for line in output.split("\n"):
+                if "dirección ipv4" in line.lower() or "ipv4 address" in line.lower():
+                    if ":" in line:
+                        local_ip = line.split(":")[1].strip()
                 if (
                     "puerta de enlace" in line.lower()
                     or "default gateway" in line.lower()
@@ -1172,29 +1405,44 @@ def run_test_by_id(test_id, args, is_windows):
                 parts = output.split()
                 if len(parts) > 2:
                     gateway = parts[2]
+            output = run_command("ip addr show")
+            for line in output.split("\n"):
+                if "inet " in line and "127." not in line:
+                    local_ip = line.strip().split()[1].split("/")[0]
+
         gateway_ok = False
+        gateway_latency = 0
         if gateway:
-            gateway_ok = test_ping(gateway, f"Gateway ({gateway})")
+            gateway_ok, gateway_latency = test_ping(gateway, f"Gateway ({gateway})")
+
         results = {
             "gateway": gateway,
+            "local_ip": local_ip,
             "loopback_ok": loopback_ok,
             "gateway_ok": gateway_ok,
+            "gateway_latency": gateway_latency,
         }
+        analyze_test_1(results)
 
     elif test_id == "2":
         internet_ok = test_ping("8.8.8.8", "Google DNS")
         dns_ok, dns_ip = test_dns("google.com")
         results = {"internet_ok": internet_ok, "dns_ok": dns_ok}
+        analyze_test_2(results)
 
     elif test_id == "2b":
         dns_servers = get_configured_dns()
+        dns_open = {}
         for dns in dns_servers:
-            test_dns_verification(dns)
-        results = {"dns_servers": dns_servers}
+            dns_open[dns] = test_dns_verification(dns)
+        results = {"dns_servers": dns_servers, "dns_open": dns_open}
+        analyze_test_2b(results)
 
     elif test_id == "3":
-        test_port("google.com", 443, "HTTPS")
-        test_port("8.8.8.8", 53, "DNS")
+        port_443 = test_port("google.com", 443, "HTTPS")
+        port_53 = test_port("8.8.8.8", 53, "DNS")
+        results = {"port_443": port_443, "port_53": port_53}
+        analyze_test_3(results)
 
     elif test_id == "4":
         targets = [("8.8.8.8", "Google"), ("1.1.1.1", "Cloudflare")]
@@ -1410,12 +1658,16 @@ def main():
     if "1" in selected_tests:
         executed_tests.add("1")
         print_header("TEST 1: CONECTIVIDAD LOCAL")
-        loopback_ok = test_ping("127.0.0.1", "Loopback (Interno)")
+        loopback_ok, _ = test_ping("127.0.0.1", "Loopback (Interno)")
 
         gateway = None
+        local_ip = None
         if is_windows:
             output = run_command("ipconfig")
             for line in output.split("\n"):
+                if "dirección ipv4" in line.lower() or "ipv4 address" in line.lower():
+                    if ":" in line:
+                        local_ip = line.split(":")[1].strip()
                 if (
                     "puerta de enlace" in line.lower()
                     or "default gateway" in line.lower()
@@ -1430,41 +1682,68 @@ def main():
                 parts = output.split()
                 if len(parts) > 2:
                     gateway = parts[2]
+            output = run_command("ip addr show")
+            for line in output.split("\n"):
+                if "inet " in line and "127." not in line:
+                    local_ip = line.strip().split()[1].split("/")[0]
 
         gateway_ok = False
+        gateway_latency = 0
         if gateway:
             print(f"\n📍 Gateway detectado: {gateway}")
-            gateway_ok = test_ping(gateway, f"Gateway ({gateway})")
+            gateway_ok, gateway_latency = test_ping(gateway, f"Gateway ({gateway})")
+            analyze_test_1(
+                {
+                    "gateway": gateway,
+                    "local_ip": local_ip,
+                    "loopback_ok": loopback_ok,
+                    "gateway_ok": gateway_ok,
+                    "gateway_latency": gateway_latency,
+                }
+            )
         else:
             print("\n⚠️ No se detectó Gateway automáticamente.")
+            analyze_test_1(
+                {
+                    "gateway": None,
+                    "local_ip": local_ip,
+                    "loopback_ok": loopback_ok,
+                    "gateway_ok": False,
+                    "gateway_latency": 0,
+                }
+            )
 
     # Test 2: Internet y DNS
     if "2" in selected_tests:
         executed_tests.add("2")
         print_header("TEST 2: INTERNET Y DNS")
 
-        internet_ok = test_ping("8.8.8.8", "Google DNS")
+        internet_ok, _ = test_ping("8.8.8.8", "Google DNS")
         dns_ok, _ = test_dns("google.com")
+        analyze_test_2({"internet_ok": internet_ok, "dns_ok": dns_ok})
 
     # Test 2B: DNS configurados
     if "2b" in selected_tests:
         executed_tests.add("2b")
         print_header("TEST 2B: SERVIDORES DNS CONFIGURADOS")
         dns_servers = get_configured_dns()
+        dns_open = {}
         if dns_servers:
             print(f"   📋 Servidores DNS configurados ({len(dns_servers)}):")
             for dns in dns_servers:
                 print(f"      - {dns}")
-                test_dns_verification(dns)
+                dns_open[dns] = test_dns_verification(dns)
         else:
             print("   ⚠️ No se detectaron servidores DNS configurados")
+        analyze_test_2b({"dns_servers": dns_servers, "dns_open": dns_open})
 
     # Test 3: Puertos
     if "3" in selected_tests:
         executed_tests.add("3")
         print_header("TEST 3: PUERTOS CRÍTICOS")
-        test_port("google.com", 443, "HTTPS")
-        test_port("8.8.8.8", 53, "DNS")
+        port_443 = test_port("google.com", 443, "HTTPS")
+        port_53 = test_port("8.8.8.8", 53, "DNS")
+        analyze_test_3({"port_443": port_443, "port_53": port_53})
 
     # Test 4: Latencia
     if "4" in selected_tests:
@@ -1914,6 +2193,9 @@ def main():
         f.write("=" * 60 + "\n")
 
     print(f"\n💾 Resultados guardados en: {nombre_archivo}")
+
+    # Mostrar sugerencias de troubleshooting
+    print_all_suggestions()
 
     # ========== PIE DE PÁGINA ==========
     print("\n" + "=" * 60)

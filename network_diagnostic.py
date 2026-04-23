@@ -25,7 +25,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.24.1"
+VERSION = "v1.24.2"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations

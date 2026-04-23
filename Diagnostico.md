@@ -1,8 +1,9 @@
-# Diagnóstico y Troubleshooting - v1.24.1
+# Diagnóstico y Troubleshooting - v1.24.2
 
-## Estado: ✅ Help mejorado
+## Estado: ✅ Documentación actualizada
 
-- v1.24.1: Help con ejemplos y lista de tests
+- v1.24.2: README y Diagnostico actualizados
+- v1.24.1: Help mejorado con ejemplos
 - v1.24.0: Test 16 Conexiones Simultáneas
 - v1.23.1: Fix DNS y doble título
 
@@ -160,6 +161,50 @@
 | Condición | Nivel | Problema |
 |----------|-------|---------|
 | DHCP Deshabilitado | INFO | IP Estática |
+
+---
+
+### TEST 13 — Bufferbloat (QoS)
+
+**Reglas activas:**
+| Condición | Nivel | Problema |
+|----------|-------|---------|
+| bufferbloat > 30ms | CRÍTICO | Bufferbloat severo |
+| bufferbloat > 15ms | WARNING | Bufferbloat moderado |
+| bufferbloat < 5ms | INFO | QoS bueno |
+
+---
+
+### TEST 14 — MTU
+
+**Reglas activas:**
+| Condición | Nivel | Problema |
+|----------|-------|---------|
+| MTU < 1500 | INFO | MTU suboptimal |
+| MTU < 1280 | WARNING | MTU muy bajo |
+
+---
+
+### TEST 15 — DNS Alternativos
+
+**Reglas activas:**
+| Condición | Nivel | Problema |
+|----------|-------|---------|
+| Alternativo >10ms más rápido | SUCCESS | Sugiere cambiar DNS |
+| DNS configurados son óptimos | SUCCESS | No necesita cambios |
+| Ningún DNS funciona | WARNING | Sin conectividad |
+
+---
+
+### TEST 16 — Conexiones Simultáneas
+
+**Reglas activas:**
+| Condición | Nivel | Problema |
+|----------|-------|---------|
+| Todas las conexiones fallan | WARNING | Sin conectividad |
+| <50% TCP exitosas | WARNING | Límites del ISP |
+| HTTP <10 Mbps concurrente | WARNING | Límite conexiones simultáneas |
+| Todo OK | INFO | Conexiones múltiples OK |
 
 ---
 

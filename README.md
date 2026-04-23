@@ -1,6 +1,11 @@
-# Network Diagnostic Tool (v1.24.1)
+# Network Diagnostic Tool (v1.24.2)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux con sugerencias de troubleshooting automatizadas.
+
+## Novedades en v1.24.2
+
+- **Updated**: README con args y tests 13-16
+- **Updated**: Diagnostico.md con reglas de tests 13-16
 
 ## Novedades en v1.24.1
 
@@ -163,6 +168,9 @@ python network_diagnostic.py -i
 ### Argumentos CLI
 
 ```bash
+# Ejecutar todos los tests
+python network_diagnostic.py
+
 # Ejecutar tests específicos por número
 python network_diagnostic.py --tests 1,2,5,11
 python network_diagnostic.py --tests 1-5          # Rango
@@ -171,6 +179,7 @@ python network_diagnostic.py --tests 1-7,9       # Combinado
 # Ejecutar tests por nombre
 python network_diagnostic.py --tests internet,wifi,speed
 python network_diagnostic.py --tests connectivity,dns-configured,firewall
+python network_diagnostic.py --tests latency,bufferbloat,simul-connections
 
 # Omitir tests lentos
 python network_diagnostic.py --no-speed            # Omitir test de velocidad
@@ -184,12 +193,14 @@ python network_diagnostic.py --speed-size 10         # 10MB personalizado
 python network_diagnostic.py -o mis-resultados.txt
 python network_diagnostic.py --format json -o resultado.json
 
+# Tests en paralelo (más rápido)
+python network_diagnostic.py --parallel
+
 # Opciones adicionales
 python network_diagnostic.py -v                   # Verbose
 python network_diagnostic.py --version             # Mostrar versión
-python network_diagnostic.py --help               # Ver ayuda
+python network_diagnostic.py --help               # Ver ayuda completa
 python network_diagnostic.py --save-prefs          # Guardar preferencias
-python network_diagnostic.py --parallel            # Ejecutar tests en paralelo
 ```
 
 ### Tabla de Tests
@@ -209,6 +220,26 @@ python network_diagnostic.py --parallel            # Ejecutar tests en paralelo
 | 10 | traceroute | Ruta hacia destinos |
 | 11 | speed | Velocidad de internet |
 | 12 | dhcp | Información DHCP |
+| 13 | bufferbloat | Bufferbloat (QoS) - latencia bajo carga |
+| 14 | mtu | MTU óptimo y fragmentación |
+| 15 | dns-alternatives | Comparación DNS configurados vs alternativos |
+| 16 | simul-connections | Conexiones TCP/HTTP simultáneas |
+
+### Tests por categoría
+
+```bash
+# Tests básicos de conectividad
+python network_diagnostic.py --tests 1-4
+
+# Tests de red local
+python network_diagnostic.py --tests connectivity,ports,interface,dhcp
+
+# Tests de rendimiento
+python network_diagnostic.py --tests latency,speed,bufferbloat,simul-connections
+
+# Tests de diagnóstico avanzado
+python network_diagnostic.py --tests traceroute,dns-alternatives,m tu
+```
 
 ### Preferencias
 

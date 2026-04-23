@@ -6,6 +6,14 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [v1.24.2] - 2026-04-23
+
+### Updated
+- README.md: Documentación de argumentos y tests 13-16
+- Diagnostico.md: Tests 13-16 con reglas activas
+
+---
+
 ## [v1.24.1] - 2026-04-23
 
 ### Added

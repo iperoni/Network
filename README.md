@@ -1,6 +1,10 @@
-# Network Diagnostic Tool (v1.19.6)
+# Network Diagnostic Tool (v1.19.7)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux con sugerencias de troubleshooting automatizadas.
+
+## Novedades en v1.19.7
+
+- **Added**: Detección de latencia base alta (>50ms)
 
 ## Novedades en v1.19.6
 

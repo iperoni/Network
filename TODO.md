@@ -2,6 +2,10 @@
 
 Lista de mejoras pendientes para el proyecto.
 
+## v1.19.7 - Completado
+
+- [x] Test 4: Detección de latencia base alta (>50ms)
+
 ## v1.19.6 - Completado
 
 - [x] Test 2: Detección de DNS lento (>2s)

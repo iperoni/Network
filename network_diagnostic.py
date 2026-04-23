@@ -23,7 +23,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.19.6"
+VERSION = "v1.19.7"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -605,6 +605,18 @@ def analyze_test_4(results):
                 f"Inestabilidad {name}",
                 f"Inestabilidad moderada ({jitter}ms jitter)",
                 "Verificar cableado, interferencia",
+                "",
+            )
+
+        # Latencia base alta (>50ms)
+        min_lat = lat.get("min", 0)
+        if min_lat > 50:
+            suggest(
+                "info",
+                "4",
+                f"Latencia base {name}",
+                f"Latencia base elevada ({min_lat}ms)",
+                "Normal en área rural o ISP lento",
                 "",
             )
 

@@ -16,13 +16,14 @@ import os
 import argparse
 import configparser
 import concurrent.futures
+import io
 from datetime import datetime
 
 # ==============================================================================
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.19.2"
+VERSION = "v1.19.3"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -171,6 +172,52 @@ UPLOAD_ORDER = ["cloudflare", "tempfile", "oshi"]
 # ==============================================================================
 
 SUGGESTIONS = []
+
+# ==============================================================================
+# OUTPUT CAPTURE - Captura stdout para archivo idéntico
+# ==============================================================================
+
+import io
+
+OUTPUT_BUFFER = None
+ORIGINAL_STDOUT = None
+
+
+class DualOutput:
+    """Wrapper que escribe a stdout y buffer simultáneamente"""
+
+    def __init__(self, original, buffer):
+        self.original = original
+        self.buffer = buffer
+
+    def write(self, data):
+        self.original.write(data)
+        self.buffer.write(data)
+
+    def flush(self):
+        self.original.flush()
+        self.buffer.flush()
+
+    def isatty(self):
+        return self.original.isatty()
+
+
+def start_capture():
+    """Inicia captura de stdout"""
+    global OUTPUT_BUFFER, ORIGINAL_STDOUT
+    ORIGINAL_STDOUT = sys.stdout
+    OUTPUT_BUFFER = io.StringIO()
+    sys.stdout = DualOutput(sys.stdout, OUTPUT_BUFFER)
+
+
+def end_capture(ruta_archivo):
+    """Guarda contenido capturado al archivo"""
+    global ORIGINAL_STDOUT
+    OUTPUT_BUFFER.seek(0)
+    content = OUTPUT_BUFFER.getvalue()
+    with open(ruta_archivo, "w", encoding="utf-8") as f:
+        f.write(content)
+    sys.stdout = ORIGINAL_STDOUT
 
 
 def suggest(level, test_id, test_name, problem, suggestion, command=""):
@@ -1599,7 +1646,10 @@ def main():
     # Verificar dependencias en Linux
     linux_deps = check_linux_dependencies()
 
-    # Si no hay tests selecionados (compatibilidad atrás), ejecutar todos
+    # Iniciar captura de output para archivo idéntico
+    start_capture()
+
+    # Si no hay tests seleccionados (compatibilidad atrás), ejecutar todos
     if not selected_tests:
         selected_tests = list(TEST_NAMES.keys())
 
@@ -2025,237 +2075,10 @@ def main():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     ruta_archivo = os.path.join(script_dir, nombre_archivo)
 
-    with open(ruta_archivo, "w", encoding="utf-8") as f:
-        f.write("╔" + "═" * 58 + "╗\n")
-        f.write("║" + " " * 20 + "DIAGNÓSTICO DE RED" + " " * 20 + "║\n")
-        f.write("╚" + "═" * 58 + "╝\n")
-        f.write(f"\nFecha: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+    # Usar captura de stdout para archivo idéntico
+    end_capture(ruta_archivo)
 
-        # INFORMACIÓN LOCAL
-        f.write("\n" + "=" * 60 + "\n")
-        f.write("   INFORMACIÓN LOCAL\n")
-        f.write("=" * 60 + "\n")
-        f.write(f"Hostname: {hostname}\n")
-        f.write(f"IP Local: {local_ip}\n")
-        f.write(f"Gateway: {gateway}\n")
-
-        if is_windows:
-            output = run_command("ipconfig")
-            f.write("\nAdaptadores de red:\n")
-            for line in output.split("\n"):
-                if any(
-                    k in line.lower()
-                    for k in ["ipv4", "puerta", "gateway", "adaptador"]
-                ):
-                    if ":" in line:
-                        f.write(f"   {line.strip()}\n")
-
-        # TEST 1: CONECTIVIDAD LOCAL
-        if "1" in executed_tests:
-            f.write("\n" + "=" * 60 + "\n")
-            f.write("   TEST 1: CONECTIVIDAD LOCAL\n")
-            f.write("=" * 60 + "\n")
-            f.write(f"Loopback (127.0.0.1): {'OK' if loopback_ok else 'FALLO'}\n")
-            f.write(f"Gateway ({gateway}): {'OK' if gateway_ok else 'FALLO'}\n")
-
-        # TEST 2: INTERNET Y DNS
-        if "2" in executed_tests:
-            f.write("\n" + "=" * 60 + "\n")
-            f.write("   TEST 2: INTERNET Y DNS\n")
-            f.write("=" * 60 + "\n")
-            f.write(f"Internet (8.8.8.8): {'OK' if internet_ok else 'FALLO'}\n")
-            f.write(f"DNS (google.com): {'OK' if dns_ok else 'FALLO'}\n")
-
-        # TEST 2B: DNS CONFIGURADOS
-        if "2b" in executed_tests:
-            f.write("\n" + "=" * 60 + "\n")
-            f.write("   TEST 2B: SERVIDORES DNS CONFIGURADOS\n")
-            f.write("=" * 60 + "\n")
-            if dns_servers:
-                f.write(f"Servidores DNS ({len(dns_servers)}):\n")
-                for dns in dns_servers:
-                    f.write(f"   - {dns}\n")
-            else:
-                f.write("No se detectaron servidores DNS configurados\n")
-
-        # TEST 3: PUERTOS
-        if "3" in executed_tests:
-            f.write("\n" + "=" * 60 + "\n")
-            f.write("   TEST 3: PUERTOS CRÍTICOS\n")
-            f.write("=" * 60 + "\n")
-
-            def test_port_check(host, port, service_name):
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.settimeout(3)
-                try:
-                    result = sock.connect_ex((host, port))
-                    sock.close()
-                    return "ABIERTO" if result == 0 else "CERRADO"
-                except:
-                    sock.close()
-                    return "ERROR"
-
-            https_status = test_port_check("google.com", 443, "HTTPS")
-            dns_status = test_port_check("8.8.8.8", 53, "DNS")
-            f.write(f"Puerto 443 (HTTPS): {https_status}\n")
-            f.write(f"Puerto 53 (DNS): {dns_status}\n")
-
-        # TEST 4: LATENCIA
-        if "4" in executed_tests:
-            f.write("\n" + "=" * 60 + "\n")
-            f.write("   TEST 4: ESTADÍSTICAS DE LATENCIA\n")
-            f.write("=" * 60 + "\n")
-
-            for ip, name in [("8.8.8.8", "Google"), ("1.1.1.1", "Cloudflare")]:
-                param = "-n" if is_windows else "-c"
-                output = run_command(f"ping {param} 5 {ip}")
-                for line in output.split("\n"):
-                    if any(
-                        k in line.lower() for k in ["average", "media", "min", "max"]
-                    ):
-                        f.write(f"{name}: {line.strip()}\n")
-
-        # TEST 5: SEÑAL WIFI
-        if "5" in executed_tests:
-            f.write("\n" + "=" * 60 + "\n")
-            f.write("   TEST 5: SEÑAL WI-FI\n")
-            f.write("=" * 60 + "\n")
-            f.write(f"Tipo de conexión: {conn_type}\n")
-        if conn_type == "wifi" and wifi_info:
-            for key, value in wifi_info.items():
-                f.write(f"{key}: {value}\n")
-        elif conn_type != "wifi":
-            f.write(f"Conexión {conn_type} - Test WiFi no aplicable\n")
-
-        # TEST 6: ISP INFO
-        if "6" in executed_tests:
-            f.write("\n" + "=" * 60 + "\n")
-            f.write("   TEST 6: INFORMACIÓN DEL ISP\n")
-            f.write("=" * 60 + "\n")
-            if isp_info:
-                f.write(f"IP Pública: {isp_info.get('public_ip', 'N/A')}\n")
-                f.write(f"ISP: {isp_info.get('isp', 'N/A')}\n")
-                f.write(f"Organización: {isp_info.get('org', 'N/A')}\n")
-                f.write(
-                    f"Ubicación: {isp_info.get('city', 'N/A')}, {isp_info.get('country', 'N/A')}\n"
-                )
-            else:
-                f.write("No se pudo obtener información del ISP\n")
-
-        # TEST 7: PÉRDIDA DE PAQUETES
-        if "7" in executed_tests:
-            f.write("\n" + "=" * 60 + "\n")
-            f.write("   TEST 7: PÉRDIDA DE PAQUETES\n")
-            f.write("=" * 60 + "\n")
-            for name, packet_info in packet_loss_results:
-                if packet_info:
-                    f.write(f"{name}:\n")
-                    f.write(f"   Enviados: {packet_info.get('enviados', 'N/A')}\n")
-                    f.write(f"   Recibidos: {packet_info.get('recibidos', 'N/A')}\n")
-                    f.write(f"   Perdidos: {packet_info.get('perdidos', 'N/A')}\n")
-                    f.write(f"   Porcentaje: {packet_info.get('% perda', 'N/A')}\n")
-                else:
-                    f.write(f"{name}: No disponible\n")
-
-        # TEST 8: DETALLES INTERFAZ DE RED
-        if "8" in executed_tests:
-            f.write("\n" + "=" * 60 + "\n")
-            f.write("   TEST 8: DETALLES DEL INTERFAZ DE RED\n")
-            f.write("=" * 60 + "\n")
-            if interface_details:
-                for key, value in interface_details.items():
-                    f.write(f"{key}: {value}\n")
-            else:
-                f.write("No se pudo obtener información del interfaz\n")
-
-        # TEST 9: ESTADO DEL FIREWALL
-        if "9" in executed_tests:
-            f.write("\n" + "=" * 60 + "\n")
-            f.write("   TEST 9: ESTADO DEL FIREWALL\n")
-            f.write("=" * 60 + "\n")
-            if firewall_info:
-                for key, value in firewall_info.items():
-                    f.write(f"{key}: {value}\n")
-            else:
-                f.write("No se pudo obtener información del firewall\n")
-
-        # TEST 10: TRACEROUTE
-        if "10" in executed_tests:
-            f.write("\n" + "=" * 60 + "\n")
-            f.write("   TEST 10: TRACEROUTE\n")
-            f.write("=" * 60 + "\n")
-            for name, hops in traceroute_results:
-                f.write(f"\n{name}:\n")
-                if hops:
-                    for hop in hops[:20]:
-                        f.write(f"   {hop}\n")
-                    if len(hops) > 20:
-                        f.write(f"   ... y {len(hops) - 20} saltos más\n")
-                else:
-                    f.write("   No se pudo obtener ruta\n")
-
-        # TEST 11: VELOCIDAD
-        if "11" in executed_tests:
-            f.write("\n" + "=" * 60 + "\n")
-            f.write("   TEST 11: VELOCIDAD DE INTERNET\n")
-            f.write("=" * 60 + "\n")
-
-            dl_results = speed_results.get("download", [])
-            ul_results = speed_results.get("upload", [])
-
-            f.write("\nDownload:\n")
-            if dl_results:
-                for name, speed, time_sec in dl_results:
-                    f.write(f"   {name}: {speed:.1f} Mbps\n")
-            else:
-                f.write("   No disponible\n")
-
-            f.write("\nUpload:\n")
-            if ul_results:
-                for name, speed, time_sec in ul_results:
-                    f.write(f"   {name}: {speed:.1f} Mbps\n")
-            else:
-                f.write("   No disponible\n")
-
-            if dl_results:
-                avg_dl = sum(r[1] for r in dl_results) / len(dl_results)
-                max_dl = max(r[1] for r in dl_results)
-                f.write(f"\nResumen Download:\n")
-                f.write(f"   Promedio: {avg_dl:.1f} Mbps\n")
-                f.write(f"   Maxima: {max_dl:.1f} Mbps\n")
-
-            if ul_results:
-                avg_ul = sum(r[1] for r in ul_results) / len(ul_results)
-                max_ul = max(r[1] for r in ul_results)
-                f.write(f"\nResumen Upload:\n")
-                f.write(f"   Promedio: {avg_ul:.1f} Mbps\n")
-                f.write(f"   Maxima: {max_ul:.1f} Mbps\n")
-
-        # TEST 12: DHCP INFO
-        if "12" in executed_tests:
-            f.write("\n" + "=" * 60 + "\n")
-            f.write("   TEST 12: INFORMACIÓN DHCP\n")
-            f.write("=" * 60 + "\n")
-            if dhcp_info:
-                for key, value in dhcp_info.items():
-                    f.write(f"{key}: {value}\n")
-            else:
-                f.write("No se pudo obtener información DHCP\n")
-
-        # RESULTADO FINAL
-        f.write("\n" + "=" * 60 + "\n")
-        f.write("   RESULTADO FINAL\n")
-        f.write("=" * 60 + "\n")
-        f.write(f"Estado: {status}\n")
-        f.write(f"Puntuación: {puntos}/3\n")
-
-        f.write("\n" + "=" * 60 + "\n")
-        f.write(f"Autor: Ignacio Peroni\n")
-        f.write(f"GitHub: github.com/iperoni\n")
-        f.write("=" * 60 + "\n")
-
-        # SUGERENCIAS DE TROUBLESHOOTING
-        write_all_suggestions(f)
+    # Información adicional al archivo (solo lo que no se muestra en pantalla)
 
     print(f"\n💾 Resultados guardados en: {nombre_archivo}")
 

@@ -2,6 +2,10 @@
 
 Lista de mejoras pendientes para el proyecto.
 
+## v1.19.3 - Completado
+
+- [x] Fix: Archivo de texto idéntico al output de pantalla
+
 ## v1.19.2 - Completado
 
 - [x] Fix: Sugerencias de troubleshooting se guardan en archivo de texto

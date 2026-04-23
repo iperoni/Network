@@ -2,99 +2,14 @@
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux con sugerencias de troubleshooting automatizadas.
 
-## Novedades en v1.24.3
-
-- **Updated**: Diagnostico.md con documentación completa de 16 tests
-
-## Novedades en v1.24.2
-
-- **Updated**: README con args y tests 13-16
-
-## Novedades en v1.24.0
-
-- **Added**: Test 16: Conexiones Simultáneas (TCP + HTTP concurrentes)
-
-## Novedades en v1.23.1
-
-- **Fixed**: Doble título en test 15 (DNS Alternativos)
-- **Fixed**: Sugerencia de DNS óptimos cuando no hay mejor alternativo
-
-## Novedades en v1.23.0
-
-- **Added**: Comparación DNS configurados vs alternativos
-- **Added**: Sugerencia de cambio si alternativo es >10ms más rápido
-
-## Novedades en v1.22.0
-
-- **Added**: Test 15: DNS Alternativos
-
-## Novedades en v1.21.0
-
-- **Added**: Test 14: MTU (fragmentación)
-- **Added**: Test 13: Bufferbloat separado
-
-## Novedades en v1.20.1
-
-- **Changed**: Test de Bufferbloat separado como Test 13
-
-## Novedades en v1.20.0
-
-- **Added**: Test de Bufferbloat (QoS)
-
-## Novedades en v1.19.9
-
-- **Added**: Detección de latencia por hop (congestión)
-
-## Novedades en v1.19.8
-
-- **Added**: Detección de half-duplex
-
-## Novedades en v1.19.7
-
-- **Added**: Detección de latencia base alta (>50ms)
-
-## Novedades en v1.19.6
-
-- **Added**: Detección de DNS lento (>2s)
-
-## Novedades en v1.19.5
-
-- **Fix**: Comandos compatibles con Windows y Linux
-
-## Novedades en v1.19.4
-
-- **Fix**: Sugerencias de troubleshooting y pie de página ahora se guardan en archivo
-
-## Novedades en v1.19.3
-
-- **Fix**: Archivo de texto idéntico al output de pantalla
-
-## Novedades en v1.19.2
-
-- **Fix**: Sugerencias de troubleshooting ahora se guardan en archivo de texto
-
-## Novedades en v1.19.1
-
-- **Fix**: parse_test_string() ahora soporta "dns-configured" como nombre de test
-
-## Novedades en v1.18
-
-- **Tests 10-12 con sugerencias**: Traceroute, Velocidad, DHCP
-- Sistema completo de troubleshooting para todos los tests (1-12)
-
-## Novedades en v1.17
-
-- **Sugerencias de troubleshooting automáticas** para los tests 1-9
-- Análisis de resultados con recomendaciones de acción
-- Niveles: 🔴 CRÍTICO, 🟡 ADVERTENCIA, ℹ️ INFO
-
 ## Tabla de Contenidos
 
 - [Funcionalidades](#funcionalidades)
 - [Requisitos](#requisitos)
 - [Instalación](#instalación)
 - [Uso](#uso)
-- [Historial de Cambios](#historial-de-cambios)
+- [Tests Disponibles](#tests-disponibles)
+- [Argumentos CLI](#argumentos-cli)
 - [Autor](#autor)
 - [Licencia](#licencia)
 
@@ -497,3 +412,74 @@ python network_diagnostic.py --parallel --tests 1,2,5,6  # Solo tests específic
 ## Licencia
 
 MIT
+
+---
+
+## Historial de Cambios
+
+### v1.24.2 (2026-04-23)
+- README: Documentación de argumentos y tests 13-16
+- Diagnostico.md: Tests 13-16 con reglas activas
+
+### v1.24.1 (2026-04-23)
+- Help mejorado con ejemplos y lista de tests disponibles
+
+### v1.24.0 (2026-04-23)
+- Test 16: Conexiones Simultáneas (TCP + HTTP concurrentes)
+
+### v1.23.1 (2026-04-23)
+- Fix: Doble título en test 15 (DNS Alternativos)
+- Fix: Sugerencia de DNS óptimos cuando no hay mejor alternativo
+
+### v1.23.0 (2026-04-23)
+- Comparación DNS configurados vs alternativos
+- Sugerencia de cambio si alternativo es >10ms más rápido
+
+### v1.22.0 (2026-04-23)
+- Test 15: DNS Alternativos
+
+### v1.21.0 (2026-04-23)
+- Test 14: MTU (fragmentación)
+- Test 13: Bufferbloat separado
+
+### v1.20.1 (2026-04-23)
+- Test de Bufferbloat separado como Test 13
+
+### v1.20.0 (2026-04-23)
+- Test de Bufferbloat (QoS)
+
+### v1.19.9 (2026-04-23)
+- Detección de latencia por hop (congestión)
+
+### v1.19.8 (2026-04-23)
+- Detección de half-duplex
+
+### v1.19.7 (2026-04-23)
+- Detección de latencia base alta (>50ms)
+
+### v1.19.6 (2026-04-23)
+- Detección de DNS lento (>2s)
+
+### v1.19.5 (2026-04-23)
+- Fix: Comandos compatibles con Windows y Linux
+
+### v1.19.4 (2026-04-23)
+- Fix: Sugerencias de troubleshooting y pie de página ahora se guardan en archivo
+
+### v1.19.3 (2026-04-23)
+- Fix: Archivo de texto idéntico al output de pantalla
+
+### v1.19.2 (2026-04-23)
+- Fix: Sugerencias de troubleshooting ahora se guardan en archivo de texto
+
+### v1.19.1 (2026-04-23)
+- Fix: parse_test_string() ahora soporta "dns-configured" como nombre de test
+
+### v1.18 (2026)
+- Tests 10-12 con sugerencias: Traceroute, Velocidad, DHCP
+- Sistema completo de troubleshooting para todos los tests (1-12)
+
+### v1.17 (2026)
+- Sugerencias de troubleshooting automáticas para los tests 1-9
+- Análisis de resultados con recomendaciones de acción
+- Niveles: 🔴 CRÍTICO, 🟡 ADVERTENCIA, ℹ️ INFO

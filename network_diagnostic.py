@@ -22,7 +22,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.14"
+VERSION = "v1.15"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -365,9 +365,181 @@ def analyze_test_3(results):
         )
 
 
-# ==============================================================================
-# FUNCIONES DE DEPENDENCIAS (LINUX)
-# ==============================================================================
+def test_latency_target(ip, name, count=5):
+    """Test de latencia a un target. Retorna dict con min/max/avg/jitter"""
+    is_win = platform.system().lower() == "windows"
+    param = "-n" if is_win else "-c"
+    output = run_command(f"ping {param} {count} {ip}")
+
+    result = {
+        "ip": ip,
+        "name": name,
+        "min": 0,
+        "max": 0,
+        "avg": 0,
+        "jitter": 0,
+        "ok": False,
+    }
+    times = []
+
+    for line in output.split("\n"):
+        line_lower = line.lower()
+        if "time=" in line_lower or "tiempo=" in line_lower:
+            try:
+                if "time=" in line_lower:
+                    idx = line_lower.index("time=")
+                    time_str = (
+                        line[idx + 5 :].split()[0].replace("ms", "").replace("TTL", "")
+                    )
+                else:
+                    idx = line_lower.index("tiempo=")
+                    time_str = (
+                        line[idx + 7 :].split()[0].replace("ms", "").replace("TTL", "")
+                    )
+                times.append(float(time_str))
+            except:
+                pass
+
+    if times:
+        result["ok"] = True
+        result["min"] = min(times)
+        result["max"] = max(times)
+        result["avg"] = round(sum(times) / len(times), 1)
+        result["jitter"] = round(result["max"] - result["min"], 1)
+
+    return result
+
+
+def analyze_test_4(results):
+    """Test 4: Latencia"""
+    latency_data = results.get("latency", [])
+
+    for lat in latency_data:
+        if not lat.get("ok", False):
+            continue
+        avg = lat.get("avg", 0)
+        jitter = lat.get("jitter", 0)
+        name = lat.get("name", lat.get("ip", ""))
+
+        if avg > 500:
+            suggest(
+                "critical",
+                "4",
+                f"Latencia {name}",
+                f"Latencia crítica ({avg}ms)",
+                "Verificar línea; llamar ISP",
+                f"tracert {lat['ip']}",
+            )
+        elif avg > 200:
+            suggest(
+                "warning",
+                "4",
+                f"Latencia {name}",
+                f"Latencia alta ({avg}ms)",
+                "Llamar ISP; verificar plan",
+                "",
+            )
+        elif avg > 100:
+            suggest(
+                "warning",
+                "4",
+                f"Latencia {name}",
+                f"Latencia elevada ({avg}ms)",
+                "Verificar QoS del router",
+                "",
+            )
+
+        if jitter > 100:
+            suggest(
+                "critical",
+                "4",
+                f"Inestabilidad {name}",
+                f"Inestabilidad severa ({jitter}ms jitter)",
+                "Verificar línea; considerar ISP alternativo",
+                f"tracert {lat['ip']}",
+            )
+        elif jitter > 50:
+            suggest(
+                "warning",
+                "4",
+                f"Inestabilidad {name}",
+                f"Inestabilidad moderada ({jitter}ms jitter)",
+                "Verificar cableado, interferencia",
+                "",
+            )
+
+
+def analyze_test_5(results):
+    """Test 5: WiFi"""
+    wifi_info = results.get("wifi_info", {})
+    conn_type = results.get("conn_type", "")
+
+    if conn_type != "wifi":
+        return
+
+    signal_str = wifi_info.get("Signal", "0%")
+
+    signal_pct = 0
+    try:
+        signal_pct = int(signal_str.replace("%", ""))
+    except:
+        pass
+
+    if signal_pct <= 20:
+        suggest(
+            "critical",
+            "5",
+            "WiFi",
+            f"Señal muy débil ({signal_pct}%)",
+            "Sin conexión estable. Mover router o cambiar posición",
+            "",
+        )
+    elif signal_pct <= 50:
+        suggest(
+            "warning",
+            "5",
+            "WiFi",
+            f"Señal débil ({signal_pct}%)",
+            "Verificar obstrucciones, cambiar canal",
+            "",
+        )
+
+    channel = wifi_info.get("Channel", "")
+    if channel:
+        try:
+            chan_num = int(channel.split()[0])
+            if chan_num in [1, 6, 11]:
+                suggest(
+                    "info",
+                    "5",
+                    "WiFi",
+                    f"Canal {chan_num} puede estar saturado",
+                    "Considerar cambiar a canal 5GHz o otro",
+                    "",
+                )
+        except:
+            pass
+
+
+def analyze_test_6(results):
+    """Test 6: ISP"""
+    isp_info = results.get("isp_info", {})
+
+    isp = isp_info.get("isp", "")
+    city = isp_info.get("city", "")
+
+    if not isp:
+        suggest(
+            "warning",
+            "6",
+            "ISP",
+            "ISP desconocido",
+            "Puede ser VPN o proxy. Verificar configuración",
+            "",
+        )
+
+    if not city:
+        suggest("info", "6", "ISP", "Geolocalización limitée", "No requiere acción", "")
 
 
 def check_linux_dependencies():
@@ -823,6 +995,43 @@ def get_public_ip_and_isp():
             return {"public_ip": result.stdout.decode().strip()}
         except:
             return None
+
+
+def analyze_test_7(results):
+    """Test 7: Pérdida de paquetes"""
+    packet_results = results.get("packets", [])
+
+    for pkt in packet_results:
+        loss_pct = pkt.get("pct", 0)
+        name = pkt.get("name", "Paquetes")
+
+        if loss_pct > 20:
+            suggest(
+                "critical",
+                "7",
+                f"Pérdida {name}",
+                f"Pérdida severa ({loss_pct}%)",
+                "tracert para identificar hop problemático",
+                f"tracert {pkt.get('host', '8.8.8.8')}",
+            )
+        elif loss_pct >= 5:
+            suggest(
+                "warning",
+                "7",
+                f"Pérdida {name}",
+                f"Pérdida moderada ({loss_pct}%)",
+                "Verificar router, línea ISP",
+                "",
+            )
+        elif loss_pct > 0:
+            suggest(
+                "info",
+                "7",
+                f"Pérdida {name}",
+                f"Pérdida leve ({loss_pct}%)",
+                "Normal en horas pico",
+                "",
+            )
 
 
 def test_packet_loss(host, count=10):
@@ -1750,13 +1959,19 @@ def main():
         executed_tests.add("4")
         print_header("TEST 4: ESTADÍSTICAS DE LATENCIA")
         targets = [("8.8.8.8", "Google"), ("1.1.1.1", "Cloudflare")]
+        latency_results = []
         for ip, name in targets:
             print(f"\n📡 {name}:")
-            param = "-n" if is_windows else "-c"
-            output = run_command(f"ping {param} 5 {ip}")
-            for line in output.split("\n"):
-                if any(k in line.lower() for k in ["average", "media", "min", "max"]):
-                    print(f"   {line.strip()}")
+            lat = test_latency_target(ip, name, 5)
+            latency_results.append(lat)
+            if lat.get("ok"):
+                print(
+                    f"   min={lat['min']}ms, max={lat['max']}ms, avg={lat['avg']}ms, jitter={lat['jitter']}ms"
+                )
+            else:
+                print(f"   ❌ Error al medir latencia")
+
+        analyze_test_4({"latency": latency_results})
 
     # Test 5: WiFi
     if "5" in selected_tests:
@@ -1798,6 +2013,8 @@ def main():
             print(f"   ℹ️ Sin adaptador WiFi detectado")
             print(f"   💡 Tipo de conexión: ETHERNET")
 
+        analyze_test_5({"conn_type": conn_type, "wifi_info": wifi_info or {}})
+
     # Test 6: ISP
     if "6" in selected_tests and not args.no_isp:
         executed_tests.add("6")
@@ -1814,12 +2031,15 @@ def main():
         else:
             print("   ⚠️ No se pudo obtener información del ISP")
 
+        analyze_test_6({"isp_info": isp_info or {}})
+
     # Test 7: Pérdida de paquetes
     if "7" in selected_tests:
         executed_tests.add("7")
         print_header("TEST 7: PÉRDIDA DE PAQUETES")
         hosts = [("8.8.8.8", "Google DNS"), ("1.1.1.1", "Cloudflare")]
         packet_loss_results = []
+        packets_list = []
 
         for host, name in hosts:
             print(f"\n   📊 Testeando {name} ({host})...")
@@ -1834,9 +2054,21 @@ def main():
                 else:
                     print(f"   {name}: {packet_info.get('% perda', 'N/A')}")
                 packet_loss_results.append((name, packet_info))
+
+                pct = 0
+                try:
+                    pct_str = packet_info.get("% perda", "0%").replace("%", "")
+                    pct = float(pct_str)
+                except:
+                    pass
+                packets_list.append(
+                    {"host": host, "name": name, "pct": pct, "info": packet_info}
+                )
             else:
                 print(f"   ⚠️ No se pudo obtener información de {name}")
                 packet_loss_results.append((name, None))
+
+        analyze_test_7({"packets": packets_list})
 
     # Test 8: Interfaz de red
     if "8" in selected_tests:

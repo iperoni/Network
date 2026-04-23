@@ -313,10 +313,10 @@ Extraer fecha de lease para calcular tiempo restante.
 | 2 | ✅ IMPLEMENTADO | Baja |
 | 2B | ✅ IMPLEMENTADO | Baja |
 | 3 | ✅ IMPLEMENTADO | Baja |
-| 4 | ⏳ PENDIENTE | Alta (parsing numérico) |
-| 5 | ⏳ PENDIENTE | Media |
-| 6 | ⏳ PENDIENTE | Baja |
-| 7 | ⏳ PENDIENTE | Baja |
+| 4 | ✅ IMPLEMENTADO | Alta (parsing numérico) |
+| 5 | ✅ IMPLEMENTADO | Media |
+| 6 | ✅ IMPLEMENTADO | Baja |
+| 7 | ✅ IMPLEMENTADO | Baja |
 | 8 | ⏳ PENDIENTE | Media |
 | 9 | ⏳ PENDIENTE | Baja |
 | 10 | ⏳ PENDIENTE | Alta (parsing hops) |
@@ -360,4 +360,4 @@ Cuando hay problemas:
 
 *Última actualización: 2026-04-23*
 
-*v1.14: Tests 1, 2, 2B, 3 implementados con sugerencias de troubleshooting*
+*v1.15: Tests 1-7 implementados con sugerencias de troubleshooting*

@@ -2,6 +2,10 @@
 
 Lista de mejoras pendientes para el proyecto.
 
+## v1.19.1 - Completado
+
+- [x] Fix: parse_test_string() soporta "dns-configured"
+
 ## Alta Prioridad
 
 - [x] Tests paralelos - Ejecutar tests independientes (ping, DNS, speed) en paralelo para reducir tiempo total

@@ -6,6 +6,13 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [v1.19.1] - 2026-04-23
+
+### Fixed
+- parse_test_string() ahora soporta "dns-configured" como nombre de test
+
+---
+
 ## [v1.18] - 2026-04-23
 
 ### Agregado

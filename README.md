@@ -1,6 +1,10 @@
-# Network Diagnostic Tool (v1.18)
+# Network Diagnostic Tool (v1.19.1)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux con sugerencias de troubleshooting automatizadas.
+
+## Novedades en v1.19.1
+
+- **Fix**: parse_test_string() ahora soporta "dns-configured" como nombre de test
 
 ## Novedades en v1.18
 

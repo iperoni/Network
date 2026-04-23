@@ -1,30 +1,35 @@
 # Diagnóstico y Troubleshooting - v1.24.2
 
-## Estado: ✅ Documentación actualizada
+## Estado: ✅ Todas las mejoras implementadas
 
-- v1.24.2: README y Diagnostico actualizados
-- v1.24.1: Help mejorado con ejemplos
-- v1.24.0: Test 16 Conexiones Simultáneas
-- v1.23.1: Fix DNS y doble título
-
-## MEJORAS IMPLEMENTADAS
-
-| Test | Mejora | Versión | Estado |
-|------|-------|--------|--------|
-| 2 | DNS lento (>2s) | v1.19.6 | ✅ IMPLEMENTADO |
-| 4 | Latencia base alta (>50ms) | v1.19.7 | ✅ IMPLEMENTADO |
-| 8 | Duplex mismatch | v1.19.8 | ✅ IMPLEMENTADO |
-| 10 | Latencia por hop | v1.19.9 | ✅ IMPLEMENTADO |
-| 13 | Bufferbloat (QoS) | v1.21.0 | ✅ IMPLEMENTADO |
-| 14 | MTU | v1.21.0 | ✅ IMPLEMENTADO |
-| 15 | DNS Alternativos | v1.22.0 | ✅ IMPLEMENTADO |
-| 16 | Conexiones Simultáneas | v1.24.0 | ✅ IMPLEMENTADO |
+El Network Diagnostic Tool cuenta con 16 tests completamente funcionales con sugerencias de troubleshooting automatizadas.
 
 ---
 
-## TESTS IMPLEMENTADOS CON SUGERENCIAS
+## Historial de Versiones
+
+| Versión | Cambios |
+|---------|---------|
+| v1.24.2 | README y Diagnostico actualizados |
+| v1.24.1 | Help mejorado con ejemplos |
+| v1.24.0 | Test 16: Conexiones Simultáneas |
+| v1.23.1 | Fix DNS y doble título |
+| v1.23.0 | Comparación DNS configurados vs alternativos |
+| v1.22.0 | Test 15: DNS Alternativos |
+| v1.21.0 | Tests 13 y 14 (Bufferbloat, MTU) |
+| v1.20.0 | Test de Bufferbloat (QoS) |
+| v1.19.9 | Latencia por hop en traceroute |
+| v1.19.8 | Detección half-duplex |
+| v1.19.7 | Detección latencia base alta |
+| v1.19.6 | Detección DNS lento |
+
+---
+
+## TESTS IMPLEMENTADOS (16 tests)
 
 ### TEST 1 — Conectividad Local
+
+**Descripción:** Verifica loopback, gateway y conectividad básica
 
 **Reglas activas:**
 | Condición | Nivel | Problema |
@@ -38,17 +43,21 @@
 
 ### TEST 2 — Internet y DNS
 
+**Descripción:** Verifica conectividad a internet y resolución DNS
+
 **Reglas activas:**
 | Condición | Nivel | Problema |
 |----------|-------|---------|
 | internet == False AND dns == False | CRÍTICO | Sin conectividad total |
 | internet == False AND dns == True | WARNING | ICMP bloqueado |
 | internet == True AND dns == False | CRÍTICO | DNS no resuelve |
-| dns_time > 2000ms | WARNING | DNS lento |
+| dns_time > 2000ms | WARNING | DNS lento (>2s) |
 
 ---
 
 ### TEST 2B — DNS Configurados
+
+**Descripción:** Lista los servidores DNS configurados en el sistema
 
 **Reglas activas:**
 | Condición | Nivel | Problema |
@@ -59,7 +68,9 @@
 
 ---
 
-### TEST 3 — Puertos
+### TEST 3 — Puertos Críticos
+
+**Descripción:** Verifica puertos esenciales (443 HTTPS, 53 DNS)
 
 **Reglas activas:**
 | Condición | Nivel | Problema |
@@ -70,6 +81,8 @@
 ---
 
 ### TEST 4 — Latencia
+
+**Descripción:** Mide latencia a múltiples servidores y calcula jitter
 
 **Reglas activas:**
 | Condición | Nivel | Problema |
@@ -85,6 +98,8 @@
 
 ### TEST 5 — WiFi
 
+**Descripción:** Mide intensidad de señal WiFi (solo Linux)
+
 **Reglas activas:**
 | Condición | Nivel | Problema |
 |----------|-------|---------|
@@ -95,6 +110,8 @@
 
 ### TEST 6 — ISP
 
+**Descripción:** Consulta información del ISP via ip-api.com
+
 **Reglas activas:**
 | Condición | Nivel | Problema |
 |----------|-------|---------|
@@ -104,6 +121,8 @@
 ---
 
 ### TEST 7 — Pérdida de Paquetes
+
+**Descripción:** Envía 10 paquetes y mide pérdida
 
 **Reglas activas:**
 | Condición | Nivel | Problema |
@@ -116,6 +135,8 @@
 
 ### TEST 8 — Interfaz de Red
 
+**Descripción:** Muestra detalles del adaptador de red
+
 **Reglas activas:**
 | Condición | Nivel | Problema |
 |----------|-------|---------|
@@ -127,6 +148,8 @@
 
 ### TEST 9 — Firewall
 
+**Descripción:** Verifica estado del firewall de Windows/Linux
+
 **Reglas activas:**
 | Condición | Nivel | Problema |
 |----------|-------|---------|
@@ -135,6 +158,8 @@
 ---
 
 ### TEST 10 — Traceroute
+
+**Descripción:** Rastrea ruta hacia YouTube y Yahoo
 
 **Reglas activas:**
 | Condición | Nivel | Problema |
@@ -145,6 +170,8 @@
 ---
 
 ### TEST 11 — Velocidad
+
+**Descripción:** Mide velocidad de download/upload via Cloudflare
 
 **Reglas activas:**
 | Condición | Nivel | Problema |
@@ -157,6 +184,8 @@
 
 ### TEST 12 — DHCP
 
+**Descripción:** Muestra información del lease DHCP
+
 **Reglas activas:**
 | Condición | Nivel | Problema |
 |----------|-------|---------|
@@ -165,6 +194,8 @@
 ---
 
 ### TEST 13 — Bufferbloat (QoS)
+
+**Descripción:** Mide latencia bajo carga de download
 
 **Reglas activas:**
 | Condición | Nivel | Problema |
@@ -177,6 +208,8 @@
 
 ### TEST 14 — MTU
 
+**Descripción:** Determina MTU óptimo probando tamaños de paquete
+
 **Reglas activas:**
 | Condición | Nivel | Problema |
 |----------|-------|---------|
@@ -186,6 +219,8 @@
 ---
 
 ### TEST 15 — DNS Alternativos
+
+**Descripción:** Compara DNS configurados vs alternativos (Cloudflare, Google, Quad9, OpenDNS)
 
 **Reglas activas:**
 | Condición | Nivel | Problema |
@@ -197,6 +232,8 @@
 ---
 
 ### TEST 16 — Conexiones Simultáneas
+
+**Descripción:** Prueba múltiples conexiones TCP y HTTP concurrentes
 
 **Reglas activas:**
 | Condición | Nivel | Problema |
@@ -210,114 +247,63 @@
 
 ## MEJORAS PENDIENTES A FUTURO
 
-### Alta Prioridad
-
-| # | Nueva Prueba | Complejidad | Beneficio |
-|---|--------------|-------------|-----------|
-| 1 | Ancho de banda por servidor | Media | Alto |
-| 2 | ~~Bufferbloat (QoS)~~ | ~~Alta~~ | ~~Alto~~ |
-
-**1. Test de Ancho de Banda por Servidor**
-- Medir velocidad por servidor individual (Cloudflare, nperf, Hetzner)
-- Detectar si un servidor específico está lento vs Internet lento
-
-~~**2. Test de Bufferbloat (QoS)** - ✅ IMPLEMENTADO en v1.20.0~~
-- Medir latencia bajo carga de download
-- Diferencia >50ms indica QoS mal configurado en router
-
----
-
 ### Media Prioridad
 
 | # | Nueva Prueba | Complejidad | Beneficio |
 |---|--------------|-------------|-----------|
-| 3 | MTU/Fragmentación | Baja | Media |
-| 4 | IPv6 | Baja | Media |
-| 5 | DNS alternativos | Media | Medio |
-| 6 | Conexiones simultáneas | Baja | Bajo |
-| 7 | Gateway secundario | Baja | Bajo |
+| 1 | IPv6 | Baja | Media |
+| 2 | Gateway secundario | Baja | Bajo |
+| 3 | ARP/Neighbor table | Baja | Bajo |
+| 4 | Jitter real (RFC 3550) | Media | Medio |
 
-**3. Test de MTU/Fragmentación**
-- Verificar MTU óptimo con `ping -f -l 1472`
-- MTU > 1500 puede causar fragmentación
-
-**4. Test de IPv6**
+**1. Test de IPv6**
 - Verificar conectividad IPv6
 - Detectar si ISP no proporciona IPv6
 
-**5. Test de DNS Alternativos**
-- Probar múltiples DNS (1.1.1.1, 9.9.9.9, 8.8.8.8)
-- Sugerir mejor DNS según rendimiento
-
-**6. Test de Conexiones Simultáneas**
-- Verificar múltiples conexiones TCP
-- Detectar límites de conexiones del ISP
-
-**7. Test de Gateway Secundario**
+**2. Test de Gateway Secundario**
 - Verificar gateway alternativo
 - Si secundario funciona, problema está más allá
 
----
-
-### Baja Prioridad
-
-| # | Nueva Prueba | Complejidad | Beneficio |
-|---|--------------|-------------|-----------|
-| 8 | ARP/Neighbor table | Baja | Bajo |
-| 9 | Jitter real (RFC 3550) | Media | Medio |
-
-**8. Test de ARP/Neighbor Table**
+**3. Test de ARP/Neighbor Table**
 - Verificar tabla ARP (Linux) / Neighbor (Windows)
 - Detectar problemas de conectividad local
 
-**9. Test de Jitter Real**
+**4. Test de Jitter Real**
 - Calcular jitter usando fórmula RFC 3550
 - Precisión para VoIP/gaming
 
 ---
 
-## NUEVAS PRUEBAS SUGERIDAS - DETALLE
+## Argumentos CLI Disponibles
 
-### Test QoS/Bufferbloat
+```bash
+# Básico
+python network_diagnostic.py              # Ejecutar todos los tests
+python network_diagnostic.py -i           # Menú interactivo
 
-```python
-# Pseudocódigo:
-def test_bufferbloat():
-    # 1. Medir latencia base (ping sin carga)
-    base_latency = ping_latency()
-    
-    # 2. Iniciar download y medir latencia simultánea
-    download_start()
-    load_latency = ping_during_download()
-    
-    # 3. Calcular diferencia
-    bloat = load_latency - base_latency
-    
-    # 4. Reglas
-    if bloat > 50ms:
-        suggest("warning", "Bufferbloat detectado (+{bloat}ms)")
-```
+# Tests específicos
+python network_diagnostic.py --tests 1           # Solo test 1
+python network_diagnostic.py --tests 1,2,3       # Tests 1, 2 y 3
+python network_diagnostic.py --tests 1-5         # Tests 1 al 5
+python network_diagnostic.py --tests internet    # Por nombre
 
-### Test MTU
+# Omitir tests
+python network_diagnostic.py --no-speed          # Sin test de velocidad
+python network_diagnostic.py --no-isp            # Sin consulta ISP
 
-```python
-def test_mtu():
-    # Probar con don't fragment
-    result = ping("-f -l 1472 8.8.8.8")
-    if result.has("packets need to be fragmented"):
-        suggest("warning", "MTU > 1500 puede causar problemas")
-```
+# Output
+python network_diagnostic.py -o resultados.txt   # Guardar en archivo
+python network_diagnostic.py --format json       # Formato JSON
 
-### Test IPv6
-
-```python
-def test_ipv6():
-    ipv6_ok = ping6("ipv6.google.com")
-    if not ipv6_ok:
-        suggest("info", "IPv6 no disponible", "Considerar habilitar IPv6")
+# Opciones
+python network_diagnostic.py --parallel          # Tests en paralelo
+python network_diagnostic.py --speed-size 10     # Velocidad con 10MB
+python network_diagnostic.py -v                  # Verbose
+python network_diagnostic.py --version           # Mostrar versión
+python network_diagnostic.py --help              # Ver ayuda completa
 ```
 
 ---
 
 *Última actualización: 2026-04-23*
-*v1.19.9: Todas las mejoras implementadas*
+*v1.24.2: Todas las mejoras implementadas (16 tests)*

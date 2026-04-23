@@ -6,6 +6,14 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [v1.24.3] - 2026-04-23
+
+### Updated
+- Diagnostico.md: Documentación completa con los 16 tests implementados
+- Agregada sección de argumentos CLI
+
+---
+
 ## [v1.24.2] - 2026-04-23
 
 ### Updated

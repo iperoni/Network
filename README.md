@@ -1,15 +1,14 @@
-# Network Diagnostic Tool (v1.24.2)
+# Network Diagnostic Tool (v1.24.3)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux con sugerencias de troubleshooting automatizadas.
+
+## Novedades en v1.24.3
+
+- **Updated**: Diagnostico.md con documentación completa de 16 tests
 
 ## Novedades en v1.24.2
 
 - **Updated**: README con args y tests 13-16
-- **Updated**: Diagnostico.md con reglas de tests 13-16
-
-## Novedades en v1.24.1
-
-- **Added**: Help mejorado con ejemplos y lista de tests disponibles
 
 ## Novedades en v1.24.0
 

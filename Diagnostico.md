@@ -1,6 +1,8 @@
-# Diagnóstico y Troubleshooting - v1.18
+# Diagnóstico y Troubleshooting - v1.19.1
 
 ## Estado: ✅ COMPLETADO para tests 1-12
+
+- v1.19.1: Fix parse_test_string() soporta "dns-configured"
 
 Todas las funciones analyze_test_N() para tests 1-12 están implementadas y funcionando.
 

@@ -23,7 +23,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.21.0"
+VERSION = "v1.21.1"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -284,7 +284,8 @@ def print_suggestion(s):
     """Imprime una sugerencia formateada"""
     icon = {"critical": "🔴", "warning": "🟡", "info": "ℹ️"}.get(s["level"], "ℹ️")
     print(f"   {icon} [{s['test_id']}] {s['test_name']}: {s['problem']}")
-    print(f"      → {s['suggestion']}")
+    if s["suggestion"]:
+        print(f"      → {s['suggestion']}")
     if s["command"]:
         print(f"      → {s['command']}")
 
@@ -2292,12 +2293,8 @@ def measure_ping(host="8.8.8.8"):
 
 
 def test_bufferbloat():
-    """Test de Bufferbloat ( QoS)"""
+    """Test de Bufferbloat (QoS)"""
     results = {}
-
-    print("\n" + "=" * 60)
-    print("   TEST DE BUFFERBLOAT (QoS)")
-    print("=" * 60)
 
     # 1. Medir latencia base (sin carga)
     print(" Mediendo latencia base...")
@@ -2395,10 +2392,6 @@ def test_mtu(host="8.8.8.8"):
     is_windows = platform.system().lower() == "windows"
     results = {}
 
-    print("\n" + "=" * 60)
-    print("   TEST DE MTU")
-    print("=" * 60)
-
     test_sizes = [1472, 1400, 1300, 1200]
 
     for size in test_sizes:
@@ -2448,13 +2441,7 @@ def analyze_mtu(results):
             "",
         )
     elif mtu > 0:
-        suggest(
-            "info",
-            "mtu",
-            "MTU Óptimo",
-            f"MTU = {mtu} bytes",
-            "",
-        )
+        suggest("info", "mtu", "MTU Óptimo", f"MTU = {mtu} bytes", "")
 
 
 if __name__ == "__main__":

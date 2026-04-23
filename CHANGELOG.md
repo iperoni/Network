@@ -6,6 +6,14 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [v1.21.1] - 2026-04-23
+
+### Fixed
+- Doble título en test 13 y 14
+- Suggestions muestran "→ " cuando comando vacío
+
+---
+
 ## [v1.21.0] - 2026-04-23
 
 ### Added

@@ -22,7 +22,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.16"
+VERSION = "v1.17"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -540,6 +540,86 @@ def analyze_test_6(results):
 
     if not city:
         suggest("info", "6", "ISP", "Geolocalización limitée", "No requiere acción", "")
+
+
+def test_packet_loss(host, count=10):
+    """Test de pérdida de paquetes"""
+    is_windows = platform.system().lower() == "windows"
+    param = "-n" if is_windows else "-c"
+    result = subprocess.run(
+        f"ping {param} {count} {host}", shell=True, capture_output=True, timeout=30
+    )
+    output = result.stdout.decode("cp437" if is_windows else "utf-8", errors="replace")
+    packet_info = {}
+    for line in output.split("\n"):
+        if "paquetes" in line.lower() and "enviados" in line.lower():
+            for part in line.split(","):
+                if "enviados" in part.lower():
+                    packet_info["enviados"] = part.split("=")[1].strip()
+                elif "recibidos" in part.lower():
+                    packet_info["recibidos"] = part.split("=")[1].strip()
+                elif "perdidos" in part.lower():
+                    packet_info["perdidos"] = part.split("=")[1].strip()
+    if "enviados" in packet_info and "perdidos" in packet_info:
+        try:
+            pct = (int(packet_info["perdidos"]) / int(packet_info["enviados"])) * 100
+            packet_info["% perda"] = f"{pct:.0f}%"
+        except:
+            pass
+    return packet_info
+
+
+def test_internet_speed(test_size_mb=20):
+    """Test de velocidad de internet"""
+    size = test_size_mb * 1024 * 1024
+    test_data = b"X" * size
+    download_results = []
+    upload_results = []
+
+    print(f"\n   📶 Download ({test_size_mb}MB):")
+    start = time.time()
+    subprocess.run(
+        f'curl -L -k -s -o NUL "https://speed.cloudflare.com/__down?bytes={size}"',
+        shell=True,
+        capture_output=True,
+        timeout=60,
+    )
+    dl_speed = test_size_mb * 8 / max(time.time() - start, 0.1)
+    print(f"      Cloudflare: {dl_speed:.1f} Mbps")
+    download_results.append(("Cloudflare", dl_speed, time.time() - start))
+
+    print(f"\n   📶 Upload ({test_size_mb}MB):")
+    with open("temp_upload.bin", "wb") as f:
+        f.write(test_data)
+    start = time.time()
+    subprocess.run(
+        'curl -k -s -X POST -F "file=@temp_upload.bin" "https://speed.cloudflare.com/__up"',
+        shell=True,
+        capture_output=True,
+        timeout=60,
+    )
+    try:
+        os.remove("temp_upload.bin")
+    except:
+        pass
+    ul_speed = test_size_mb * 8 / max(time.time() - start, 0.1)
+    print(f"      Cloudflare: {ul_speed:.1f} Mbps")
+    upload_results.append(("Cloudflare", ul_speed, time.time() - start))
+
+    return {"download": download_results, "upload": upload_results}
+
+
+def run_traceroute(host, max_hops=30):
+    """Ejecuta traceroute"""
+    result = subprocess.run(
+        f"tracert -d -h {max_hops} {host}", shell=True, capture_output=True, timeout=60
+    )
+    output = result.stdout.decode("cp437", errors="replace")
+    return [
+        line.strip()
+        for line in output.split("\n")
+        if line.strip() and line.strip()[0].isdigit()
+    ][:15]
 
 
 def check_linux_dependencies():

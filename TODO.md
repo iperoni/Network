@@ -2,6 +2,10 @@
 
 Lista de mejoras pendientes para el proyecto.
 
+## v1.19.2 - Completado
+
+- [x] Fix: Sugerencias de troubleshooting se guardan en archivo de texto
+
 ## v1.19.1 - Completado
 
 - [x] Fix: parse_test_string() soporta "dns-configured"

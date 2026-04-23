@@ -6,6 +6,13 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [v1.19.2] - 2026-04-23
+
+### Fixed
+- Sugerencias de troubleshooting ahora se guardan en archivo de texto
+
+---
+
 ## [v1.19.1] - 2026-04-23
 
 ### Fixed

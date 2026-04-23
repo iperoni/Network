@@ -23,7 +23,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.19.4"
+VERSION = "v1.19.5"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -129,6 +129,50 @@ if IS_WINDOWS:
 # ==============================================================================
 # CONFIGURACIONES DE TESTS
 # ==============================================================================
+
+# Comandos del sistema por SO
+SYS_COMMANDS = {
+    "windows": {
+        "config_all": "ipconfig /all",
+        "dns_flush": "ipconfig /flushdns",
+        "winsock": "netsh winsock reset",
+        "ping": "ping -n {count} {host}",
+        "traceroute": "tracert -d -h {max_hops} {host}",
+        "wifi_show": "netsh wlan show interfaces",
+        "wifi_list": "netsh wlan show networks mode=bssid",
+        "firewall_profiles": "netsh advfirewall show allprofiles",
+        "firewall_rules": "netsh advfirewall show rule name=all",
+        "dhcp_info": "ipconfig /all",
+        "interface_set": 'netsh interface set interface "{name}" admin=enabled',
+        "dns_set": 'netsh interface ip set dns "{adapter}" static {dns}',
+        "dns_add": 'netsh interface ip add dns "{adapter}" {dns} index={index}',
+        "dnsserver_show": "netsh interface ipv4 show dns",
+    },
+    "linux": {
+        "config_all": "ip addr show",
+        "dns_flush": "systemd-resolve --flush-caches || resolvectl flush-caches",
+        "winsock": "sudo systemctl restart NetworkManager",
+        "ping": "ping -c {count} {host}",
+        "traceroute": "traceroute -m {max_hops} -n {host}",
+        "wifi_show": "iwconfig || nmcli dev status",
+        "wifi_list": "nmcli dev wifi list",
+        "firewall_profiles": "sudo iptables -L -n -v",
+        "firewall_rules": "sudo iptables -L -n --line-numbers",
+        "dhcp_info": "cat /var/lib/dhcp/dhclient.leases",
+        "interface_set": "sudo ip link set {name} up",
+        "dns_set": 'echo "nameserver {dns}" | sudo tee /etc/resolv.conf',
+        "dns_add": 'echo "nameserver {dns}" | sudo tee -a /etc/resolv.conf',
+        "dnsserver_show": "cat /etc/resolv.conf",
+    },
+}
+
+
+# Obtener comandos según el SO actual
+def get_cmd(key):
+    """Retorna comando según el SO actual"""
+    os_type = "windows" if IS_WINDOWS else "linux"
+    return SYS_COMMANDS.get(os_type, {}).get(key, "")
+
 
 # Tamaño por defecto para speed test
 DEFAULT_SPEED_SIZE = 20  # MB
@@ -303,7 +347,7 @@ def analyze_test_1(results):
             "Conectividad Local",
             "APIPA detectada — DHCP falló",
             "La IP 169.254.x.x indica que no se obtuvo lease DHCP",
-            "ipconfig /release && ipconfig /renew",
+            f"{get_cmd('config_all')} && {get_cmd('config_all').replace('/all', '/release')} && {get_cmd('config_all').replace('/all', '/renew')}",
         )
     elif gateway is None:
         suggest(
@@ -312,7 +356,7 @@ def analyze_test_1(results):
             "Conectividad Local",
             "Gateway no detectado",
             "Verificar que DHCP esté habilitado en el router, cables y adaptador",
-            "ipconfig /all",
+            get_cmd("config_all"),
         )
     elif not gateway_ok:
         suggest(
@@ -382,7 +426,7 @@ def analyze_test_2b(results):
             "DNS Configurados",
             "Sin servidores DNS",
             "Configurar DNS manualmente",
-            'netsh interface ip set dns "Ethernet" static 8.8.8.8',
+            get_cmd("dns_set").format(adapter="Ethernet", dns="8.8.8.8"),
         )
     else:
         closed = [d for d in dns_servers if dns_open.get(d, True) is False]
@@ -393,7 +437,7 @@ def analyze_test_2b(results):
                 "DNS Configurados",
                 f"DNS caído: {closed[0]}",
                 "Cambiar DNS primario a 8.8.8.8",
-                'netsh interface ip set dns "Ethernet" static 8.8.8.8',
+                get_cmd("dns_set").format(adapter="Ethernet", dns="8.8.8.8"),
             )
         if len(dns_servers) == 1:
             suggest(
@@ -402,7 +446,7 @@ def analyze_test_2b(results):
                 "DNS Configurados",
                 "Sin redundancia DNS",
                 "Agregar DNS secundario 1.1.1.1",
-                'netsh interface ip add dns "Ethernet" 1.1.1.1 index=2',
+                get_cmd("dns_add").format(adapter="Ethernet", dns="1.1.1.1", index=2),
             )
 
 
@@ -418,7 +462,7 @@ def analyze_test_3(results):
             "Puertos",
             "Puerto 443 (HTTPS) cerrado",
             "Verificar firewall, proxy o ISP bloquea HTTPS",
-            "netsh advfirewall show all profiles",
+            get_cmd("firewall_profiles"),
         )
     if not port_53:
         suggest(
@@ -503,7 +547,7 @@ def analyze_test_4(results):
                 f"Latencia {name}",
                 f"Latencia crítica ({avg}ms)",
                 "Verificar línea; llamar ISP",
-                f"tracert {lat['ip']}",
+                get_cmd("traceroute").format(max_hops=30, host=lat["ip"]),
             )
         elif avg > 200:
             suggest(
@@ -531,7 +575,7 @@ def analyze_test_4(results):
                 f"Inestabilidad {name}",
                 f"Inestabilidad severa ({jitter}ms jitter)",
                 "Verificar línea; considerar ISP alternativo",
-                f"tracert {lat['ip']}",
+                get_cmd("traceroute").format(max_hops=30, host=lat["ip"]),
             )
         elif jitter > 50:
             suggest(
@@ -686,10 +730,14 @@ def test_internet_speed(test_size_mb=20):
 
 def run_traceroute(host, max_hops=30):
     """Ejecuta traceroute"""
-    result = subprocess.run(
-        f"tracert -d -h {max_hops} {host}", shell=True, capture_output=True, timeout=60
-    )
-    output = result.stdout.decode("cp437", errors="replace")
+    is_windows = platform.system().lower() == "windows"
+    if is_windows:
+        cmd = f"tracert -d -h {max_hops} {host}"
+    else:
+        cmd = f"traceroute -m {max_hops} -n {host}"
+
+    result = subprocess.run(cmd, shell=True, capture_output=True, timeout=60)
+    output = result.stdout.decode("cp437" if is_windows else "utf-8", errors="replace")
     return [
         line.strip()
         for line in output.split("\n")
@@ -1215,8 +1263,10 @@ def analyze_test_7(results):
                 "7",
                 f"Pérdida {name}",
                 f"Pérdida severa ({loss_pct}%)",
-                "tracert para identificar hop problemático",
-                f"tracert {pkt.get('host', '8.8.8.8')}",
+                "traceroute para identificar hop problemático",
+                get_cmd("traceroute").format(
+                    max_hops=30, host=pkt.get("host", "8.8.8.8")
+                ),
             )
         elif loss_pct >= 5:
             suggest(
@@ -1343,7 +1393,7 @@ def analyze_test_8(results):
             "Interfaz de Red",
             f"Interfaz caído ({estado})",
             "Habilitar interfaz",
-            'netsh interface set interface "Ethernet" admin=enabled',
+            get_cmd("interface_set").format(name="Ethernet"),
         )
 
     velocidad = iface.get("Velocidad", "")
@@ -1378,7 +1428,9 @@ def analyze_test_9(results):
             "Firewall",
             "Todos los perfiles desactivados",
             "Considerar activar firewall",
-            "netsh advfirewall set allprofiles state on",
+            get_cmd("firewall_profiles").replace("show", "set allprofiles state on")
+            if IS_WINDOWS
+            else "sudo ufw enable",
         )
 
 

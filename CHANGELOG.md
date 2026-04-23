@@ -6,6 +6,14 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [v1.19.5] - 2026-04-23
+
+### Fixed
+- Comandos ahora son compatibles con Windows y Linux (SYS_COMMANDS + get_cmd())
+- Sugerencias de troubleshooting muestran comandos según el SO
+
+---
+
 ## [v1.19.4] - 2026-04-23
 
 ### Fixed

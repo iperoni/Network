@@ -1034,6 +1034,99 @@ def analyze_test_7(results):
             )
 
 
+def get_network_interface_details():
+    """Obtiene detalles del interfaz de red"""
+    is_windows = platform.system().lower() == "windows"
+    details = {}
+
+    if is_windows:
+        try:
+            result = subprocess.run(
+                [
+                    "powershell",
+                    "-Command",
+                    "Get-NetAdapter | Where-Object Status -eq 'Up' | Select-Object Name, InterfaceDescription, Status, MacAddress, LinkSpeed | ConvertTo-Json",
+                ],
+                capture_output=True,
+                timeout=15,
+            )
+            output = result.stdout.decode("utf-8", errors="replace")
+            if output.strip().startswith("["):
+                import json
+
+                data = json.loads(output)
+                if isinstance(data, list) and len(data) > 0:
+                    data = data[0]
+            elif output.strip().startswith("{"):
+                import json
+
+                data = json.loads(output)
+            else:
+                return details
+
+            if data:
+                details["Nombre"] = data.get("Name", "N/A")
+                details["Descripcion"] = data.get("InterfaceDescription", "N/A")
+                details["Estado"] = data.get("Status", "N/A")
+                details["MAC"] = data.get("MacAddress", "N/A")
+                details["Velocidad"] = data.get("LinkSpeed", "N/A")
+        except Exception as e:
+            pass
+    return details
+
+
+def get_firewall_status():
+    """Obtiene estado del firewall"""
+    is_windows = platform.system().lower() == "windows"
+    firewall_info = {}
+
+    if is_windows:
+        output = run_command("netsh advfirewall show allprofiles")
+        for line in output.split("\n"):
+            line_lower = line.lower()
+            if "perfil de dominio" in line_lower or "domain" in line_lower:
+                firewall_info["Dominio"] = "ON"
+            elif "perfil privado" in line_lower or "private" in line_lower:
+                firewall_info["Privado"] = "ON"
+            elif "perfil público" in line_lower or "public" in line_lower:
+                firewall_info["Publico"] = "ON"
+
+        output = run_command("netsh advfirewall show rule name=all")
+        reglas_count = len([l for l in output.split("\n") if "Regla" in l])
+        firewall_info["Reglas activas"] = str(reglas_count)
+    else:
+        firewall_info["UFW"] = "N/A"
+        firewall_info["iptables"] = "N/A"
+
+    return firewall_info
+
+
+def get_dhcp_lease_info():
+    """Obtiene información del lease DHCP"""
+    is_windows = platform.system().lower() == "windows"
+    lease_info = {}
+
+    if is_windows:
+        output = run_command("ipconfig /all")
+        for line in output.split("\n"):
+            line_lower = line.lower()
+            if (
+                "dhcp" in line_lower
+                and "habilitado" in line_lower
+                or "enabled" in line_lower
+            ):
+                lease_info["DHCP"] = (
+                    "Habilitado"
+                    if "si" in line_lower or "yes" in line_lower
+                    else "Deshabilitado (IP Estática)"
+                )
+                break
+        if "DHCP" not in lease_info:
+            lease_info["DHCP"] = "Deshabilitado (IP Estática)"
+
+    return lease_info
+
+
 def analyze_test_8(results):
     """Test 8: Interfaz de red"""
     iface = results.get("interface_details", {})
@@ -1142,25 +1235,17 @@ def analyze_test_11(results):
 def analyze_test_12(results):
     """Test 12: DHCP"""
     dhcp = results.get("dhcp_info", {})
-    lease = dhcp.get("LeaseExpires", "")
+    dhcp_status = dhcp.get("DHCP", "")
 
-    if lease:
-        try:
-            from datetime import datetime
-
-            exp = datetime.strptime(lease, "%d/%m/%Y %H:%M:%S")
-            now = datetime.now()
-            if exp - now < 3600:
-                suggest(
-                    "warning",
-                    "12",
-                    "DHCP",
-                    "Lease por expirar pronto",
-                    "Renovar: ipconfig /renew",
-                    "",
-                )
-        except:
-            pass
+    if dhcp_status and "Deshabilitado" in dhcp_status:
+        suggest(
+            "info",
+            "12",
+            "DHCP",
+            "IP Estática",
+            "Normal si es configuración intencional",
+            "",
+        )
 
 
 def run_test_by_id(test_id, args, is_windows):

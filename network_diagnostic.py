@@ -23,7 +23,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.22.0"
+VERSION = "v1.23.1"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -2457,8 +2457,21 @@ def analyze_mtu(results):
 # ==============================================================================
 
 
+def test_dns_speed(dns_ip):
+    """Medir tiempo de respuesta de un DNS"""
+    start = time.time()
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(3)
+        sock.connect((dns_ip, 53))
+        sock.close()
+        return (time.time() - start) * 1000
+    except:
+        return None
+
+
 def test_dns_alternatives():
-    """Test de servidores DNS alternativos"""
+    """Test de servidores DNS alternativos vs configurados"""
     dns_servers = [
         ("1.1.1.1", "Cloudflare"),
         ("8.8.8.8", "Google"),
@@ -2467,41 +2480,95 @@ def test_dns_alternatives():
     ]
 
     results = []
+    configured_results = []
 
-    print("\n" + "=" * 60)
-    print("   TEST DE DNS ALTERNATIVOS")
-    print("=" * 60)
+    # Obtener DNS configurados
+    configured_dns = get_configured_dns()
+    print("\n   DNS configurados:")
+    for dns in configured_dns:
+        t = test_dns_speed(dns)
+        if t:
+            print(f"      {dns}: {t:.0f}ms")
+            configured_results.append((dns, "Configurado", t))
+        else:
+            print(f"      {dns}: ERROR")
 
+    print("\n   DNS alternativos:")
     for dns_ip, provider in dns_servers:
-        start = time.time()
-        try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(3)
-            sock.connect((dns_ip, 53))
-            sock.close()
-            elapsed = (time.time() - start) * 1000
+        elapsed = test_dns_speed(dns_ip)
+        if elapsed:
             results.append((dns_ip, provider, elapsed, True))
             print(f"   {provider} ({dns_ip}): {elapsed:.0f}ms")
-        except:
+        else:
             results.append((dns_ip, provider, 0, False))
             print(f"   {provider} ({dns_ip}): NO DISPONIBLE")
 
-    return {"dns_results": results}
+    # Comparar mejor alternativo con mejor configurado
+    working_alt = [(ip, name, t) for ip, name, t, ok in results if ok]
+    working_cfg = [
+        (ip, name, t) for ip, name, t in configured_results if t is not None and t > 0
+    ]
+
+    comparison = {}
+    if working_alt and working_cfg:
+        best_alt = min(working_alt, key=lambda x: x[2])
+        best_cfg = min(working_cfg, key=lambda x: x[2])
+        diff = best_cfg[2] - best_alt[2]
+        comparison = {
+            "best_alt": best_alt,
+            "best_cfg": best_cfg,
+            "difference": diff,
+        }
+
+    return {
+        "dns_results": results,
+        "configured_results": configured_results,
+        "comparison": comparison,
+    }
 
 
 def analyze_dns_alternatives(results):
     """Analizar resultados de DNS alternativos"""
     dns_list = results.get("dns_results", [])
+    comparison = results.get("comparison", {})
+    configured_results = results.get("configured_results", [])
 
     working = [(ip, name, t) for ip, name, t, ok in dns_list if ok]
 
-    if not working:
+    if not working and not configured_results:
         suggest(
             "warning",
             "dns_alt",
             "DNS Alternativos",
-            "Ningún DNS alternativo funciona",
+            "Ningún DNS funciona",
             "Verificar conectividad",
+            "",
+        )
+        return
+
+    if comparison and comparison.get("difference", 0) > 10:
+        best_alt = comparison["best_alt"]
+        best_cfg = comparison["best_cfg"]
+        diff = comparison["difference"]
+
+        suggest(
+            "success",
+            "dns_alt",
+            "DNS Más Rápido Disponible",
+            f"{best_alt[1]} ({best_alt[0]}) es {diff:.0f}ms más rápido",
+            f"Cambiar de {best_cfg[0]} a {best_alt[0]}",
+            f'netsh interface ip set dns name="Wi-Fi" static {best_alt[0]}',
+        )
+        return
+
+    if comparison:
+        best_cfg = comparison["best_cfg"]
+        suggest(
+            "success",
+            "dns_alt",
+            "DNS Óptimos",
+            f"Tus DNS configurados ({best_cfg[0]}) son buenos",
+            "No es necesario cambiarlos",
             "",
         )
         return

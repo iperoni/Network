@@ -1,7 +1,9 @@
-# Diagnóstico y Troubleshooting - v1.22.0
+# Diagnóstico y Troubleshooting - v1.23.1
 
-## Estado: ✅ Test 15 agregado
+## Estado: ✅ Comparación DNS implementada
 
+- v1.23.1: Comparación DNS configurados vs alternativos
+- v1.23.0: Comparación DNS (sin sugerencia)
 - v1.22.0: Test 15 DNS Alternativos
 - v1.21.1: Fix doble título y suggestions
 - v1.21.0: Tests 13 y 14 (Bufferbloat, MTU)

@@ -6,6 +6,22 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [v1.23.1] - 2026-04-23
+
+### Fixed
+- Doble título en test 15 (DNS Alternativos)
+- Sugerencia de DNS óptimos cuando no hay mejor alternativo
+
+---
+
+## [v1.23.0] - 2026-04-23
+
+### Added
+- Comparación DNS configurados vs alternativos
+- Sugerencia de cambio si alternativo es >10ms más rápido
+
+---
+
 ## [v1.22.0] - 2026-04-23
 
 ### Added

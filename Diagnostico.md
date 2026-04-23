@@ -1,11 +1,11 @@
-# Diagnóstico y Troubleshooting - v1.19.7
+# Diagnóstico y Troubleshooting - v1.19.8
 
 ## Estado: ✅ COMPLETADO para tests 1-12
 
+- v1.19.8: Detección de half-duplex
 - v1.19.7: Detección de latencia base alta (>50ms)
 - v1.19.6: Detección de DNS lento (>2s)
 - v1.19.5: Comandos compatibles con Windows y Linux
-- v1.19.4: Sugerencias y pie de página ahora se guardan en archivo
 
 ## Nuevas mejoras implementadas
 
@@ -13,7 +13,7 @@
 |------|-------|--------|
 | 2 | DNS lento (>2s) | ✅ IMPLEMENTADO |
 | 4 | Latencia base alta (>50ms) | ✅ IMPLEMENTADO |
-| 8 | Duplex mismatch | ⏳ PENDIENTE |
+| 8 | Duplex mismatch | ✅ IMPLEMENTADO |
 | 10 | Latencia por hop | ⏳ PENDIENTE |
 
 **Todas las funciones analyze_test_N() para tests 1-12 están implementadas y funcionando.**

@@ -2,6 +2,10 @@
 
 Lista de mejoras pendientes para el proyecto.
 
+## v1.19.8 - Completado
+
+- [x] Test 8: Detección de half-duplex
+
 ## v1.19.7 - Completado
 
 - [x] Test 4: Detección de latencia base alta (>50ms)

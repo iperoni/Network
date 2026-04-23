@@ -23,7 +23,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.19.7"
+VERSION = "v1.19.8"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -1337,7 +1337,7 @@ def get_network_interface_details():
                 [
                     "powershell",
                     "-Command",
-                    "Get-NetAdapter | Where-Object Status -eq 'Up' | Select-Object Name, InterfaceDescription, Status, MacAddress, LinkSpeed | ConvertTo-Json",
+                    "Get-NetAdapter | Where-Object Status -eq 'Up' | Select-Object Name, InterfaceDescription, Status, MacAddress, LinkSpeed, FullDuplex | ConvertTo-Json",
                 ],
                 capture_output=True,
                 timeout=15,
@@ -1362,6 +1362,7 @@ def get_network_interface_details():
                 details["Estado"] = data.get("Status", "N/A")
                 details["MAC"] = data.get("MacAddress", "N/A")
                 details["Velocidad"] = data.get("LinkSpeed", "N/A")
+                details["Duplex"] = "Full" if data.get("FullDuplex", False) else "Half"
         except Exception as e:
             pass
     return details
@@ -1450,6 +1451,18 @@ def analyze_test_8(results):
                 "Verificar cable o comparar con plan contratado",
                 "",
             )
+
+    # DetectHalf duplex
+    duplex = iface.get("Duplex", "").lower()
+    if duplex == "half":
+        suggest(
+            "warning",
+            "8",
+            "Interfaz de Red",
+            "Half-duplex detectado",
+            "Configurar full-duplex en el switch/router para mejor rendimiento",
+            "",
+        )
 
 
 def analyze_test_9(results):

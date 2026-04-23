@@ -1,6 +1,10 @@
-# Network Diagnostic Tool (v1.19.7)
+# Network Diagnostic Tool (v1.19.8)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux con sugerencias de troubleshooting automatizadas.
+
+## Novedades en v1.19.8
+
+- **Added**: Detección de half-duplex
 
 ## Novedades en v1.19.7
 

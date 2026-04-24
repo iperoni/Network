@@ -2,52 +2,24 @@
 
 Lista de mejoras pendientes para el proyecto.
 
-## v1.22.0 - Completado
+## v1.24.3 - Completado
 
-- [x] Test 15: DNS Alternativos
+- [x] README reorganizado
+- [x] Changelog movido solo a CHANGELOG.md
+- [x] Documentación completa de 16 tests
 
-## v1.21.0 - Completado
+## v1.24.2 - Completado
 
-- [x] Test 13: Bufferbloat (QoS) separado
-- [x] Test 14: MTU (fragmentación)
+- [x] Documentación de argumentos y tests 13-16
+- [x] Tests 13-16 con reglas activas
 
-## v1.20.1 - Completado
+## v1.24.1 - Completado
 
-## v1.19.9 - Completado
+- [x] Help mejorado con ejemplos y lista de tests
 
-- [x] Test 10: Detección de latencia por hop (congestión)
+## v1.24.0 - Completado
 
-## v1.19.8 - Completado
-
-- [x] Test 8: Detección de half-duplex
-
-## v1.19.7 - Completado
-
-- [x] Test 4: Detección de latencia base alta (>50ms)
-
-## v1.19.6 - Completado
-
-- [x] Test 2: Detección de DNS lento (>2s)
-
-## v1.19.5 - Completado
-
-- [x] Fix: Comandos compatibles Windows/Linux
-
-## v1.19.4 - Completado
-
-- [x] Fix: Sugerencias de troubleshooting y pie de página se guardan en archivo
-
-## v1.19.3 - Completado
-
-- [x] Fix: Archivo de texto idéntico al output de pantalla
-
-## v1.19.2 - Completado
-
-- [x] Fix: Sugerencias de troubleshooting se guardan en archivo de texto
-
-## v1.19.1 - Completado
-
-- [x] Fix: parse_test_string() soporta "dns-configured"
+- [x] Test 16: Conexiones Simultáneas
 
 ## Alta Prioridad
 

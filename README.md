@@ -183,6 +183,8 @@ MIT
 
 ---
 
-*Para ver el historial completo de cambios, consulte el archivo CHANGELOG.md*
-- Análisis de resultados con recomendaciones de acción
-- Niveles: 🔴 CRÍTICO, 🟡 ADVERTENCIA, ℹ️ INFO
+## Más Información
+
+- **[TODO.md](TODO.md)** - Lista de tareas pendientes y completadas
+- **[CHANGELOG.md](CHANGELOG.md)** - Historial completo de cambios
+- **[Diagnostico.md](Diagnostico.md)** - Detalle de tests y reglas de troubleshooting

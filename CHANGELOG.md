@@ -6,6 +6,13 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [v1.25.0] - 2026-04-24
+
+### Added
+- Test 14: MTU Path con tracepath y sugerencias específicas
+
+---
+
 ## [v1.24.5] - 2026-04-24
 
 ### Updated

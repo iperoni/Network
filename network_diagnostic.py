@@ -25,7 +25,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.24.5"
+VERSION = "v1.25.0"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -2477,6 +2477,16 @@ def analyze_bufferbloat(results):
 # ==============================================================================
 
 
+def parse_tracepath(output):
+    """Extraer IPs de tracepath/tracert"""
+    ips = []
+    for line in output.split("\n"):
+        match = re.search(r"(\d+\.\d+\.\d+\.\d+)", line)
+        if match:
+            ips.append(match.group(1))
+    return ips
+
+
 def test_mtu(host="8.8.8.8"):
     """Test de MTU - fragmentación"""
     is_windows = platform.system().lower() == "windows"
@@ -2511,14 +2521,51 @@ def test_mtu(host="8.8.8.8"):
 
     print(f"   MTU máximo: {max_mtu} bytes")
 
-    return {"mtu": max_mtu, "details": results}
+    # Parte 2: tracepath
+    print("   Analizando ruta...")
+    cmd = f"tracert -d -h 30 {host}" if is_windows else f"tracepath -n {host}"
+
+    path_ips = []
+    try:
+        result = subprocess.run(cmd, shell=True, capture_output=True, timeout=30)
+        output = result.stdout.decode(
+            "cp437" if is_windows else "utf-8", errors="replace"
+        )
+        path_ips = parse_tracepath(output)
+        print(f"   Ruta: {len(path_ips)} saltos")
+        for ip in path_ips[:5]:
+            print(f"      {ip}")
+    except Exception as e:
+        print("   Ruta: Error al obtener")
+
+    return {"mtu": max_mtu, "details": results, "path": path_ips}
 
 
 def analyze_mtu(results):
     """Analizar resultados MTU"""
     mtu = results.get("mtu", 0)
+    path = results.get("path", [])
 
     if mtu == 0:
+        suggest(
+            "critical",
+            "mtu",
+            "MTU Fallo",
+            "No se pudo determinar MTU",
+            "Verificar conectividad a Internet",
+            "",
+        )
+        return
+
+    if mtu == 1500:
+        suggest(
+            "info",
+            "mtu",
+            "MTU Óptimo",
+            f"MTU = {mtu} bytes - sin fragmentación",
+            "",
+            "",
+        )
         return
 
     if mtu > 1500:
@@ -2527,11 +2574,42 @@ def analyze_mtu(results):
             "mtu",
             "MTU Alto",
             f"MTU = {mtu} bytes (puede causar fragmentación)",
-            "Verificar configuración del router o ISP",
+            "Verificar configuración del router",
             "",
         )
-    elif mtu > 0:
-        suggest("info", "mtu", "MTU Óptimo", f"MTU = {mtu} bytes", "")
+        return
+
+    if mtu <= 1280:
+        suggest(
+            "warning",
+            "mtu",
+            "MTU Muy Bajo",
+            f"MTU = {mtu} bytes",
+            "Posible VPN o tunnel activo. Verificar configuración",
+            "",
+        )
+        return
+
+    if mtu > 1280 and mtu < 1500:
+        suggest(
+            "info",
+            "mtu",
+            "MTU Subóptimo",
+            f"MTU = {mtu} bytes",
+            "MTU reducido. Verificar router o ISP",
+            "",
+        )
+        return
+
+    if not path:
+        suggest(
+            "warning",
+            "mtu",
+            "Ruta No Disponible",
+            "No se pudo analizar la ruta",
+            "Verificar conectividad",
+            "",
+        )
 
 
 # ==============================================================================

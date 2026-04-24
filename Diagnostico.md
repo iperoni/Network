@@ -1,6 +1,8 @@
-# Diagnóstico y Troubleshooting - v1.24.5
+# Diagnóstico y Troubleshooting - v1.25.0
 
-## Estado: ✅ 16 tests implementados + mejoras pendientes
+## Estado: ✅ Test 14 mejorado con MTU Path
+
+El Network Diagnostic Tool cuenta con 16 tests funcionales + MTU Path.
 
 El Network Diagnostic Tool cuenta con 16 tests completamente funcionales y lista de mejoras pendientes para futuro.
 

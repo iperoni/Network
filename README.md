@@ -1,4 +1,4 @@
-# Network Diagnostic Tool (v1.24.3)
+# Network Diagnostic Tool (v1.25.0)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux con sugerencias de troubleshooting automatizadas.
 

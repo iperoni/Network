@@ -1,8 +1,8 @@
-# Diagnóstico y Troubleshooting - v1.24.2
+# Diagnóstico y Troubleshooting - v1.24.5
 
-## Estado: ✅ Todas las mejoras implementadas
+## Estado: ✅ 16 tests implementados + mejoras pendientes
 
-El Network Diagnostic Tool cuenta con 16 tests completamente funcionales con sugerencias de troubleshooting automatizadas.
+El Network Diagnostic Tool cuenta con 16 tests completamente funcionales y lista de mejoras pendientes para futuro.
 
 ---
 
@@ -247,30 +247,141 @@ El Network Diagnostic Tool cuenta con 16 tests completamente funcionales con sug
 
 ## MEJORAS PENDIENTES A FUTURO
 
+### Alta Prioridad (Problemas Comunes de Conectividad)
+
+| # | Nueva Prueba | Complejidad | Beneficio |
+|---|--------------|-------------|-----------|
+| A1 | MTR (hop-by-hop) | Media | Alto |
+| A2 | TCP Traceroute | Media | Medio |
+| A3 | Test MTU path | Baja | Alto |
+| A4 | ARP/Neighbor table | Baja | Medio |
+
+**A1. MTR (My Traceroute)**
+- MTR combina traceroute + ping para mostrar pérdida por cada salto
+- Detectar en qué salto ISP hay pérdida de paquetes
+- Si primer salto OK pero hay loss en salto 3 → problema ISP
+- Windows: requiere tools adicionales (WinMTR)
+- Linux: `mtr -c 100 8.8.8.8`
+
+**A2. TCP Traceroute**
+- Si ICMP bloqueado pero TCP funciona
+- Útil cuando traceroute tradicional falla
+- Windows: `tcptraceroute` o Test-NetConnection con -TraceRoute
+- Linux: `tcptraceroute -n 443 8.8.8.8`
+
+**A3. Test de MTU Path**
+- Encontrar MTU máximo sin fragmentación (PMTUD blackhole)
+- Windows: `Test-NetConnection -ComputerName 8.8.8.8 -TraceRoute`
+- Linux: `tracepath -n 8.8.8.8`
+- Detectar si paquetes grandes fallan sin fragmentación
+
+**A4. ARP/Neighbor Table**
+- Verificar tabla ARP (Linux) / Neighbor (Windows)
+- Detectar problemas de conectividad local
+- Detectar MAC duplicate, entradas stagnantes
+- Windows: `netsh interface ipv4 show neighbors`
+- Linux: `ip neighbor show`
+
+---
+
 ### Media Prioridad
 
 | # | Nueva Prueba | Complejidad | Beneficio |
 |---|--------------|-------------|-----------|
-| 1 | IPv6 | Baja | Media |
-| 2 | Gateway secundario | Baja | Bajo |
-| 3 | ARP/Neighbor table | Baja | Bajo |
-| 4 | Jitter real (RFC 3550) | Media | Medio |
+| M1 | IPv6 | Baja | Media |
+| M2 | Gateway secundario | Baja | Bajo |
+| M3 | DNS reverso | Baja | Medio |
+| M4 | TCP ports scan | Media | Medio |
+| M5 | Interface errors | Baja | Medio |
+| M6 | VPN detection | Baja | Bajo |
 
-**1. Test de IPv6**
+**M1. Test de IPv6**
 - Verificar conectividad IPv6
-- Detectar si ISP no proporciona IPv6
+- Detectar si ISP proporciona IPv6 o no
+- Testing: `ping6 -n 1 ipv6.google.com`
+- Dual-stack: verificar que ambos protocolos funcionan
 
-**2. Test de Gateway Secundario**
+**M2. Test de Gateway Secundario**
 - Verificar gateway alternativo
 - Si secundario funciona, problema está más allá
+- Útil para redundant routing
 
-**3. Test de ARP/Neighbor Table**
-- Verificar tabla ARP (Linux) / Neighbor (Windows)
-- Detectar problemas de conectividad local
+**M3. DNS Reverso**
+- Resolución inversa de IPs en ruta del traceroute
+- Verificar queDNS reverso funciona
+- `nslookup 8.8.8.8` o `dig -x 8.8.8.8`
 
-**4. Test de Jitter Real**
+**M4. TCP Ports Scan**
+- Testear múltiples puertos comunes
+- Puertos: 22 (SSH), 80 (HTTP), 443 (HTTPS), 3389 (RDP), 21 (FTP), 25 (SMTP)
+- Windows: `Test-NetConnection -Port 443`
+- Linux: `nc -zv -w 3 target port`
+
+**M5. Interface Errors**
+- Ver errores de interfaz (RX/TX errors, overruns, drops)
+- Windows: `netsh interface show interface`
+- Linux: `cat /proc/net/dev | grep eth0`
+- High errors = problema físico (cable, NIC, switch)
+
+**M6. VPN Detection**
+- Identificar si hay VPN activa
+- Verificar rutas inesperadas
+- Detectar DNS leaks
+
+---
+
+### Baja Prioridad (Comparaciones Útiles)
+
+| # | Nueva Prueba | Complejidad | Beneficio |
+|---|--------------|-------------|-----------|
+| B1 | Multi-server speed | Media | Medio |
+| B2 | CDN comparison | Media | Medio |
+| B3 | ISP comparison | Baja | Medio |
+| B4 | Jitter real (RFC 3550) | Media | Medio |
+
+**B1. Multi-Server Speed**
+- Comparar velocidad hacia múltiples servers
+- Servers: Cloudflare, nperf, Fast.com
+- Detectar si un server específico está lento vs internet lento
+
+**B2. CDN Comparison**
+- Comparar Cloudflare vs Netflix vs Google
+- Ver cómo-rinden diferentes CDNs
+- Indicador de peering/optimización
+
+**B3. ISP Comparison**
+- Comparar velocidad real vs velocidad publicada
+- Tests a diferentes horas del día
+- Detectar congestion en peak hours
+
+**B4. Jitter Real (RFC 3550)**
 - Calcular jitter usando fórmula RFC 3550
-- Precisión para VoIP/gaming
+- Más preciso para VoIP/gaming
+- Diferente de packet-to-packet variation
+
+---
+
+### Tests Existentes (ya implementados)
+
+| # | Test | Estado | Notas |
+|---|------|--------|-------|
+| 1 | Conectividad Local | ✅ Listo | Loopback, gateway |
+| 2 | Internet y DNS | ✅ Listo | Conectividad básica |
+| 2B | DNS Configurados | ✅ Listo | Lista DNS sistema |
+| 3 | Puertos Críticos | ✅ Listo | Solo 443, 53 |
+| 4 | Latencia | ✅ Listo | Jitter básico |
+| 5 | WiFi | ✅ Listo | Solo Linux |
+| 6 | ISP | ✅ Listo | Solo ip-api.com |
+| 7 | Pérdida de Paquetes | ✅ Listo | 10 packets |
+| 8 | Interfaz de Red | ✅ Listo | Estado/duplex |
+| 9 | Firewall | ✅ Listo | Estado basic |
+| 10 | Traceroute | ✅ Listo | Con detección |
+| 11 | Velocidad | ✅ Listo | Solo Cloudflare |
+| 12 | DHCP | ✅ Listo | Solo lectura |
+| 13 | Bufferbloat | ✅ Listo | Latencia bajo carga |
+| 14 | MTU | ✅ Listo | MTU óptimo |
+| 15 | DNS Alternativos | ✅ Listo | Comparación |
+| 16 | Conexiones Simultáneas | ✅ Listo | TCP/HTTP |
 
 ---
 

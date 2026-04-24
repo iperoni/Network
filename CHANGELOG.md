@@ -6,6 +6,14 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [v1.24.5] - 2026-04-24
+
+### Updated
+- README con enlaces a TODO, CHANGELOG, Diagnostico
+- Diagnostico con lista de mejoras pendientes
+
+---
+
 ## [v1.24.3] - 2026-04-23
 
 ### Updated

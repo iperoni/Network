@@ -208,15 +208,19 @@ El Network Diagnostic Tool cuenta con 16 tests completamente funcionales y lista
 
 ---
 
-### TEST 14 — MTU
+### TEST 14 — MTU (con Path)
 
-**Descripción:** Determina MTU óptimo probando tamaños de paquete
+**Descripción:** Determina MTU óptimo probando tamaños de paquete + tracepath para ver ruta
 
 **Reglas activas:**
 | Condición | Nivel | Problema |
 |----------|-------|---------|
-| MTU < 1500 | INFO | MTU suboptimal |
-| MTU < 1280 | WARNING | MTU muy bajo |
+| MTU = 0 | CRÍTICO | Sin conectividad |
+| MTU = 1500 | INFO | MTU óptimo - sin fragmentación |
+| MTU > 1500 | WARNING | Puede causar fragmentación |
+| MTU ≤ 1280 | WARNING | Muy bajo - posible VPN/tunnel |
+| MTU 1281-1499 | INFO | MTU subóptimo |
+| Sin ruta | WARNING | Ruta no disponible |
 
 ---
 
@@ -255,8 +259,7 @@ El Network Diagnostic Tool cuenta con 16 tests completamente funcionales y lista
 |---|--------------|-------------|-----------|
 | A1 | MTR (hop-by-hop) | Media | Alto |
 | A2 | TCP Traceroute | Media | Medio |
-| A3 | Test MTU path | Baja | Alto |
-| A4 | ARP/Neighbor table | Baja | Medio |
+| ~~A3~~ | ~~Test MTU path~~ | ~~Baja~~ | ~~Alto~~ |
 
 **A1. MTR (My Traceroute)**
 - MTR combina traceroute + ping para mostrar pérdida por cada salto
@@ -271,11 +274,7 @@ El Network Diagnostic Tool cuenta con 16 tests completamente funcionales y lista
 - Windows: `tcptraceroute` o Test-NetConnection con -TraceRoute
 - Linux: `tcptraceroute -n 443 8.8.8.8`
 
-**A3. Test de MTU Path**
-- Encontrar MTU máximo sin fragmentación (PMTUD blackhole)
-- Windows: `Test-NetConnection -ComputerName 8.8.8.8 -TraceRoute`
-- Linux: `tracepath -n 8.8.8.8`
-- Detectar si paquetes grandes fallan sin fragmentación
+~~**A3. Test de MTU Path** - ✅ IMPLEMENTADO en v1.25.0~~
 
 **A4. ARP/Neighbor Table**
 - Verificar tabla ARP (Linux) / Neighbor (Windows)
@@ -381,7 +380,7 @@ El Network Diagnostic Tool cuenta con 16 tests completamente funcionales y lista
 | 11 | Velocidad | ✅ Listo | Solo Cloudflare |
 | 12 | DHCP | ✅ Listo | Solo lectura |
 | 13 | Bufferbloat | ✅ Listo | Latencia bajo carga |
-| 14 | MTU | ✅ Listo | MTU óptimo |
+| 14 | MTU | ✅ Listo | MTU óptimo + tracepath |
 | 15 | DNS Alternativos | ✅ Listo | Comparación |
 | 16 | Conexiones Simultáneas | ✅ Listo | TCP/HTTP |
 

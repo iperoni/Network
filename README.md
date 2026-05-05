@@ -2,14 +2,6 @@
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux con sugerencias de troubleshooting automatizadas.
 
-## Novedades en v1.25.2
-
-- Test 8: Fix PowerShell para obtener detalles de interfaz de red
-
-## Novedades en v1.25.1
-
-- Test 12 (DHCP): Ahora muestra múltiples interfaces de red con su estado DHCP, IP, máscara, gateway y lease
-
 ## Tabla de Contenidos
 
 - [Funcionalidades](#funcionalidades)

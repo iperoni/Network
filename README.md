@@ -1,6 +1,10 @@
-# Network Diagnostic Tool (v1.25.1)
+# Network Diagnostic Tool (v1.25.2)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux con sugerencias de troubleshooting automatizadas.
+
+## Novedades en v1.25.2
+
+- Test 8: Fix PowerShell para obtener detalles de interfaz de red
 
 ## Novedades en v1.25.1
 

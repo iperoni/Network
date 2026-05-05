@@ -2,10 +2,10 @@
 
 Lista de mejoras pendientes para el proyecto.
 
-## v1.25.1 - Completado
+## v1.25.2 - Completado
 
-- [x] Test 12 DHCP con múltiples interfaces
-- [x] Fix run_command para ipconfig/netsh
+- [x] Test 8: Fix PowerShell para detalles de interfaz
+- [x] Test 12: DHCP con múltiples interfaces
 
 ## v1.24.3 - Completado
 

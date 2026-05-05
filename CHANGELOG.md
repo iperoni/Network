@@ -6,6 +6,13 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [v1.25.2] - 2026-05-05
+
+### Fixed
+- Test 8: Fix PowerShell para obtener detalles de interfaz de red en Windows
+
+---
+
 ## [v1.25.1] - 2026-05-05
 
 ### Fixed

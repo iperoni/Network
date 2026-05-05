@@ -1,6 +1,6 @@
-# Diagnóstico y Troubleshooting - v1.25.1
+# Diagnóstico y Troubleshooting - v1.25.2
 
-## Estado: ✅ Test 12 DHCP con múltiples interfaces
+## Estado: ✅ Test 8 y Test 12 funcionando
 
 El Network Diagnostic Tool cuenta con 16 tests funcionales + MTU Path.
 
@@ -12,6 +12,7 @@ El Network Diagnostic Tool cuenta con 16 tests completamente funcionales y lista
 
 | Versión | Cambios |
 |---------|---------|
+| v1.25.2 | Test 8 y Test 12 fix para Windows |
 | v1.25.1 | Test 12 DHCP mejorado con múltiples interfaces |
 | v1.24.2 | README y Diagnostico actualizados |
 | v1.24.1 | Help mejorado con ejemplos |

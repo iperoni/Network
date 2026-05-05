@@ -25,7 +25,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.25.1"
+VERSION = "v1.25.2"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -1440,21 +1440,40 @@ def analyze_test_7(results):
 
 def get_network_interface_details():
     """Obtiene detalles del interfaz de red"""
+    import platform
+    import subprocess
+    import os
+
     is_windows = platform.system().lower() == "windows"
     details = {}
 
     if is_windows:
         try:
+            pwsh_paths = [
+                r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe",
+                r"C:\Program Files\PowerShell\7\pwsh.exe",
+                "powershell.exe",
+            ]
+            pwsh_cmd = None
+            for p in pwsh_paths:
+                if os.path.exists(p) if "\\" in p or p == "powershell.exe" else True:
+                    pwsh_cmd = p
+                    break
+
+            if not pwsh_cmd:
+                pwsh_cmd = "powershell.exe"
+
+            cmd = f'{pwsh_cmd} -Command "Get-NetAdapter | Where-Object Status -eq Up | Select-Object Name, InterfaceDescription, Status, MacAddress, LinkSpeed, FullDuplex | ConvertTo-Json"'
             result = subprocess.run(
-                [
-                    "powershell",
-                    "-Command",
-                    "Get-NetAdapter | Where-Object Status -eq 'Up' | Select-Object Name, InterfaceDescription, Status, MacAddress, LinkSpeed, FullDuplex | ConvertTo-Json",
-                ],
+                cmd,
+                shell=True,
                 capture_output=True,
                 timeout=15,
             )
-            output = result.stdout.decode("utf-8", errors="replace")
+            stdout = result.stdout.decode("utf-8", errors="replace")
+            stderr = result.stderr.decode("utf-8", errors="replace")
+            print(f"[DEBUG] stdout len: {len(stdout)}")
+            output = stdout
             if output.strip().startswith("["):
                 import json
 

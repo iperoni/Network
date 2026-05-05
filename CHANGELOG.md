@@ -6,6 +6,14 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [v1.25.3] - 2026-05-05
+
+### Fixed
+- Test 8: Ahora muestra TODAS las interfaces de red activas (no solo una)
+- Test 8: Muestra múltiples adapters (Ethernet, WiFi, VirtualBox, etc.)
+
+---
+
 ## [v1.25.2] - 2026-05-05
 
 ### Fixed

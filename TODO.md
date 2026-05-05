@@ -2,9 +2,9 @@
 
 Lista de mejoras pendientes para el proyecto.
 
-## v1.25.2 - Completado
+## v1.25.3 - Completado
 
-- [x] Test 8: Fix PowerShell para detalles de interfaz
+- [x] Test 8: Muestra todas las interfaces de red activas
 - [x] Test 12: DHCP con múltiples interfaces
 
 ## v1.24.3 - Completado

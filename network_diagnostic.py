@@ -25,7 +25,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.25.2"
+VERSION = "v1.25.3"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -1439,13 +1439,13 @@ def analyze_test_7(results):
 
 
 def get_network_interface_details():
-    """Obtiene detalles del interfaz de red"""
+    """Obtiene detalles de TODOS los interfaces de red activos"""
     import platform
     import subprocess
     import os
 
     is_windows = platform.system().lower() == "windows"
-    details = {}
+    all_interfaces = {}
 
     if is_windows:
         try:
@@ -1471,31 +1471,43 @@ def get_network_interface_details():
                 timeout=15,
             )
             stdout = result.stdout.decode("utf-8", errors="replace")
-            stderr = result.stderr.decode("utf-8", errors="replace")
             output = stdout
+
+            interfaces_list = []
             if output.strip().startswith("["):
                 import json
 
-                data = json.loads(output)
-                if isinstance(data, list) and len(data) > 0:
-                    data = data[0]
+                interfaces_list = json.loads(output)
             elif output.strip().startswith("{"):
                 import json
 
-                data = json.loads(output)
-            else:
-                return details
+                interfaces_list = [json.loads(output)]
 
-            if data:
-                details["Nombre"] = data.get("Name", "N/A")
-                details["Descripcion"] = data.get("InterfaceDescription", "N/A")
-                details["Estado"] = data.get("Status", "N/A")
-                details["MAC"] = data.get("MacAddress", "N/A")
-                details["Velocidad"] = data.get("LinkSpeed", "N/A")
-                details["Duplex"] = "Full" if data.get("FullDuplex", False) else "Half"
+            for data in interfaces_list:
+                if data:
+                    adapter_name = data.get("Name", "Unknown")
+                    all_interfaces[adapter_name] = {
+                        "Nombre": data.get("Name", "N/A"),
+                        "Descripcion": data.get("InterfaceDescription", "N/A"),
+                        "Estado": data.get("Status", "N/A"),
+                        "MAC": data.get("MacAddress", "N/A"),
+                        "Velocidad": data.get("LinkSpeed", "N/A"),
+                        "Duplex": "Full" if data.get("FullDuplex", False) else "Half",
+                    }
         except Exception as e:
             pass
-    return details
+
+    if not all_interfaces:
+        all_interfaces["Sin información"] = {
+            "Nombre": "N/A",
+            "Descripcion": "N/A",
+            "Estado": "N/A",
+            "MAC": "N/A",
+            "Velocidad": "N/A",
+            "Duplex": "N/A",
+        }
+
+    return all_interfaces
 
 
 def get_firewall_status():
@@ -1666,47 +1678,52 @@ def get_dhcp_lease_info():
 
 def analyze_test_8(results):
     """Test 8: Interfaz de red"""
-    iface = results.get("interface_details", {})
-    estado = iface.get("Estado", "").lower()
+    all_ifaces = results.get("interface_details", {})
 
-    if estado and estado != "up":
-        suggest(
-            "critical",
-            "8",
-            "Interfaz de Red",
-            f"Interfaz caído ({estado})",
-            "Habilitar interfaz",
-            get_cmd("interface_set").format(name="Ethernet"),
-        )
+    for adapter_name, iface in all_ifaces.items():
+        if adapter_name == "Sin información":
+            continue
 
-    velocidad = iface.get("Velocidad", "")
-    if velocidad:
-        speed_gbps = 0
-        try:
-            speed_gbps = int(velocidad.replace("Gbps", "").replace("Mbps", ""))
-        except:
-            pass
-        if speed_gbps < 1:
+        estado = iface.get("Estado", "").lower()
+
+        if estado and estado != "up":
             suggest(
-                "info",
+                "critical",
                 "8",
-                "Interfaz de Red",
-                f"Velocidad link baja ({velocidad})",
-                "Verificar cable o comparar con plan contratado",
-                "",
+                f"Interfaz de Red ({adapter_name})",
+                f"Interfaz caído ({estado})",
+                "Habilitar interfaz",
+                get_cmd("interface_set").format(name=adapter_name),
             )
 
-    # DetectHalf duplex
-    duplex = iface.get("Duplex", "").lower()
-    if duplex == "half":
-        suggest(
-            "warning",
-            "8",
-            "Interfaz de Red",
-            "Half-duplex detectado",
-            "Configurar full-duplex en el switch/router para mejor rendimiento",
-            "",
-        )
+        velocidad = iface.get("Velocidad", "")
+        if velocidad:
+            speed_gbps = 0
+            try:
+                speed_gbps = int(velocidad.replace("Gbps", "").replace("Mbps", ""))
+            except:
+                pass
+            if speed_gbps < 1:
+                suggest(
+                    "info",
+                    "8",
+                    f"Interfaz de Red ({adapter_name})",
+                    f"Velocidad link baja ({velocidad})",
+                    "Verificar cable o comparar con plan contratado",
+                    "",
+                )
+
+        # DetectHalf duplex
+        duplex = iface.get("Duplex", "").lower()
+        if duplex == "half":
+            suggest(
+                "warning",
+                "8",
+                f"Interfaz de Red ({adapter_name})",
+                "Half-duplex detectado",
+                "Configurar full-duplex en el switch/router para mejor rendimiento",
+                "",
+            )
 
 
 def analyze_test_9(results):
@@ -2325,8 +2342,14 @@ def main():
         interface_details = get_network_interface_details()
         if interface_details:
             print(f"   📡 Información del interfaz de red:")
-            for key, value in interface_details.items():
-                print(f"      {key}: {value}")
+            for adapter_name, adapter_data in interface_details.items():
+                if adapter_name == "Sin información":
+                    print(f"      ⚠️ No se pudo obtener información del interfaz")
+                    continue
+                print(f"   📺 {adapter_name}:")
+                for key, value in adapter_data.items():
+                    if value:
+                        print(f"      {key}: {value}")
             analyze_test_8({"interface_details": interface_details})
         else:
             print("   ⚠️ No se pudo obtener información del interfaz")

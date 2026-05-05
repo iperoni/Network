@@ -1472,7 +1472,6 @@ def get_network_interface_details():
             )
             stdout = result.stdout.decode("utf-8", errors="replace")
             stderr = result.stderr.decode("utf-8", errors="replace")
-            print(f"[DEBUG] stdout len: {len(stdout)}")
             output = stdout
             if output.strip().startswith("["):
                 import json

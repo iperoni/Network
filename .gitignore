@@ -3,3 +3,4 @@ __pycache__/
 *.pyo
 *.log
 2026-*.txt
+agents.md

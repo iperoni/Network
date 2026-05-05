@@ -25,7 +25,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.25.0"
+VERSION = "v1.25.1"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -1157,12 +1157,20 @@ def run_command(command):
     """Ejecuta comando y devuelve output"""
     try:
         is_win = platform.system().lower() == "windows"
-        result = subprocess.run(
-            command,
-            shell=True,
-            capture_output=True,
-            timeout=10,
-        )
+
+        if is_win and ("ipconfig" in command or "netsh" in command):
+            result = subprocess.run(
+                ["cmd", "/c", command],
+                capture_output=True,
+                timeout=10,
+            )
+        else:
+            result = subprocess.run(
+                command,
+                shell=True,
+                capture_output=True,
+                timeout=10,
+            )
         return (
             result.stdout.decode("cp437", errors="replace")
             if is_win
@@ -1499,27 +1507,141 @@ def get_firewall_status():
 
 
 def get_dhcp_lease_info():
-    """Obtiene información del lease DHCP"""
+    """Obtiene información del lease DHCP por cada interfaz de red"""
+    import platform
+    import subprocess
+
     is_windows = platform.system().lower() == "windows"
     lease_info = {}
 
     if is_windows:
         output = run_command("ipconfig /all")
+
+        if not output or len(output) < 10:
+            result = subprocess.run(
+                ["C:\\Windows\\System32\\ipconfig", "/all"],
+                capture_output=True,
+                timeout=10,
+            )
+            output = result.stdout.decode("cp437", errors="replace")
+
+        current_adapter = None
+        adapter_data = {}
+        skip_next = False
+
         for line in output.split("\n"):
-            line_lower = line.lower()
+            line_stripped = line.strip()
+            line_lower = line_stripped.lower()
+
+            if skip_next:
+                skip_next = False
+                continue
+
             if (
-                "dhcp" in line_lower
-                and "habilitado" in line_lower
-                or "enabled" in line_lower
+                line_lower.startswith("adaptador")
+                or line_lower.startswith("adapter")
+                or line_lower.startswith("ethernet")
+                or line_lower.startswith("wireless")
             ):
-                lease_info["DHCP"] = (
-                    "Habilitado"
-                    if "si" in line_lower or "yes" in line_lower
-                    else "Deshabilitado (IP Estática)"
-                )
-                break
-        if "DHCP" not in lease_info:
-            lease_info["DHCP"] = "Deshabilitado (IP Estática)"
+                if current_adapter and adapter_data:
+                    lease_info[current_adapter] = adapter_data
+                current_adapter = line_stripped.split(":")[0].strip()
+                if (
+                    len(line_stripped.split(":")) > 1
+                    and line_stripped.split(":", 1)[1].strip()
+                ):
+                    adapter_name = line_stripped.split(":", 1)[1].strip()
+                    current_adapter = (
+                        f"{line_stripped.split(':')[0].strip()}: {adapter_name}"
+                    )
+                adapter_data = {
+                    "DHCP": "N/A",
+                    "IP": "",
+                    "Máscara": "",
+                    "Gateway": "",
+                    "DNS": "",
+                }
+                skip_next = True
+                continue
+
+            if current_adapter:
+                if "dhcp habilitado" in line_lower or "dhcp enabled" in line_lower:
+                    if (
+                        " sí" in line_lower
+                        or " yes" in line_lower
+                        or "s" in line.split(":")[-1].strip()
+                    ):
+                        adapter_data["DHCP"] = "Habilitado"
+                    else:
+                        adapter_data["DHCP"] = "Deshabilitado (IP Estática)"
+
+                if " ipv4" in line_lower and ":" in line_stripped:
+                    ip_val = line_stripped.split(":")[1].strip()
+                    if "(preferido)" in ip_val.lower():
+                        ip_val = (
+                            ip_val.lower()
+                            .replace("(preferido)", "")
+                            .strip()
+                            .replace("  ", " ")
+                        )
+                    if ip_val:
+                        adapter_data["IP"] = ip_val
+
+                if " subred" in line_lower or " mascar" in line_lower:
+                    if ":" in line_stripped:
+                        mask = line_stripped.split(":")[1].strip()
+                        if mask:
+                            adapter_data["Máscara"] = mask
+
+                if " gateway" in line_lower or " puerta" in line_lower:
+                    if ":" in line_stripped:
+                        gw = line_stripped.split(":")[1].strip()
+                        if gw:
+                            adapter_data["Gateway"] = gw
+
+                if " dhcp server" in line_lower:
+                    if ":" in line_stripped:
+                        dhcp_server = line_stripped.split(":")[1].strip()
+                        if dhcp_server:
+                            adapter_data["Servidor DHCP"] = dhcp_server
+
+                if (
+                    "lease obtained" in line_lower
+                    or "conexión obtained" in line_lower
+                    or "concesión obtenida" in line_lower
+                ):
+                    if ":" in line_stripped:
+                        lease_obtained = line_stripped.split(":")[1].strip()
+                        if lease_obtained:
+                            adapter_data["Lease Obtenido"] = lease_obtained
+
+                if (
+                    "lease expires" in line_lower
+                    or "conexión expires" in line_lower
+                    or "conexión expira" in line_lower
+                ):
+                    if ":" in line_stripped:
+                        lease_expires = line_stripped.split(":")[1].strip()
+                        if lease_expires:
+                            adapter_data["Lease Expira"] = lease_expires
+
+                if " dns servers" in line_lower:
+                    if ":" in line_stripped:
+                        dns = line_stripped.split(":")[1].strip()
+                        if dns:
+                            adapter_data["DNS"] = dns
+
+        if current_adapter and adapter_data:
+            lease_info[current_adapter] = adapter_data
+
+    if not lease_info:
+        lease_info["Sin información"] = {
+            "DHCP": "No disponible",
+            "IP": "",
+            "Máscara": "",
+            "Gateway": "",
+            "DNS": "",
+        }
 
     return lease_info
 
@@ -1670,17 +1792,22 @@ def analyze_test_11(results):
 def analyze_test_12(results):
     """Test 12: DHCP"""
     dhcp = results.get("dhcp_info", {})
-    dhcp_status = dhcp.get("DHCP", "")
 
-    if dhcp_status and "Deshabilitado" in dhcp_status:
-        suggest(
-            "info",
-            "12",
-            "DHCP",
-            "IP Estática",
-            "Normal si es configuración intencional",
-            "",
-        )
+    for adapter_name, adapter_data in dhcp.items():
+        if adapter_name == "Sin información":
+            continue
+
+        dhcp_status = adapter_data.get("DHCP", "")
+
+        if dhcp_status and "Deshabilitado" in dhcp_status:
+            suggest(
+                "info",
+                "12",
+                f"DHCP ({adapter_name})",
+                "IP Estática",
+                "Normal si es configuración intencional",
+                "",
+            )
 
 
 def run_test_by_id(test_id, args, is_windows):
@@ -2252,8 +2379,17 @@ def main():
         dhcp_info = get_dhcp_lease_info()
         if dhcp_info:
             print(f"   📋 Información del lease DHCP:")
-            for key, value in dhcp_info.items():
-                print(f"      {key}: {value}")
+            for adapter_name, adapter_data in dhcp_info.items():
+                if adapter_name == "Sin información":
+                    print(f"      ⚠️ No se pudo obtener información DHCP")
+                    continue
+                has_ip = bool(adapter_data.get("IP", "").strip())
+                if not has_ip:
+                    continue
+                print(f"   📺 {adapter_name}:")
+                for key, value in adapter_data.items():
+                    if value:
+                        print(f"      {key}: {value}")
             analyze_test_12({"dhcp_info": dhcp_info})
         else:
             print("   ⚠️ No se pudo obtener información DHCP")

@@ -2,6 +2,11 @@
 
 Lista de mejoras pendientes para el proyecto.
 
+## v1.25.1 - Completado
+
+- [x] Test 12 DHCP con múltiples interfaces
+- [x] Fix run_command para ipconfig/netsh
+
 ## v1.24.3 - Completado
 
 - [x] README reorganizado

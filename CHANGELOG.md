@@ -6,6 +6,15 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [v1.25.1] - 2026-05-05
+
+### Fixed
+- Test 12 (DHCP): Ahora muestra múltiples interfaces de red (no solo una)
+- Test 12: Muestra estado DHCP, IP, máscara, gateway, DNS, servidor DHCP y lease por cada interfaz
+- run_command(): Fix para ejecutar ipconfig/netsh en Windows (usa cmd /c)
+
+---
+
 ## [v1.25.0] - 2026-04-24
 
 ### Added

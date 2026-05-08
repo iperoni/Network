@@ -25,7 +25,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.25.3"
+VERSION = "v1.25.4"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -2223,7 +2223,12 @@ def main():
     if "4" in selected_tests:
         executed_tests.add("4")
         print_header("TEST 4: ESTADÍSTICAS DE LATENCIA")
-        targets = [("8.8.8.8", "Google"), ("1.1.1.1", "Cloudflare")]
+        targets = [
+            ("8.8.8.8", "Google DNS"),
+            ("1.1.1.1", "Cloudflare DNS"),
+            ("youtube.com", "YouTube (CDN)"),
+            ("yahoo.com", "Yahoo (IPTransit)"),
+        ]
         latency_results = []
         for ip, name in targets:
             print(f"\n📡 {name}:")

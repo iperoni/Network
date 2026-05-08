@@ -6,6 +6,13 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [v1.25.4] - 2026-05-08
+
+### Added
+- Test 4: Nueva prueba de latencia hacia YouTube (CDN) y Yahoo (IPTransit)
+
+---
+
 ## [v1.25.3] - 2026-05-05
 
 ### Fixed

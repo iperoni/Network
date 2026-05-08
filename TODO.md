@@ -2,6 +2,10 @@
 
 Lista de mejoras pendientes para el proyecto.
 
+## v1.25.4 - Completado
+
+- [x] Test 4: Agregar latencia YouTube (CDN) y Yahoo (IPTransit)
+
 ## v1.25.3 - Completado
 
 - [x] Test 8: Muestra todas las interfaces de red activas

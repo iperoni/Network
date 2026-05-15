@@ -6,6 +6,13 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [v1.25.8] - 2026-05-15
+
+### Added
+- Test 9: Agregado soporte para Linux - consulta UFW e iptables (con sudo)
+
+---
+
 ## [v1.25.7] - 2026-05-15
 
 ### Added

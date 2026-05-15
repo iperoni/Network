@@ -25,7 +25,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.25.7"
+VERSION = "v1.25.8"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -1599,7 +1599,7 @@ def get_network_interface_details():
 
 
 def get_firewall_status():
-    """Obtiene estado del firewall"""
+    """Obtiene estado del firewall - Windows y Linux"""
     is_windows = platform.system().lower() == "windows"
     firewall_info = {}
 
@@ -1618,8 +1618,47 @@ def get_firewall_status():
         reglas_count = len([l for l in output.split("\n") if "Regla" in l])
         firewall_info["Reglas activas"] = str(reglas_count)
     else:
-        firewall_info["UFW"] = "N/A"
-        firewall_info["iptables"] = "N/A"
+        # Linux: verificar UFW
+        try:
+            ufw_output = run_command("sudo ufw status")
+            if "Status: active" in ufw_output:
+                firewall_info["UFW"] = "Activo"
+                # Contar reglas
+                rules_count = 0
+                for line in ufw_output.split("\n"):
+                    if (
+                        line.strip()
+                        and not line.startswith("---")
+                        and "Status:" not in line
+                    ):
+                        rules_count += 1
+                firewall_info["Reglas UFW"] = str(rules_count)
+            elif "Status: inactive" in ufw_output:
+                firewall_info["UFW"] = "Inactivo"
+            else:
+                firewall_info["UFW"] = "No gestionado"
+        except:
+            firewall_info["UFW"] = "No instalado"
+
+        # Linux: verificar iptables
+        try:
+            iptables_output = run_command("sudo iptables -L -n")
+            if iptables_output:
+                # Contar reglas (excluyendo header y chain policies)
+                rule_count = 0
+                for line in iptables_output.split("\n"):
+                    line = line.strip()
+                    if (
+                        line
+                        and not line.startswith("Chain")
+                        and not line.startswith("policy")
+                    ):
+                        rule_count += 1
+                firewall_info["iptables"] = f"{rule_count} reglas"
+            else:
+                firewall_info["iptables"] = "Vacío"
+        except:
+            firewall_info["iptables"] = "Sin acceso"
 
     return firewall_info
 

@@ -25,7 +25,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.25.8"
+VERSION = "v1.25.9"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -1807,13 +1807,20 @@ def analyze_test_8(results):
     """Test 8: Interfaz de red"""
     all_ifaces = results.get("interface_details", {})
 
+    # Identificar interfaces especiales que pueden estar down normalmente
+    special_interfaces = ["lo", "docker", "br-", "veth", "virbr", "wwan"]
+
     for adapter_name, iface in all_ifaces.items():
         if adapter_name == "Sin información":
             continue
 
         estado = iface.get("Estado", "").lower()
 
-        if estado and estado != "up":
+        # Ignorar interfaces especiales que pueden estar down (loopback, virtual, wwan)
+        is_special = any(adapter_name.startswith(s) for s in special_interfaces)
+
+        # Solo dar recomendaciones de interfaz caído para interfaces principales (no especiales)
+        if estado and estado == "down" and not is_special:
             suggest(
                 "critical",
                 "8",
@@ -1824,13 +1831,22 @@ def analyze_test_8(results):
             )
 
         velocidad = iface.get("Velocidad", "")
-        if velocidad:
-            speed_gbps = 0
+        if velocidad and velocidad != "N/A":
+            speed_mbps = 0
             try:
-                speed_gbps = int(velocidad.replace("Gbps", "").replace("Mbps", ""))
+                # Extraer número - soportar "1 Gbps", "1000Mbps", "100 Mbps", etc.
+                speed_str = (
+                    velocidad.lower().replace("gbps", "").replace("mbps", "").strip()
+                )
+                speed_mbps = int(float(speed_str))
+                # Convertir Gbps a Mbps si está en Gbps
+                if "gbps" in velocidad.lower():
+                    speed_mbps = speed_mbps * 1000
             except:
                 pass
-            if speed_gbps < 1:
+
+            # Solo warning si velocidad < 100 Mbps (no 1 Gbps)
+            if 0 < speed_mbps < 100:
                 suggest(
                     "info",
                     "8",
@@ -1840,7 +1856,7 @@ def analyze_test_8(results):
                     "",
                 )
 
-        # DetectHalf duplex
+        # Detectar half duplex - solo si es específicamente "half"
         duplex = iface.get("Duplex", "").lower()
         if duplex == "half":
             suggest(

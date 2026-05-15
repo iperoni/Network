@@ -6,6 +6,13 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [v1.25.9] - 2026-05-15
+
+### Fixed
+- Test 8: Corregido análisis de troubleshooting - ignora interfaces especiales (lo, docker, wwan), no marca 1000Mbps como lento, umbral改为100Mbps
+
+---
+
 ## [v1.25.8] - 2026-05-15
 
 ### Added

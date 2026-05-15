@@ -25,7 +25,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.25.5"
+VERSION = "v1.25.6"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -742,26 +742,26 @@ def test_packet_loss(host, count=10):
                 elif "perdidos" in part_lower:
                     packet_info["lost"] = part.split("=")[1].strip()
 
-        # Inglés: "X packets transmitted, Y received, Z lost"
+        # Inglés Linux: "X packets transmitted, Y received, Z% packet loss"
         elif "packets" in line_lower and (
             "transmitted" in line_lower or "sent" in line_lower
         ):
-            for part in line.split(","):
-                part_lower = part.lower()
-                if "transmitted" in part_lower or "sent" in part_lower:
-                    match = re.search(r"(\d+)", part)
-                    if match:
-                        packet_info["sent"] = match.group(1)
-                elif "received" in part_lower:
-                    match = re.search(r"(\d+)", part)
-                    if match:
-                        packet_info["received"] = match.group(1)
-                elif "lost" in part_lower:
-                    match = re.search(r"(\d+)", part)
-                    if match:
-                        packet_info["lost"] = match.group(1)
+            # Buscar transmitted/sent
+            match = re.search(r"(\d+)\s+packets?\s+(?:transmitted|sent)", line_lower)
+            if match:
+                packet_info["sent"] = match.group(1)
 
-    # Calcular porcentaje
+            # Buscar received
+            match = re.search(r"(\d+)\s+received", line_lower)
+            if match:
+                packet_info["received"] = match.group(1)
+
+            # Buscar packet loss con porcentaje
+            match = re.search(r"(\d+(?:\.\d+)?)\s*%?\s*packet loss", line_lower)
+            if match:
+                packet_info["lost"] = "0" if match.group(1) == "0" else match.group(1)
+
+    # Calcular porcentaje si no vino en el output
     if "sent" in packet_info and "lost" in packet_info:
         try:
             pct = (int(packet_info["lost"]) / int(packet_info["sent"])) * 100

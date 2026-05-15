@@ -25,7 +25,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.25.4"
+VERSION = "v1.25.5"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -718,7 +718,7 @@ def analyze_test_6(results):
 
 
 def test_packet_loss(host, count=10):
-    """Test de pérdida de paquetes"""
+    """Test de pérdida de paquetes - soporta Windows (español) y Linux (inglés)"""
     is_windows = platform.system().lower() == "windows"
     param = "-n" if is_windows else "-c"
     result = subprocess.run(
@@ -726,21 +726,53 @@ def test_packet_loss(host, count=10):
     )
     output = result.stdout.decode("cp437" if is_windows else "utf-8", errors="replace")
     packet_info = {}
+
+    # Buscar línea con estadísticas de paquetes - soporte español e inglés
     for line in output.split("\n"):
-        if "paquetes" in line.lower() and "enviados" in line.lower():
+        line_lower = line.lower()
+
+        # Español: "X paquetes enviados, Y recibidos, Z perdidos"
+        if "paquetes" in line_lower and "enviados" in line_lower:
             for part in line.split(","):
-                if "enviados" in part.lower():
-                    packet_info["enviados"] = part.split("=")[1].strip()
-                elif "recibidos" in part.lower():
-                    packet_info["recibidos"] = part.split("=")[1].strip()
-                elif "perdidos" in part.lower():
-                    packet_info["perdidos"] = part.split("=")[1].strip()
-    if "enviados" in packet_info and "perdidos" in packet_info:
+                part_lower = part.lower()
+                if "enviados" in part_lower:
+                    packet_info["sent"] = part.split("=")[1].strip()
+                elif "recibidos" in part_lower:
+                    packet_info["received"] = part.split("=")[1].strip()
+                elif "perdidos" in part_lower:
+                    packet_info["lost"] = part.split("=")[1].strip()
+
+        # Inglés: "X packets transmitted, Y received, Z lost"
+        elif "packets" in line_lower and (
+            "transmitted" in line_lower or "sent" in line_lower
+        ):
+            for part in line.split(","):
+                part_lower = part.lower()
+                if "transmitted" in part_lower or "sent" in part_lower:
+                    match = re.search(r"(\d+)", part)
+                    if match:
+                        packet_info["sent"] = match.group(1)
+                elif "received" in part_lower:
+                    match = re.search(r"(\d+)", part)
+                    if match:
+                        packet_info["received"] = match.group(1)
+                elif "lost" in part_lower:
+                    match = re.search(r"(\d+)", part)
+                    if match:
+                        packet_info["lost"] = match.group(1)
+
+    # Calcular porcentaje
+    if "sent" in packet_info and "lost" in packet_info:
         try:
-            pct = (int(packet_info["perdidos"]) / int(packet_info["enviados"])) * 100
+            pct = (int(packet_info["lost"]) / int(packet_info["sent"])) * 100
             packet_info["% perda"] = f"{pct:.0f}%"
+            # Normalizar keys para consistencia
+            packet_info["enviados"] = packet_info["sent"]
+            packet_info["recibidos"] = packet_info.get("received", "0")
+            packet_info["perdidos"] = packet_info["lost"]
         except:
             pass
+
     return packet_info
 
 

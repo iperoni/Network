@@ -1,6 +1,6 @@
-# Diagnóstico y Troubleshooting - v1.25.3
+# Diagnóstico y Troubleshooting - v1.25.4
 
-## Estado: ✅ Test 8 con múltiples interfaces
+## Estado: ✅ Test 4 con YouTube (CDN) y Yahoo (IPTransit)
 
 El Network Diagnostic Tool cuenta con 16 tests funcionales + MTU Path.
 
@@ -12,6 +12,7 @@ El Network Diagnostic Tool cuenta con 16 tests completamente funcionales y lista
 
 | Versión | Cambios |
 |---------|---------|
+| v1.25.4 | Test 4 con YouTube (CDN) y Yahoo (IPTransit) |
 | v1.25.3 | Test 8 con múltiples interfaces |
 | v1.25.2 | Test 8 y Test 12 fix para Windows |
 | v1.25.1 | Test 12 DHCP mejorado con múltiples interfaces |

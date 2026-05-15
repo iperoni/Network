@@ -6,6 +6,13 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [v1.25.7] - 2026-05-15
+
+### Added
+- Test 8: Agregado soporte para Linux - usa `ip link`, `ip addr` y `ethtool`
+
+---
+
 ## [v1.25.6] - 2026-05-15
 
 ### Fixed

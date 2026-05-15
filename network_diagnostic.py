@@ -25,7 +25,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.25.6"
+VERSION = "v1.25.7"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -1475,6 +1475,7 @@ def get_network_interface_details():
     import platform
     import subprocess
     import os
+    import re
 
     is_windows = platform.system().lower() == "windows"
     all_interfaces = {}
@@ -1526,6 +1527,61 @@ def get_network_interface_details():
                         "Velocidad": data.get("LinkSpeed", "N/A"),
                         "Duplex": "Full" if data.get("FullDuplex", False) else "Half",
                     }
+        except Exception as e:
+            pass
+
+    # Linux: usar ip link e ip addr
+    if not is_windows:
+        try:
+            # Obtener lista de interfaces activas
+            output = run_command("ip -o link show scope global")
+            for line in output.split("\n"):
+                if not line.strip():
+                    continue
+
+                # Parsear: "2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP mode DEFAULT"
+                parts = line.split(":")
+                if len(parts) < 2:
+                    continue
+
+                interface = parts[1].split()[0] if parts[1].strip() else ""
+                if not interface:
+                    continue
+
+                # Buscar MAC y estado
+                mac_match = re.search(r"link/ether ([0-9a-f:]+)", line)
+                state_match = re.search(r"state (\w+)", line)
+
+                mac = mac_match.group(1) if mac_match else "N/A"
+                estado = state_match.group(1) if state_match else "UNKNOWN"
+
+                # Obtener IP y velocidad
+                ip_output = run_command(f"ip -4 addr show {interface}")
+                ip_addr = ""
+                for ip_line in ip_output.split("\n"):
+                    if "inet " in ip_line:
+                        ip_addr = ip_line.strip().split()[1].split("/")[0]
+                        break
+
+                # Intentar obtener velocidad con ethtool
+                speed = "N/A"
+                duplex = "N/A"
+                ethtool_output = run_command(f"ethtool {interface}")
+                for e_line in ethtool_output.split("\n"):
+                    e_lower = e_line.lower()
+                    if "speed:" in e_lower:
+                        speed = e_line.split(":")[1].strip()
+                    if "duplex:" in e_lower:
+                        duplex = e_line.split(":")[1].strip()
+
+                all_interfaces[interface] = {
+                    "Nombre": interface,
+                    "Descripcion": f"Interfaz {interface}",
+                    "Estado": estado.upper(),
+                    "MAC": mac,
+                    "Velocidad": speed,
+                    "Duplex": duplex,
+                }
         except Exception as e:
             pass
 

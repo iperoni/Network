@@ -25,7 +25,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.25.9"
+VERSION = "v1.25.10"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -1808,7 +1808,7 @@ def analyze_test_8(results):
     all_ifaces = results.get("interface_details", {})
 
     # Identificar interfaces especiales que pueden estar down normalmente
-    special_interfaces = ["lo", "docker", "br-", "veth", "virbr", "wwan"]
+    special_interfaces = ["lo", "docker", "br-", "veth", "virbr", "wwan", "wlp", "wlan"]
 
     for adapter_name, iface in all_ifaces.items():
         if adapter_name == "Sin información":
@@ -1816,7 +1816,7 @@ def analyze_test_8(results):
 
         estado = iface.get("Estado", "").lower()
 
-        # Ignorar interfaces especiales que pueden estar down (loopback, virtual, wwan)
+        # Ignorar interfaces especiales que pueden estar down (loopback, virtual, wifi, wwan)
         is_special = any(adapter_name.startswith(s) for s in special_interfaces)
 
         # Solo dar recomendaciones de interfaz caído para interfaces principales (no especiales)
@@ -1856,9 +1856,9 @@ def analyze_test_8(results):
                     "",
                 )
 
-        # Detectar half duplex - solo si es específicamente "half"
+        # Detectar half duplex - solo si el interfaz está up
         duplex = iface.get("Duplex", "").lower()
-        if duplex == "half":
+        if duplex == "half" and estado == "up":
             suggest(
                 "warning",
                 "8",

@@ -6,10 +6,17 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [v1.25.10] - 2026-05-15
+
+### Fixed
+- Test 8: Agregado wlp/wlan a interfaces especiales, solo sugiere half-duplex si interfaz está UP
+
+---
+
 ## [v1.25.9] - 2026-05-15
 
 ### Fixed
-- Test 8: Corregido análisis de troubleshooting - ignora interfaces especiales (lo, docker, wwan), no marca 1000Mbps como lento, umbral改为100Mbps
+- Test 8: Corregido análisis de troubleshooting - ignora interfaces especiales (lo, docker, wwan), no marca 1000Mbps como lento, umbral 改为 100Mbps
 
 ---
 

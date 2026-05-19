@@ -6,6 +6,13 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [v1.25.11] - 2026-05-18
+
+### Added
+- Test 10: Soporte para Linux ya estaba implementado, verificado en Windows
+
+---
+
 ## [v1.25.10] - 2026-05-15
 
 ### Fixed

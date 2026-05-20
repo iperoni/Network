@@ -26,7 +26,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.25.17"
+VERSION = "v1.25.18"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -834,18 +834,27 @@ def run_traceroute(host, max_hops=30):
             output = result.stderr
     except Exception as e:
         return []
+
+    hops_data = []
+    for line in output.split("\n"):
+        line_stripped = line.strip()
+        if not line_stripped:
+            continue
+        
+        hop_match = re.match(r"^\s*(\d+)\s+", line_stripped)
+        if not hop_match:
+            continue
         
         line = line_stripped
         latency = 0
         times = []
         
-        # Extraer latencias (formato: "X ms", "<X ms", o "X ms  Y ms  Z ms")
         for part in line.split():
             part_clean = part.replace("ms", "").replace("<", "").replace("s", "").replace("m", "")
             if part_clean.lstrip('-').isdigit():
                 try:
                     t = int(part_clean)
-                    if t < 10000:  # Filtrar valores absurdos
+                    if t < 10000:
                         times.append(t)
                 except:
                     pass
@@ -853,7 +862,6 @@ def run_traceroute(host, max_hops=30):
         if times:
             latency = sum(times) / len(times)
         
-        # Extraer IP (buscar patrón xxx.xxx.xxx.xxx o (xxx.xxx.xxx.xxx))
         ip_match = re.search(r"(?:^|\s)(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(?:\s|$|\))", line)
         
         if ip_match:
@@ -861,10 +869,9 @@ def run_traceroute(host, max_hops=30):
         elif "* * *" in line or "* *" in line:
             hop_ip = "*"
         else:
-            # Sin IP numérica - usar lo que venga después del número de hop
             parts = line.split(None, 2)
             if len(parts) >= 3:
-                hop_ip = parts[2].split()[0][:30]  # Primer token después del hop number
+                hop_ip = parts[2].split()[0][:30]
             else:
                 hop_ip = f"hop {hop_match.group(1)}"
         

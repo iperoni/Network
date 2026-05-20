@@ -6,6 +6,20 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [v1.25.18] - 2026-05-20
+
+### Fixed
+- Test 10: Corregido código mal formado que causaba NameError
+
+---
+
+## [v1.25.17] - 2026-05-20
+
+### Fixed
+- Test 10: traceroute sin opción -n (no soportada en algunas distros Linux)
+
+---
+
 ## [v1.25.15] - 2026-05-20
 
 ### Fixed

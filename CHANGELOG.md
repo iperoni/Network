@@ -6,6 +6,13 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [v1.25.13] - 2026-05-20
+
+### Fixed
+- Test 10: Mejor parsing para formato Linux (detecta IPs con paréntesis), filtrado de valores atípicos
+
+---
+
 ## [v1.25.12] - 2026-05-20
 
 ### Fixed

@@ -2,6 +2,10 @@
 
 Lista de mejoras pendientes para el proyecto.
 
+## v1.25.13 - Completado
+
+- [x] Test 10: Mejor parsing formato Linux, filtrado valores atípicos
+
 ## v1.25.12 - Completado
 
 - [x] Test 10: Mejorado parsing traceroute para Linux, formato limpio

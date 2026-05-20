@@ -1,6 +1,6 @@
-# Diagnóstico y Troubleshooting - v1.25.12
+# Diagnóstico y Troubleshooting - v1.25.13
 
-## Estado: ✅ Test 10 mejorado para Linux
+## Estado: ✅ Test 10 parsing Linux mejorado
 
 El Network Diagnostic Tool cuenta con 16 tests completamente funcionales y lista de mejoras pendientes para futuro.
 
@@ -10,6 +10,7 @@ El Network Diagnostic Tool cuenta con 16 tests completamente funcionales y lista
 
 | Versión | Cambios |
 |---------|---------|
+| v1.25.13 | Test 10 mejor parsing Linux, filtrado valores atípicos |
 | v1.25.12 | Test 10 parsing Linux, formato limpio |
 | v1.25.11 | Test 10 verificado en Windows |
 | v1.25.10 | Test 8 fix - wlp/wlan especiales, half-duplex solo si UP |

@@ -26,7 +26,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.25.23"
+VERSION = "v1.25.24"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -1816,7 +1816,10 @@ def get_dhcp_lease_info():
             lease_info[current_adapter] = adapter_data
     else:
         output = run_command("ip addr show")
+        print(f"[DEBUG] ip addr show output:\n{output[:500]}")
+        
         route_output = run_command("ip route show")
+        print(f"[DEBUG] ip route show output:\n{route_output[:300]}")
         
         interfaces = {}
         current_iface = None
@@ -1833,6 +1836,7 @@ def get_dhcp_lease_info():
                         "Máscara": "",
                         "DHCP": "Deshabilitado (IP Estática)",
                     }
+                    print(f"[DEBUG] Interface found: {current_iface}")
             elif current_iface and "inet " in line:
                 inet_match = re.search(r"inet (\d+\.\d+\.\d+\.\d+)/(\d+)", line)
                 if inet_match:
@@ -1841,40 +1845,33 @@ def get_dhcp_lease_info():
                     mask = prefix_to_mask(prefix)
                     interfaces[current_iface]["IP"] = ip
                     interfaces[current_iface]["Máscara"] = mask
+                    print(f"[DEBUG] {current_iface} IP: {ip}")
+        
+        print(f"[DEBUG] interfaces after IP parse: {interfaces}")
         
         for line in route_output.split("\n"):
             if line.strip().startswith("default"):
                 parts = line.split()
                 if len(parts) >= 3:
+                    gateway = parts[2]
+                    print(f"[DEBUG] Gateway found: {gateway}")
                     for iface in interfaces:
-                        interfaces[iface]["Gateway"] = parts[2]
+                        interfaces[iface]["Gateway"] = gateway
                 break
         
-        dhcp_lease_files = ["/var/lib/dhcp/dhclient.leases", "/var/lib/dhcpd/dhcpd.leases"]
-        for lease_file in dhcp_lease_files:
-            try:
-                with open(lease_file, "r") as f:
-                    lease_content = f.read()
-                    for iface in interfaces:
-                        if f'interface "{iface}"' in lease_content or f"interface {iface}" in lease_content:
-                            interfaces[iface]["DHCP"] = "Habilitado"
-                            lease_match = re.search(r"starts.*?(\d{4}/\d+/\d+ \d+:\d+:\d+)", lease_content)
-                            if lease_match:
-                                interfaces[iface]["Lease Obtenido"] = lease_match.group(1)
-                            expire_match = re.search(r"ends.*?(\d{4}/\d+/\d+ \d+:\d+:\d+)", lease_content)
-                            if expire_match:
-                                interfaces[iface]["Lease Expira"] = expire_match.group(1)
-            except:
-                pass
-        
         dns_output = run_command("cat /etc/resolv.conf")
+        print(f"[DEBUG] DNS output:\n{dns_output[:300]}")
         nameservers = re.findall(r"nameserver (\d+\.\d+\.\d+\.\d+)", dns_output)
         dns_servers = ", ".join(nameservers) if nameservers else ""
+        print(f"[DEBUG] nameservers: {nameservers}")
         
         for iface, data in interfaces.items():
+            print(f"[DEBUG] processing iface {iface} with IP: {data.get('IP')}")
             if data["IP"]:
                 data["DNS"] = dns_servers
                 lease_info[iface] = data
+        
+        print(f"[DEBUG] final lease_info: {lease_info}")
 
     if not lease_info:
         lease_info["Sin información"] = {

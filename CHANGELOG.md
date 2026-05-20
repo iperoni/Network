@@ -6,6 +6,13 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [v1.25.15] - 2026-05-20
+
+### Fixed
+- Test 10: Fix - import shutil faltante
+
+---
+
 ## [v1.25.14] - 2026-05-20
 
 ### Fixed

@@ -1,6 +1,6 @@
-# Diagnóstico y Troubleshooting - v1.25.14
+# Diagnóstico y Troubleshooting - v1.25.15
 
-## Estado: ✅ Test 10 detecta traceroute faltante
+## Estado: ✅ Fix import shutil
 
 El Network Diagnostic Tool cuenta con 16 tests completamente funcionales y lista de mejoras pendientes para futuro.
 
@@ -10,9 +10,9 @@ El Network Diagnostic Tool cuenta con 16 tests completamente funcionales y lista
 
 | Versión | Cambios |
 |---------|---------|
+| v1.25.15 | Fix import shutil |
 | v1.25.14 | Test 10 detecta traceroute no instalado |
 | v1.25.13 | Test 10 mejor parsing Linux |
-| v1.25.12 | Test 10 formato limpio |
 | v1.25.10 | Test 8 fix - wlp/wlan especiales, half-duplex solo si UP |
 | v1.25.9 | Test 8 troubleshooting - ignorar interfaces especiales, umbral 100Mbps |
 | v1.25.8 | Test 9 soporte Linux - UFW e iptables |

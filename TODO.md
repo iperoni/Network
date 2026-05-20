@@ -2,6 +2,10 @@
 
 Lista de mejoras pendientes para el proyecto.
 
+## v1.25.15 - Completado
+
+- [x] Test 10: Fix import shutil faltante
+
 ## v1.25.14 - Completado
 
 - [x] Test 10: Detecta traceroute no instalado, mensaje de instalación

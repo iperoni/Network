@@ -10,6 +10,7 @@ import socket
 import subprocess
 import re
 import platform
+import shutil
 import time
 import sys
 import os
@@ -25,7 +26,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.25.14"
+VERSION = "v1.25.15"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations

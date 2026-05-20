@@ -1,8 +1,8 @@
-# Diagnóstico y Troubleshooting - v1.25.15
+# Diagnóstico y Troubleshooting - v1.25.28
 
-## Estado: ✅ Fix import shutil
+## Estado: ✅ Todo funcionando en Linux y Windows
 
-El Network Diagnostic Tool cuenta con 16 tests completamente funcionales y lista de mejoras pendientes para futuro.
+El Network Diagnostic Tool cuenta con 16 tests completamente funcionales con soporte completo para Linux y Windows.
 
 ---
 
@@ -10,22 +10,20 @@ El Network Diagnostic Tool cuenta con 16 tests completamente funcionales y lista
 
 | Versión | Cambios |
 |---------|---------|
+| v1.25.28 | Test 14 fix traceroute -n |
+| v1.25.27 | Debug Test 14 |
+| v1.25.26 | Test 14 mejor soporte Linux |
+| v1.25.25 | Test 12 fix parsing ip addr |
+| v1.25.23 | Test 12 soporte Linux |
+| v1.25.22 | Test 10 número de hop |
+| v1.25.21 | Test 10 separador decimal coma |
+| v1.25.18 | Test 10 fix código mal formado |
+| v1.25.17 | Test 10 traceroute sin -n |
 | v1.25.15 | Fix import shutil |
 | v1.25.14 | Test 10 detecta traceroute no instalado |
-| v1.25.13 | Test 10 mejor parsing Linux |
-| v1.25.10 | Test 8 fix - wlp/wlan especiales, half-duplex solo si UP |
-| v1.25.9 | Test 8 troubleshooting - ignorar interfaces especiales, umbral 100Mbps |
+| v1.25.10 | Test 8 fix - wlp/wlan especiales |
 | v1.25.8 | Test 9 soporte Linux - UFW e iptables |
-| v1.25.7 | Test 8 soporte Linux con ip link/addr/ethtool |
-| v1.25.6 | Test 7 mejor parsing formato Linux |
-| v1.25.5 | Test 7 soporte output ping inglés Linux |
-| v1.25.4 | Test 4 con YouTube (CDN) y Yahoo (IPTransit) |
-| v1.25.3 | Test 8 con múltiples interfaces |
-| v1.25.2 | Test 8 y Test 12 fix para Windows |
-| v1.25.1 | Test 12 DHCP mejorado con múltiples interfaces |
-| v1.24.2 | README y Diagnostico actualizados |
-| v1.24.1 | Help mejorado con ejemplos |
-| v1.24.0 | Test 16: Conexiones Simultáneas |
+| v1.25.7 | Test 8 soporte Linux |
 
 ---
 
@@ -419,5 +417,29 @@ python network_diagnostic.py --help              # Ver ayuda completa
 
 ---
 
-*Última actualización: 2026-04-23*
-*v1.24.2: Todas las mejoras implementadas (16 tests)*
+## Mejoras Sugeridas - Pendientes
+
+### Mejoras a Tests Existentes
+
+| Test | Mejora | Descripción |
+|------|--------|-------------|
+| Test 8 | Velocidad de enlace | Agregar speed en Linux con ethtool |
+| Test 10 | Soporte mtr | Usar mtr que combina ping + traceroute |
+| Test 11 | Velocidad local | Test de velocidad hacia servidores locales/ISP |
+| Test 12 | Lease DHCP | Mostrar tiempo de lease restante |
+| Test 16 | HTTPS/TLS | Agregar diagnóstico de conexión HTTPS |
+
+### Nuevos Tests Potenciales
+
+| Test | Descripción |
+|------|-------------|
+| Test 17 - QoS/DSCP | Detectar si el tráfico está marcado correctamente |
+| Test 18 - Latencia UDP | Test de latencia UDP (más preciso que ICMP) |
+| Test 19 - Ancho de banda local | Velocidad entre equipos en la misma red local |
+| Test 20 - DNS reverso | Verificar resolución inversa de IPs |
+| Test 21 - Puertos personalizados | Test de conectividad a puertos específicos |
+
+---
+
+*Última actualización: 2026-05-20*
+*v1.25.28: 16 tests funcionando en Linux y Windows*

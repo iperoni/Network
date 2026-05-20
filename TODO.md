@@ -135,3 +135,23 @@ Lista de mejoras pendientes para el proyecto.
 *Completado en v1.14-v1.16: Sugerencias de troubleshooting para tests 1-9*
 
 *Pendiente: Tests 10-12, macOS, Dashboard, Comparar resultados, Notificaciones*
+
+---
+
+## Mejoras Sugeridas - Pendientes
+
+### Mejoras a Tests Existentes
+
+- [ ] Test 8: Agregar velocidad de enlace (speed) en Linux con ethtool
+- [ ] Test 10: Soporte para usar mtr (combina ping + traceroute)
+- [ ] Test 11: Agregar test de velocidad hacia servidores locales/ISP
+- [ ] Test 12: Mostrar tiempo de lease DHCP restante
+- [ ] Test 16: Agregar diagnóstico de conexión HTTPS/TLS
+
+### Nuevos Tests Potenciales
+
+- [ ] Test 17 - QoS/DSCP: Detectar si el tráfico está marcado correctamente
+- [ ] Test 18 - Latencia UDP: Test de latencia UDP (más preciso que ICMP)
+- [ ] Test 19 - Ancho de banda local: Velocidad entre equipos en la misma red local
+- [ ] Test 20 - DNS reverso: Verificar resolución inversa de IPs
+- [ ] Test 21 - Puertos específicos: Test de conectividad a puertos personalizados

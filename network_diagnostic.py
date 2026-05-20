@@ -26,7 +26,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.25.27"
+VERSION = "v1.25.28"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -2950,9 +2950,8 @@ def test_mtu(host="8.8.8.8"):
     if is_windows:
         cmd = f"tracert -d -h 30 {host}"
     else:
-        # Usar traceroute si está disponible, si no tracepath
         if shutil.which("traceroute"):
-            cmd = f"traceroute -w 2 -n {host}"
+            cmd = f"traceroute -w 2 {host}"
         elif shutil.which("tracepath"):
             cmd = f"tracepath -n {host}"
         else:
@@ -2965,7 +2964,6 @@ def test_mtu(host="8.8.8.8"):
             output = result.stdout
             if not output and result.stderr:
                 output = result.stderr
-            print(f"[DEBUG] output (first 500): {output[:500]}")
             path_ips = parse_tracepath(output)
             print(f"   Ruta: {len(path_ips)} saltos")
             for ip in path_ips[:5]:

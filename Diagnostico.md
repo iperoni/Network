@@ -1,8 +1,6 @@
-# Diagnóstico y Troubleshooting - v1.25.4
+# Diagnóstico y Troubleshooting - v1.25.11
 
-## Estado: ✅ Test 4 con YouTube (CDN) y Yahoo (IPTransit)
-
-El Network Diagnostic Tool cuenta con 16 tests funcionales + MTU Path.
+## Estado: ✅ Test 10 verificado en Windows
 
 El Network Diagnostic Tool cuenta con 16 tests completamente funcionales y lista de mejoras pendientes para futuro.
 
@@ -12,6 +10,13 @@ El Network Diagnostic Tool cuenta con 16 tests completamente funcionales y lista
 
 | Versión | Cambios |
 |---------|---------|
+| v1.25.11 | Test 10 verificado en Windows |
+| v1.25.10 | Test 8 fix - wlp/wlan especiales, half-duplex solo si UP |
+| v1.25.9 | Test 8 troubleshooting - ignorar interfaces especiales, umbral 100Mbps |
+| v1.25.8 | Test 9 soporte Linux - UFW e iptables |
+| v1.25.7 | Test 8 soporte Linux con ip link/addr/ethtool |
+| v1.25.6 | Test 7 mejor parsing formato Linux |
+| v1.25.5 | Test 7 soporte output ping inglés Linux |
 | v1.25.4 | Test 4 con YouTube (CDN) y Yahoo (IPTransit) |
 | v1.25.3 | Test 8 con múltiples interfaces |
 | v1.25.2 | Test 8 y Test 12 fix para Windows |
@@ -19,15 +24,6 @@ El Network Diagnostic Tool cuenta con 16 tests completamente funcionales y lista
 | v1.24.2 | README y Diagnostico actualizados |
 | v1.24.1 | Help mejorado con ejemplos |
 | v1.24.0 | Test 16: Conexiones Simultáneas |
-| v1.23.1 | Fix DNS y doble título |
-| v1.23.0 | Comparación DNS configurados vs alternativos |
-| v1.22.0 | Test 15: DNS Alternativos |
-| v1.21.0 | Tests 13 y 14 (Bufferbloat, MTU) |
-| v1.20.0 | Test de Bufferbloat (QoS) |
-| v1.19.9 | Latencia por hop en traceroute |
-| v1.19.8 | Detección half-duplex |
-| v1.19.7 | Detección latencia base alta |
-| v1.19.6 | Detección DNS lento |
 
 ---
 

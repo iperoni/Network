@@ -26,7 +26,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.25.18"
+VERSION = "v1.25.19"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -849,18 +849,25 @@ def run_traceroute(host, max_hops=30):
         latency = 0
         times = []
         
-        for part in line.split():
-            part_clean = part.replace("ms", "").replace("<", "").replace("s", "").replace("m", "")
-            if part_clean.lstrip('-').isdigit():
-                try:
-                    t = int(part_clean)
-                    if t < 10000:
-                        times.append(t)
-                except:
-                    pass
+        # Debug: mostrar línea completa
+        print(f"[DEBUG] line: {line}")
+        
+        # Buscar todos los números que terminan en ms o son tiempos
+        import re
+        time_matches = re.findall(r"(\d+(?:\.\d+)?)\s*ms", line)
+        print(f"[DEBUG] time_matches: {time_matches}")
+        
+        for tm in time_matches:
+            try:
+                t = float(tm)
+                if t < 10000:
+                    times.append(t)
+            except:
+                pass
         
         if times:
             latency = sum(times) / len(times)
+            print(f"[DEBUG] latency: {latency}")
         
         ip_match = re.search(r"(?:^|\s)(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(?:\s|$|\))", line)
         

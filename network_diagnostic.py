@@ -26,7 +26,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.25.25"
+VERSION = "v1.25.26"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -2893,12 +2893,19 @@ def analyze_bufferbloat(results):
 
 
 def parse_tracepath(output):
-    """Extraer IPs de tracepath/tracert"""
+    """Extraer IPs de tracepath/traceroute"""
     ips = []
     for line in output.split("\n"):
-        match = re.search(r"(\d+\.\d+\.\d+\.\d+)", line)
+        # Saltar líneas de error o help
+        line_lower = line.lower()
+        if "unrecognized" in line_lower or "not found" in line_lower or "invalid" in line_lower:
+            continue
+        # Buscar IPs (con o sin paréntesis para tracepath)
+        match = re.search(r"(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})", line)
         if match:
-            ips.append(match.group(1))
+            ip = match.group(1)
+            if ip != "0.0.0.0":
+                ips.append(ip)
     return ips
 
 
@@ -2936,22 +2943,34 @@ def test_mtu(host="8.8.8.8"):
 
     print(f"   MTU máximo: {max_mtu} bytes")
 
-    # Parte 2: tracepath
+    # Parte 2: tracepath o traceroute
     print("   Analizando ruta...")
-    cmd = f"tracert -d -h 30 {host}" if is_windows else f"tracepath -n {host}"
-
     path_ips = []
-    try:
-        result = subprocess.run(cmd, shell=True, capture_output=True, timeout=30)
-        output = result.stdout.decode(
-            "cp437" if is_windows else "utf-8", errors="replace"
-        )
-        path_ips = parse_tracepath(output)
-        print(f"   Ruta: {len(path_ips)} saltos")
-        for ip in path_ips[:5]:
-            print(f"      {ip}")
-    except Exception as e:
-        print("   Ruta: Error al obtener")
+    
+    if is_windows:
+        cmd = f"tracert -d -h 30 {host}"
+    else:
+        # Usar traceroute si está disponible, si no tracepath
+        if shutil.which("traceroute"):
+            cmd = f"traceroute -w 2 -n {host}"
+        elif shutil.which("tracepath"):
+            cmd = f"tracepath -n {host}"
+        else:
+            print("   Ruta: tracepath/traceroute no instalado")
+            cmd = None
+    
+    if cmd:
+        try:
+            result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=30)
+            output = result.stdout
+            if not output and result.stderr:
+                output = result.stderr
+            path_ips = parse_tracepath(output)
+            print(f"   Ruta: {len(path_ips)} saltos")
+            for ip in path_ips[:5]:
+                print(f"      {ip}")
+        except Exception as e:
+            print(f"   Ruta: Error al obtener ({e})")
 
     return {"mtu": max_mtu, "details": results, "path": path_ips}
 

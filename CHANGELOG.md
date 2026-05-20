@@ -6,6 +6,13 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [v1.25.26] - 2026-05-20
+
+### Fixed
+- Test 14: Mejor soporte para Linux - usa traceroute si está disponible, o tracepath
+
+---
+
 ## [v1.25.23] - 2026-05-20
 
 ### Added

@@ -1,4 +1,4 @@
-# Network Diagnostic Tool (v1.25.4)
+# Network Diagnostic Tool (v1.25.11)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux con sugerencias de troubleshooting automatizadas.
 
@@ -21,8 +21,8 @@ Herramienta de diagnóstico de conectividad de red para Windows y Linux con suge
 - Test de conectividad a puertos comunes (HTTP, HTTPS, SSH, FTP, etc.)
 - Información del servidor DNS configurado
 - Detección de pérdida de paquetes
-- Detalles del interfaz de red (Windows)
-- Estado del firewall (Windows)
+- Detalles del interfaz de red (Windows y Linux)
+- Estado del firewall (Windows, UFW e iptables en Linux)
 - Traceroute
 - Test de velocidad de internet (download/upload)
 - Información DHCP

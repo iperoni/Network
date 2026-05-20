@@ -2,6 +2,34 @@
 
 Lista de mejoras pendientes para el proyecto.
 
+## v1.25.11 - Completado
+
+- [x] Test 10: Verificado en Windows, usa traceroute en Linux
+
+## v1.25.10 - Completado
+
+- [x] Test 8: Corregido troubleshooting - ignorar interfaces especiales (lo, docker, wwan, wlp), half-duplex solo si UP
+
+## v1.25.9 - Completado
+
+- [x] Test 8: Corregido análisis de troubleshooting - umbral 100Mbps (no 1Gbps)
+
+## v1.25.8 - Completado
+
+- [x] Test 9: Agregado soporte para Linux - consulta UFW e iptables
+
+## v1.25.7 - Completado
+
+- [x] Test 8: Agregado soporte para Linux - usa ip link, ip addr y ethtool
+
+## v1.25.6 - Completado
+
+- [x] Test 7: Mejor parsing para formato Linux
+
+## v1.25.5 - Completado
+
+- [x] Test 7: Soporte para output de ping en inglés (Linux)
+
 ## v1.25.4 - Completado
 
 - [x] Test 4: Agregar latencia YouTube (CDN) y Yahoo (IPTransit)

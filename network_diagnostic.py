@@ -26,7 +26,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.25.21"
+VERSION = "v1.25.22"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -2551,13 +2551,13 @@ def main():
             hops = run_traceroute(host, max_hops=30)
             if hops:
                 traceroute_results.append((name, hops))
-                for hop in hops[:20]:
+                for i, hop in enumerate(hops[:20], 1):
                     hop_ip = hop.get("ip", "*")
                     hop_latency = hop.get("latency", 0)
                     if hop_latency > 0:
-                        print(f"      {hop_ip}  {hop_latency:.1f}ms")
+                        print(f"      {i:2d}. {hop_ip}  {hop_latency:.1f}ms")
                     else:
-                        print(f"      {hop_ip}  *")
+                        print(f"      {i:2d}. {hop_ip}  *")
                 if len(hops) > 20:
                     print(f"      ... y {len(hops) - 20} saltos más")
             elif hops is None:

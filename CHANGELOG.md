@@ -6,6 +6,20 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [v1.25.22] - 2026-05-20
+
+### Added
+- Test 10: Mostrar número de hop/salto en la ruta
+
+---
+
+## [v1.25.21] - 2026-05-20
+
+### Fixed
+- Test 10: Separador decimal coma (0,177ms -> 0.177ms) en latencias
+
+---
+
 ## [v1.25.18] - 2026-05-20
 
 ### Fixed

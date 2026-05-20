@@ -26,7 +26,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.25.20"
+VERSION = "v1.25.21"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -849,16 +849,13 @@ def run_traceroute(host, max_hops=30):
         latency = 0
         times = []
         
-        # Debug: mostrar línea completa
-        print(f"[DEBUG] line: {line}")
-        
-        # Buscar todos los números que terminan en ms
-        time_matches = re.findall(r"(\d+(?:\.\d+)?)\s*ms", line)
-        print(f"[DEBUG] time_matches: {time_matches}")
+        # Buscar todos los números que terminan en ms (soporta punto y coma como decimal)
+        time_matches = re.findall(r"(\d+[.,]?\d*)\s*ms", line)
         
         for tm in time_matches:
             try:
-                t = float(tm)
+                # Cambiar coma por punto para decimal
+                t = float(tm.replace(",", "."))
                 if t < 10000:
                     times.append(t)
             except:
@@ -866,7 +863,6 @@ def run_traceroute(host, max_hops=30):
         
         if times:
             latency = sum(times) / len(times)
-            print(f"[DEBUG] latency: {latency}")
         
         ip_match = re.search(r"(?:^|\s)(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(?:\s|$|\))", line)
         

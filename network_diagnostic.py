@@ -25,7 +25,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.25.13"
+VERSION = "v1.25.14"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -822,6 +822,8 @@ def run_traceroute(host, max_hops=30):
     if is_windows:
         cmd = f"tracert -d -h {max_hops} {host}"
     else:
+        if not shutil.which("traceroute"):
+            return None
         cmd = f"traceroute -m {max_hops} -n {host}"
 
     try:
@@ -2554,6 +2556,10 @@ def main():
                         print(f"      {hop_ip}  *")
                 if len(hops) > 20:
                     print(f"      ... y {len(hops) - 20} saltos más")
+            elif hops is None:
+                print("      ⚠️ traceroute no instalado (Linux)")
+                print("      ℹ️  Instalar: sudo apt install traceroute")
+                traceroute_results.append((name, None))
             else:
                 print("      ⚠️ No se pudo obtener ruta")
                 traceroute_results.append((name, None))

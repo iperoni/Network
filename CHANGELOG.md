@@ -6,6 +6,13 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [v1.25.14] - 2026-05-20
+
+### Fixed
+- Test 10: Detecta si traceroute no está instalado en Linux y muestra mensaje de instalación
+
+---
+
 ## [v1.25.13] - 2026-05-20
 
 ### Fixed

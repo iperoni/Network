@@ -1,10 +1,10 @@
-# Network Diagnostic Tool (v1.25.13)
+# Network Diagnostic Tool (v1.25.14)
 
 Herramienta de diagnóstico de conectividad de red para Windows y Linux con sugerencias de troubleshooting automatizadas.
 
-## Novedades en v1.25.13
+## Novedades en v1.25.14
 
-- Test 10: Mejor parsing para formato Linux (con paréntesis en IPs), filtrado de valores atípicos
+- Test 10: Detecta si traceroute no está instalado en Linux y muestra mensaje de instalación
 
 ## Tabla de Contenidos
 

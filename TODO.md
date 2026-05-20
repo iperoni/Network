@@ -2,6 +2,10 @@
 
 Lista de mejoras pendientes para el proyecto.
 
+## v1.25.14 - Completado
+
+- [x] Test 10: Detecta traceroute no instalado, mensaje de instalación
+
 ## v1.25.13 - Completado
 
 - [x] Test 10: Mejor parsing formato Linux, filtrado valores atípicos

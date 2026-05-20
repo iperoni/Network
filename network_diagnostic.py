@@ -26,7 +26,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.25.22"
+VERSION = "v1.25.23"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -1814,6 +1814,67 @@ def get_dhcp_lease_info():
 
         if current_adapter and adapter_data:
             lease_info[current_adapter] = adapter_data
+    else:
+        output = run_command("ip addr show")
+        route_output = run_command("ip route show")
+        
+        interfaces = {}
+        current_iface = None
+        
+        for line in output.split("\n"):
+            if not line.strip():
+                continue
+            if line[0].isdigit() or line.startswith(" "):
+                parts = line.split()
+                if parts:
+                    current_iface = parts[1].rstrip(":")
+                    interfaces[current_iface] = {
+                        "IP": "",
+                        "Máscara": "",
+                        "DHCP": "Deshabilitado (IP Estática)",
+                    }
+            elif current_iface and "inet " in line:
+                inet_match = re.search(r"inet (\d+\.\d+\.\d+\.\d+)/(\d+)", line)
+                if inet_match:
+                    ip = inet_match.group(1)
+                    prefix = int(inet_match.group(2))
+                    mask = prefix_to_mask(prefix)
+                    interfaces[current_iface]["IP"] = ip
+                    interfaces[current_iface]["Máscara"] = mask
+        
+        for line in route_output.split("\n"):
+            if line.strip().startswith("default"):
+                parts = line.split()
+                if len(parts) >= 3:
+                    for iface in interfaces:
+                        interfaces[iface]["Gateway"] = parts[2]
+                break
+        
+        dhcp_lease_files = ["/var/lib/dhcp/dhclient.leases", "/var/lib/dhcpd/dhcpd.leases"]
+        for lease_file in dhcp_lease_files:
+            try:
+                with open(lease_file, "r") as f:
+                    lease_content = f.read()
+                    for iface in interfaces:
+                        if f'interface "{iface}"' in lease_content or f"interface {iface}" in lease_content:
+                            interfaces[iface]["DHCP"] = "Habilitado"
+                            lease_match = re.search(r"starts.*?(\d{4}/\d+/\d+ \d+:\d+:\d+)", lease_content)
+                            if lease_match:
+                                interfaces[iface]["Lease Obtenido"] = lease_match.group(1)
+                            expire_match = re.search(r"ends.*?(\d{4}/\d+/\d+ \d+:\d+:\d+)", lease_content)
+                            if expire_match:
+                                interfaces[iface]["Lease Expira"] = expire_match.group(1)
+            except:
+                pass
+        
+        dns_output = run_command("cat /etc/resolv.conf")
+        nameservers = re.findall(r"nameserver (\d+\.\d+\.\d+\.\d+)", dns_output)
+        dns_servers = ", ".join(nameservers) if nameservers else ""
+        
+        for iface, data in interfaces.items():
+            if data["IP"]:
+                data["DNS"] = dns_servers
+                lease_info[iface] = data
 
     if not lease_info:
         lease_info["Sin información"] = {
@@ -1825,6 +1886,12 @@ def get_dhcp_lease_info():
         }
 
     return lease_info
+
+
+def prefix_to_mask(prefix):
+    """Convierte prefijo CIDR a máscara"""
+    mask = (0xFFFFFFFF << (32 - prefix)) & 0xFFFFFFFF
+    return f"{(mask >> 24) & 0xFF}.{(mask >> 16) & 0xFF}.{(mask >> 8) & 0xFF}.{mask & 0xFF}"
 
 
 def analyze_test_8(results):

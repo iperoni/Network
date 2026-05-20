@@ -26,7 +26,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.25.26"
+VERSION = "v1.25.27"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -2965,6 +2965,7 @@ def test_mtu(host="8.8.8.8"):
             output = result.stdout
             if not output and result.stderr:
                 output = result.stderr
+            print(f"[DEBUG] output (first 500): {output[:500]}")
             path_ips = parse_tracepath(output)
             print(f"   Ruta: {len(path_ips)} saltos")
             for ip in path_ips[:5]:

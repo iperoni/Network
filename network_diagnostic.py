@@ -26,7 +26,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.25.15"
+VERSION = "v1.25.16"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -832,7 +832,11 @@ def run_traceroute(host, max_hops=30):
         output = result.stdout
         if not output and result.stderr:
             output = result.stderr
+        if not is_windows:
+            print(f"[DEBUG] output type: {type(output)}, len: {len(output) if output else 0}")
+            print(f"[DEBUG] output[:500]: {output[:500] if output else 'empty'}")
     except Exception as e:
+        print(f"[DEBUG] Exception: {e}")
         return []
 
     hops_data = []
@@ -844,7 +848,10 @@ def run_traceroute(host, max_hops=30):
         # Buscar número de hop al inicio (puede tener espacios)
         hop_match = re.match(r"^\s*(\d+)\s+", line_stripped)
         if not hop_match:
+            print(f"[DEBUG] Skip line (no hop num): {line_stripped[:50]}")
             continue
+        
+        print(f"[DEBUG] Hop found: {line_stripped[:60]}")
         
         line = line_stripped
         latency = 0

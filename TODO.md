@@ -2,6 +2,10 @@
 
 Lista de mejoras pendientes para el proyecto.
 
+## v1.25.12 - Completado
+
+- [x] Test 10: Mejorado parsing traceroute para Linux, formato limpio
+
 ## v1.25.11 - Completado
 
 - [x] Test 10: Verificado en Windows, usa traceroute en Linux

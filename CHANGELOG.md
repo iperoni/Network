@@ -6,6 +6,14 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [v1.25.12] - 2026-05-20
+
+### Fixed
+- Test 10: Mejorado parsing de traceroute para Linux - ahora detecta correctamente hops con espacios
+- Test 10: Mejorado formato de salida - más limpio y legible
+
+---
+
 ## [v1.25.11] - 2026-05-18
 
 ### Added

@@ -25,7 +25,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.25.11"
+VERSION = "v1.25.12"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -829,31 +829,44 @@ def run_traceroute(host, max_hops=30):
 
     hops_data = []
     for line in output.split("\n"):
-        if line.strip() and (
-            line.strip()[0].isdigit() or line.strip().startswith("1 ")
-        ):
-            line = line.strip()
-            latency = 0
-            times = []
-            for part in line.split():
-                if (
-                    part.replace("ms", "")
-                    .replace("<", "")
-                    .replace("s", "")
-                    .replace("m", "")
-                    .isdigit()
-                ):
-                    try:
-                        t = int(part.replace("ms", "").replace("<", ""))
-                        times.append(t)
-                    except:
-                        pass
-            if times:
-                latency = sum(times) / len(times)
-
-            ip_match = re.search(r"\d+\.\d+\.\d+\.\d+", line)
-            hop_ip = ip_match.group(0) if ip_match else line[:20]
-            hops_data.append({"ip": hop_ip, "latency": latency, "line": line})
+        line_stripped = line.strip()
+        if not line_stripped:
+            continue
+        # Verificar si es una línea de hop (comienza con número o espacios+número)
+        if not (line_stripped[0:1].isdigit() or line_stripped[:3].strip()[0:1].isdigit()):
+            continue
+        
+        line = line_stripped
+        latency = 0
+        times = []
+        
+        # Extraer latencias (formato: "X ms" o "<X ms")
+        for part in line.split():
+            part_clean = part.replace("ms", "").replace("<", "").replace("s", "").replace("m", "")
+            if part_clean.lstrip('-').isdigit():
+                try:
+                    t = int(part_clean)
+                    times.append(t)
+                except:
+                    pass
+        
+        if times:
+            latency = sum(times) / len(times)
+        
+        # Extraer IP (buscar patrón xxx.xxx.xxx.xxx)
+        ip_match = re.search(r"\d+\.\d+\.\d+\.\d+", line)
+        
+        if ip_match:
+            hop_ip = ip_match.group(0)
+        elif "* * *" in line or "* *" in line:
+            # Timeout - no hay IP
+            hop_ip = "*"
+        else:
+            # Usar el número de hop como identificación
+            hop_match = re.search(r"^\s*(\d+)", line)
+            hop_ip = f"hop {hop_match.group(1)}" if hop_match else line[:25]
+        
+        hops_data.append({"ip": hop_ip, "latency": latency, "line": line})
 
     return hops_data[:15]
 
@@ -2528,7 +2541,12 @@ def main():
             if hops:
                 traceroute_results.append((name, hops))
                 for hop in hops[:20]:
-                    print(f"      {hop}")
+                    hop_ip = hop.get("ip", "*")
+                    hop_latency = hop.get("latency", 0)
+                    if hop_latency > 0:
+                        print(f"      {hop_ip}  {hop_latency:.1f}ms")
+                    else:
+                        print(f"      {hop_ip}  *")
                 if len(hops) > 20:
                     print(f"      ... y {len(hops) - 20} saltos más")
             else:

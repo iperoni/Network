@@ -26,7 +26,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.25.19"
+VERSION = "v1.25.20"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -852,8 +852,7 @@ def run_traceroute(host, max_hops=30):
         # Debug: mostrar línea completa
         print(f"[DEBUG] line: {line}")
         
-        # Buscar todos los números que terminan en ms o son tiempos
-        import re
+        # Buscar todos los números que terminan en ms
         time_matches = re.findall(r"(\d+(?:\.\d+)?)\s*ms", line)
         print(f"[DEBUG] time_matches: {time_matches}")
         

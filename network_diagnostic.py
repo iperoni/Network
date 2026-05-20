@@ -26,7 +26,7 @@ from datetime import datetime
 # CONSTANTES GLOBALES
 # ==============================================================================
 
-VERSION = "v1.25.16"
+VERSION = "v1.25.17"
 IS_WINDOWS = platform.system().lower() == "windows"
 
 # Timeout configurations
@@ -825,33 +825,15 @@ def run_traceroute(host, max_hops=30):
     else:
         if not shutil.which("traceroute"):
             return None
-        cmd = f"traceroute -m {max_hops} -n {host}"
+        cmd = f"traceroute -w 2 {max_hops} {host}"
 
     try:
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=60)
         output = result.stdout
         if not output and result.stderr:
             output = result.stderr
-        if not is_windows:
-            print(f"[DEBUG] output type: {type(output)}, len: {len(output) if output else 0}")
-            print(f"[DEBUG] output[:500]: {output[:500] if output else 'empty'}")
     except Exception as e:
-        print(f"[DEBUG] Exception: {e}")
         return []
-
-    hops_data = []
-    for line in output.split("\n"):
-        line_stripped = line.strip()
-        if not line_stripped:
-            continue
-        
-        # Buscar número de hop al inicio (puede tener espacios)
-        hop_match = re.match(r"^\s*(\d+)\s+", line_stripped)
-        if not hop_match:
-            print(f"[DEBUG] Skip line (no hop num): {line_stripped[:50]}")
-            continue
-        
-        print(f"[DEBUG] Hop found: {line_stripped[:60]}")
         
         line = line_stripped
         latency = 0
@@ -879,7 +861,12 @@ def run_traceroute(host, max_hops=30):
         elif "* * *" in line or "* *" in line:
             hop_ip = "*"
         else:
-            hop_ip = f"hop {hop_match.group(1)}"
+            # Sin IP numérica - usar lo que venga después del número de hop
+            parts = line.split(None, 2)
+            if len(parts) >= 3:
+                hop_ip = parts[2].split()[0][:30]  # Primer token después del hop number
+            else:
+                hop_ip = f"hop {hop_match.group(1)}"
         
         hops_data.append({"ip": hop_ip, "latency": latency, "line": line})
 
